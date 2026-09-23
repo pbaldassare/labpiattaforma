@@ -4,8 +4,24 @@
     {
       "name": "landing",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace", "@lab/web"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace",
+        "@lab/web"
+      ],
       "port": 3000
+    },
+    {
+      "name": "app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "web",
+        "--workspace",
+        "@lab/mobile"
+      ],
+      "port": 8081
     }
   ]
 }

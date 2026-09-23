@@ -6,13 +6,13 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
+import { Testo as Text } from '@/components/testo';
 
 import { supabase } from '@/lib/supabase';
-import { TOCCO_MINIMO, colori, raggio, spazi } from '@/lib/tema';
+import { TOCCO_MINIMO, caratteri, colori, raggio, spazi } from '@/lib/tema';
 
 type Modo = 'accesso' | 'registrazione';
 
@@ -153,6 +153,7 @@ const stili = StyleSheet.create({
   campo: { gap: spazi.xs },
   etichetta: { fontSize: 13, fontWeight: '600', color: colori.testo },
   input: {
+    fontFamily: caratteri.normale,
     minHeight: TOCCO_MINIMO,
     backgroundColor: colori.superficie,
     borderWidth: 1,

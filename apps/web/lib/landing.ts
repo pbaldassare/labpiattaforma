@@ -91,11 +91,17 @@ export function urlFoto(path: string): string {
 
 /** L'offerta e' ancora proponibile? */
 export function offertaDisponibile(dati: DatiPagina): boolean {
-  return (
-    dati.pagina.pubblicata &&
-    dati.offerta.stato === 'attiva' &&
-    dati.venditore.stato === 'attivo'
-  );
+  if (!dati.pagina.pubblicata) return false;
+  if (dati.offerta.stato !== 'attiva') return false;
+  if (dati.venditore.stato !== 'attivo') return false;
+
+  // Se il venditore toglie il prezzo rivenditore da un'offerta che ne aveva
+  // uno, la pagina riservata resta in piedi ma senza numero da mostrare.
+  // La pagina non si cancella — il link puo' essere gia' in mano a qualcuno —
+  // ma smette di proporre l'offerta.
+  if (dati.vendita && dati.vendita.prezzo_cent == null) return false;
+
+  return true;
 }
 
 /** Link che apre WhatsApp con il messaggio gia' scritto (documento §3.3). */

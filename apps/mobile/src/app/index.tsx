@@ -1,6 +1,7 @@
 import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Testo as Text } from '@/components/testo';
 import { urlVetrina, type Venditore } from '@lab/shared';
 
 import { supabase } from '@/lib/supabase';
@@ -42,9 +43,15 @@ export default function Home() {
         </View>
       )}
 
-      <Link href="/profilo" asChild>
+      <Link href="/offerte" asChild>
         <Pressable style={({ pressed }) => [stili.bottone, pressed && stili.premuto]}>
-          <Text style={stili.bottoneTesto}>
+          <Text style={stili.bottoneTesto}>Le tue offerte</Text>
+        </Pressable>
+      </Link>
+
+      <Link href="/profilo" asChild>
+        <Pressable style={({ pressed }) => [stili.bottoneTenue, pressed && stili.premuto]}>
+          <Text style={stili.bottoneTenueTesto}>
             {venditore ? 'Modifica il profilo' : 'Compila il profilo'}
           </Text>
         </Pressable>

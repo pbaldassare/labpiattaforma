@@ -14,6 +14,8 @@ config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(workspaceRoot, 'node_modules'),
 ];
-config.resolver.disableHierarchicalLookup = true;
+// Nessun disableHierarchicalLookup: serve ai monorepo con pnpm, dove le
+// dipendenze sono collegate simbolicamente. Con npm, che le appiattisce nella
+// radice, impedirebbe a Metro di risalire e trovarle.
 
 module.exports = config;

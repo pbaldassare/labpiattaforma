@@ -30,3 +30,34 @@ export const raggio = { s: 8, m: 12, l: 16 } as const;
 
 /** Area minima toccabile: sotto i 44 punti il dito sbaglia. */
 export const TOCCO_MINIMO = 44;
+
+/**
+ * Plus Jakarta Sans, la famiglia indicata dalla direzione grafica per gli
+ * strumenti di lavoro: leggibile in piccolo, numeri chiari, niente carattere.
+ *
+ * Con i font caricati come file distinti, "fontWeight" non basta: ogni peso e'
+ * una famiglia a se'. Per questo il peso richiesto viene tradotto nel nome
+ * giusto dal componente Testo, invece di sparpagliare nomi di file negli stili.
+ */
+export const caratteri = {
+  normale: 'PlusJakartaSans_400Regular',
+  medio: 'PlusJakartaSans_500Medium',
+  forte: 'PlusJakartaSans_600SemiBold',
+  grassetto: 'PlusJakartaSans_700Bold',
+} as const;
+
+export function famigliaPerPeso(peso: string | number | undefined): string {
+  switch (String(peso ?? '400')) {
+    case '700':
+    case '800':
+    case '900':
+    case 'bold':
+      return caratteri.grassetto;
+    case '600':
+      return caratteri.forte;
+    case '500':
+      return caratteri.medio;
+    default:
+      return caratteri.normale;
+  }
+}

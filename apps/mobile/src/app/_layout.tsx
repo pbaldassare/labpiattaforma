@@ -1,3 +1,10 @@
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  useFonts,
+} from '@expo-google-fonts/plus-jakarta-sans';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -11,6 +18,15 @@ export default function Layout() {
   const [caricato, setCaricato] = useState(false);
   const segmenti = useSegments();
   const router = useRouter();
+
+  // Plus Jakarta Sans: finche' non e' pronto si mostra il caricamento, invece
+  // di far comparire tutto col carattere di sistema e poi saltare.
+  const [fontPronti] = useFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -37,7 +53,7 @@ export default function Layout() {
     }
   }, [caricato, sessione, segmenti, router]);
 
-  if (!caricato) {
+  if (!caricato || !fontPronti) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo }}>
         <ActivityIndicator color={colori.primario} />
@@ -56,6 +72,9 @@ export default function Layout() {
       <Stack.Screen name="accedi" options={{ title: 'Accedi', headerShown: false }} />
       <Stack.Screen name="index" options={{ title: 'Lab Piattaforma' }} />
       <Stack.Screen name="profilo" options={{ title: 'Il tuo profilo' }} />
+      <Stack.Screen name="offerte/index" options={{ title: 'Le tue offerte' }} />
+      <Stack.Screen name="offerte/nuova" options={{ title: 'Nuova offerta' }} />
+      <Stack.Screen name="offerte/[id]" options={{ title: 'Offerta' }} />
     </Stack>
   );
 }

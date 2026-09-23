@@ -2,7 +2,7 @@ import 'react-native-url-polyfill/auto';
 
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { SCHEMA_DB } from '@lab/shared';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -62,11 +62,21 @@ const archivioSicuro = {
   },
 };
 
+/**
+ * SecureStore esiste solo sui telefoni. Sul web — dove l'app gira in anteprima
+ * e dove Expo Router esegue anche un passaggio di resa lato server — non c'e',
+ * e istanziarlo comunque fa morire l'applicazione all'avvio.
+ *
+ * Lasciando l'archivio indefinito, supabase-js usa da solo quello del browser
+ * e ripiega sulla memoria quando non c'e' (durante la resa lato server).
+ */
+const archivio = Platform.OS === 'web' ? undefined : archivioSicuro;
+
 export const supabase = createClient(url, chiavePubblicabile, {
   // Le tabelle dell'App Venditori non stanno in "public".
   db: { schema: SCHEMA_DB },
   auth: {
-    storage: archivioSicuro,
+    storage: archivio,
     autoRefreshToken: true,
     persistSession: true,
     // Serve al web per leggere il token dall'indirizzo: su telefono rompe l'avvio.
@@ -77,11 +87,14 @@ export const supabase = createClient(url, chiavePubblicabile, {
 /**
  * Il rinnovo automatico del token va fermato quando l'app va in secondo piano
  * e ripreso al ritorno, altrimenti l'utente si ritrova disconnesso a caso.
+ * Sul web il concetto di secondo piano non esiste e AppState non e' affidabile.
  */
-AppState.addEventListener('change', (stato) => {
-  if (stato === 'active') {
-    void supabase.auth.startAutoRefresh();
-  } else {
-    void supabase.auth.stopAutoRefresh();
-  }
-});
+if (Platform.OS !== 'web') {
+  AppState.addEventListener('change', (stato) => {
+    if (stato === 'active') {
+      void supabase.auth.startAutoRefresh();
+    } else {
+      void supabase.auth.stopAutoRefresh();
+    }
+  });
+}

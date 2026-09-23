@@ -6,10 +6,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
+import { Testo as Text } from '@/components/testo';
 import {
   ERRORI_SLUG,
   normalizzaSlug,
@@ -20,7 +20,7 @@ import {
 } from '@lab/shared';
 
 import { supabase } from '@/lib/supabase';
-import { TOCCO_MINIMO, colori, raggio, spazi } from '@/lib/tema';
+import { TOCCO_MINIMO, caratteri, colori, raggio, spazi } from '@/lib/tema';
 
 const DOMINIO = process.env.EXPO_PUBLIC_DOMINIO_LANDING ?? 'https://dominio-da-decidere.it';
 
@@ -270,6 +270,7 @@ const stili = StyleSheet.create({
   campo: { gap: spazi.xs },
   etichetta: { fontSize: 13, fontWeight: '600', color: colori.testo },
   input: {
+    fontFamily: caratteri.normale,
     minHeight: TOCCO_MINIMO,
     backgroundColor: colori.superficie,
     borderWidth: 1,
