@@ -56,7 +56,12 @@ export interface DatiPagina {
 
 export async function caricaPagina(codice: string): Promise<DatiPagina | null> {
   const supabase = clientPubblico();
-  const { data, error } = await supabase.rpc('dati_pagina', { p_codice: codice });
+  // Passa dal ponte in "public": lo schema "venditori" non e' ancora esposto
+  // nelle impostazioni Data API. La funzione richiamata e' comunque quella
+  // vera, quindi il filtro dei dati e' lo stesso.
+  const { data, error } = await supabase
+    .schema('public')
+    .rpc('venditori_dati_pagina', { p_codice: codice });
 
   if (error) throw error;
   return (data as DatiPagina | null) ?? null;
@@ -72,7 +77,7 @@ export async function caricaPagina(codice: string): Promise<DatiPagina | null> {
 export async function registraApertura(codice: string): Promise<void> {
   try {
     const supabase = clientPubblico();
-    await supabase.rpc('registra_apertura', { p_codice: codice });
+    await supabase.schema('public').rpc('venditori_registra_apertura', { p_codice: codice });
   } catch {
     // volutamente silenzioso
   }

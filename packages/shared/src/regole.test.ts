@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { PREFISSO_MODULO } from './moduli';
 import { normalizzaSlug, proponiSlug, urlVetrina, validaSlug } from './slug';
 import {
+  analizzaEuro,
   euroInCentesimi,
   formattaEuro,
   formattaEuroPreciso,
@@ -74,6 +75,33 @@ describe('denaro', () => {
   it('formatta i totali con i centesimi', () => {
     expect(formattaEuroPreciso(890050)).toBe('8.900,50 €');
     expect(formattaEuroPreciso(5)).toBe('0,05 €');
+  });
+
+  it('interpreta i prezzi come li scrive un venditore di fretta', () => {
+    expect(analizzaEuro('8900')).toBe(890000);
+    expect(analizzaEuro('8.900')).toBe(890000);
+    expect(analizzaEuro(' 8 900 € ')).toBe(890000);
+    expect(analizzaEuro('8900,50')).toBe(890050);
+    expect(analizzaEuro('1.234,56')).toBe(123456);
+    // Scritto all'inglese: il separatore decimale resta l'ultimo che compare.
+    expect(analizzaEuro('1,234.56')).toBe(123456);
+    expect(analizzaEuro('8,90')).toBe(890);
+    expect(analizzaEuro('8,5')).toBe(850);
+    expect(analizzaEuro('0')).toBe(0);
+  });
+
+  it('rifiuta quello che non e’ un prezzo, invece di inventarne uno', () => {
+    expect(analizzaEuro('')).toBeNull();
+    expect(analizzaEuro('   ')).toBeNull();
+    expect(analizzaEuro('ottomilanovecento')).toBeNull();
+    expect(analizzaEuro('89oo')).toBeNull();
+    expect(analizzaEuro('12x')).toBeNull();
+  });
+
+  it('sopravvive al giro di andata e ritorno', () => {
+    for (const centesimi of [0, 500, 890000, 123456, 125000000]) {
+      expect(analizzaEuro(formattaEuroPreciso(centesimi))).toBe(centesimi);
+    }
   });
 
   it('mostra i valori negativi con il segno, senza nasconderli', () => {

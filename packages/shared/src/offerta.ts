@@ -115,6 +115,53 @@ export function euroInCentesimi(euro: number): number {
   return Math.round(euro * 100);
 }
 
+/**
+ * Interpreta un prezzo scritto a mano dal venditore.
+ *
+ * Sul telefono si scrive in fretta e ognuno ha le sue abitudini: "8900",
+ * "8.900", "8 900 €", "8900,50". Il punto in italiano separa le migliaia e la
+ * virgola i decimali, ma capita di scrivere all'inglese, quindi il separatore
+ * decimale viene riconosciuto da come e' fatto il numero e non per convenzione.
+ *
+ * Restituisce null se non e' un numero: meglio far correggere il venditore che
+ * salvare un prezzo inventato.
+ */
+export function analizzaEuro(testo: string): number | null {
+  const pulito = testo.replace(/[\s €.,]/g, (c) => (c === '.' || c === ',' ? c : ''));
+  if (pulito === '') return null;
+
+  const ultimoPunto = pulito.lastIndexOf('.');
+  const ultimaVirgola = pulito.lastIndexOf(',');
+
+  // Con entrambi, il separatore decimale e' quello piu' a destra.
+  // Con uno solo, e' decimale se ha al massimo due cifre dopo: "8.900" sono
+  // ottomilanovecento euro, "8,90" sono otto euro e novanta.
+  let posizioneDecimale = -1;
+  if (ultimoPunto >= 0 && ultimaVirgola >= 0) {
+    posizioneDecimale = Math.max(ultimoPunto, ultimaVirgola);
+  } else if (ultimoPunto >= 0 || ultimaVirgola >= 0) {
+    const unico = Math.max(ultimoPunto, ultimaVirgola);
+    if (pulito.length - unico - 1 <= 2) posizioneDecimale = unico;
+  }
+
+  const parteIntera =
+    posizioneDecimale >= 0 ? pulito.slice(0, posizioneDecimale) : pulito;
+  const parteDecimale =
+    posizioneDecimale >= 0 ? pulito.slice(posizioneDecimale + 1) : '';
+
+  const interoPulito = parteIntera.replace(/[.,]/g, '');
+  const segno = interoPulito.startsWith('-') ? -1 : 1;
+  const cifreIntere = interoPulito.replace(/^-/, '');
+
+  if (!/^\d*$/.test(cifreIntere) || !/^\d*$/.test(parteDecimale)) return null;
+  if (cifreIntere === '' && parteDecimale === '') return null;
+
+  const centesimi =
+    Number(cifreIntere || '0') * 100 + Number(parteDecimale.padEnd(2, '0').slice(0, 2) || '0');
+
+  return segno * centesimi;
+}
+
 export function centesimiInEuro(centesimi: number): number {
   return centesimi / 100;
 }
