@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/*
+  Token delle landing — direzione "Hero-Centric".
+  Volutamente diversi da quelli dell'app venditore: qui si deve vendere,
+  nell'app si deve lavorare.
+*/
+:root {
+  --sfondo: #f8fafc;
+  --testo: #0f172a;
+  --superficie: #ffffff;
+  --testo-superficie: #0f172a;
+  --primario: #1e293b;
+  --su-primario: #ffffff;
+  --secondario: #334155;
+  --azione: #dc2626;
+  --su-azione: #ffffff;
+  --tenue: #e9edf1;
+  --testo-tenue: #475569;
+  --bordo: #e2e8f0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sfondo: #0f172a;
+    --testo: #f8fafc;
+    --superficie: #1e293b;
+    --testo-superficie: #f8fafc;
+    --primario: #f8fafc;
+    --su-primario: #0f172a;
+    --secondario: #cbd5e1;
+    --azione: #ef4444;
+    --su-azione: #ffffff;
+    --tenue: #1e293b;
+    --testo-tenue: #94a3b8;
+    --bordo: #334155;
+  }
+}
+
+@theme inline {
+  --color-sfondo: var(--sfondo);
+  --color-testo: var(--testo);
+  --color-superficie: var(--superficie);
+  --color-primario: var(--primario);
+  --color-su-primario: var(--su-primario);
+  --color-secondario: var(--secondario);
+  --color-azione: var(--azione);
+  --color-su-azione: var(--su-azione);
+  --color-tenue: var(--tenue);
+  --color-testo-tenue: var(--testo-tenue);
+  --color-bordo: var(--bordo);
+}
+
+body {
+  background: var(--sfondo);
+  color: var(--testo);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Le pagine prodotto avranno animazioni di comparsa: chi le ha disattivate
+   deve vedere subito lo stato finale, non una pagina vuota. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

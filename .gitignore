@@ -1,0 +1,19 @@
+node_modules/
+.turbo/
+
+# build
+.next/
+out/
+dist/
+.expo/
+*.tsbuildinfo
+
+# segreti: la chiave di servizio bypassa RLS, non deve mai finire nel repo
+.env
+.env.*
+!.env.example
+
+# sistema
+.DS_Store
+Thumbs.db
+npm-debug.log*

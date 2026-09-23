@@ -1,0 +1,23 @@
+{
+  "name": "labpiattaforma",
+  "private": true,
+  "description": "Lab Piattaforma — App Venditori",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:web": "npm run dev --workspace @lab/web",
+    "dev:mobile": "npm run start --workspace @lab/mobile",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "turbo": "^2.11.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
