@@ -21,6 +21,7 @@ import {
   type TipoPagina,
 } from '@lab/shared';
 
+import { fn, tab } from '@lab/shared';
 import { supabase } from '@/lib/supabase';
 import { TOCCO_MINIMO, colori, raggio, spazi } from '@/lib/tema';
 
@@ -46,9 +47,9 @@ export default function DettaglioOfferta() {
 
   const carica = useCallback(async () => {
     const [o, v, p] = await Promise.all([
-      supabase.from('offerta').select('*').eq('id', id).maybeSingle<Offerta>(),
-      supabase.from('offerta_vendita').select('*').eq('offerta_id', id).maybeSingle<OffertaVendita>(),
-      supabase.from('pagina_contatori').select('*').eq('offerta_id', id).order('tipo'),
+      supabase.from(tab('offerta')).select('*').eq('id', id).maybeSingle<Offerta>(),
+      supabase.from(tab('offerta_vendita')).select('*').eq('offerta_id', id).maybeSingle<OffertaVendita>(),
+      supabase.from(tab('pagina_contatori')).select('*').eq('offerta_id', id).order('tipo'),
     ]);
 
     if (o.error) setErrore(o.error.message);
@@ -70,7 +71,7 @@ export default function DettaglioOfferta() {
       attuali.map((x) => (x.pagina_id === pagina.pagina_id ? { ...x, pubblicata: attiva } : x))
     );
     const { error } = await supabase
-      .from('pagina')
+      .from(tab('pagina'))
       .update({ pubblicata: attiva })
       .eq('id', pagina.pagina_id);
 

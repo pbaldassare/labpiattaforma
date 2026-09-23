@@ -49,8 +49,33 @@ export interface ModuloStato {
   updated_at: string;
 }
 
-/** Lo schema non e' `public`: i client vanno inizializzati con questo. */
-export const SCHEMA_DB = 'venditori' as const;
+/**
+ * Ponte temporaneo verso lo schema `public`.
+ *
+ * Le tabelle vivono in `venditori`, ma quello schema non risulta esposto dalle
+ * API del progetto: il pannello e l'API di gestione lo registrano, PostgREST
+ * continua a servirne quattro anche dopo un riavvio completo. E' un difetto
+ * della piattaforma, non una configurazione sbagliata.
+ *
+ * Finche' dura, si passa da viste e funzioni in `public` con prefisso
+ * `venditori_`. Le viste sono security_invoker, quindi le policy applicate
+ * restano quelle delle tabelle vere: non e' un buco, e' un cambio di indirizzo.
+ *
+ * Per tornare indietro basta mettere false qui: nessun altro file cambia.
+ */
+export const PONTE_PUBLIC = true;
+
+export const SCHEMA_DB = PONTE_PUBLIC ? 'public' : 'venditori';
+
+/** Nome con cui l'API conosce una tabella. */
+export function tab(nome: string): string {
+  return PONTE_PUBLIC ? `venditori_${nome}` : nome;
+}
+
+/** Nome con cui l'API conosce una funzione. */
+export function fn(nome: string): string {
+  return PONTE_PUBLIC ? `venditori_${nome}` : nome;
+}
 
 /**
  * Messaggi che il trigger `gestisci_slug` restituisce, da tradurre per chi legge.

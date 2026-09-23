@@ -19,6 +19,7 @@ import {
   type Venditore,
 } from '@lab/shared';
 
+import { fn, tab } from '@lab/shared';
 import { supabase } from '@/lib/supabase';
 import { TOCCO_MINIMO, caratteri, colori, raggio, spazi } from '@/lib/tema';
 
@@ -68,7 +69,7 @@ export default function Profilo() {
     // Se sia libero lo sa solo il database: le policy impediscono (giustamente)
     // di leggere i profili altrui, quindi si chiede a lui.
     attesa.current = setTimeout(async () => {
-      const { data, error } = await supabase.rpc('slug_disponibile', { p_slug: pulito });
+      const { data, error } = await supabase.rpc(fn('slug_disponibile'), { p_slug: pulito });
       if (error) {
         setStatoSlug({ tipo: 'occupato', motivo: 'Non riesco a verificarlo adesso.' });
       } else if (data === true) {
@@ -82,7 +83,7 @@ export default function Profilo() {
   useEffect(() => {
     void (async () => {
       const { data, error } = await supabase
-        .from('venditore')
+        .from(tab('venditore'))
         .select('*')
         .maybeSingle<Venditore>();
 
@@ -138,8 +139,8 @@ export default function Profilo() {
     // user_id lo mette il database con auth.uid(): il client non lo manda mai,
     // così non può sbagliarlo né falsificarlo.
     const { error } = esisteGia
-      ? await supabase.from('venditore').update(valori).select().single()
-      : await supabase.from('venditore').insert(valori).select().single();
+      ? await supabase.from(tab('venditore')).update(valori).select().single()
+      : await supabase.from(tab('venditore')).insert(valori).select().single();
 
     setSalvataggio(false);
 

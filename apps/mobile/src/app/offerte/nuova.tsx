@@ -23,6 +23,7 @@ import {
 } from '@lab/shared';
 
 import { Bottone, Campo, Input, Scelta, Sezione } from '@/components/modulo';
+import { fn, tab } from '@lab/shared';
 import { supabase } from '@/lib/supabase';
 import { colori, raggio, spazi } from '@/lib/tema';
 
@@ -124,7 +125,7 @@ export default function NuovaOfferta() {
       })),
     };
 
-    const { data, error } = await supabase.rpc('salva_offerta_vendita', { p_dati: dati });
+    const { data, error } = await supabase.rpc(fn('salva_offerta_vendita'), { p_dati: dati });
     setInCorso(false);
 
     if (error) {
