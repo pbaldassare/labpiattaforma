@@ -1,5 +1,6 @@
 import type {
   Alimentazione,
+  DatiAssicurazione,
   DatiNoleggioLungo,
   Cambio,
   FormulaAcquisto,
@@ -39,6 +40,8 @@ export interface DatiPagina {
     presentazione: string | null;
     logo_path: string | null;
     stato: 'attivo' | 'sospeso';
+    /** Numero di iscrizione RUI, pubblico per legge (§7.4). */
+    rui: string | null;
   };
   vendita: {
     marca: string;
@@ -52,6 +55,7 @@ export interface DatiPagina {
     prezzo_consigliato_cent: number | null;
   } | null;
   lungo: DatiNoleggioLungo | null;
+  assicurazione: DatiAssicurazione | null;
   foto: string[];
   formule: FormulaAcquisto[];
 }

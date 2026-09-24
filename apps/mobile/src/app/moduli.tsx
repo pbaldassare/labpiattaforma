@@ -42,8 +42,15 @@ const ICONA: Record<Modulo, NomeIcona> = {
 const PRONTO: Record<Modulo, boolean> = {
   vendita: true,
   noleggio_lungo: true,
+  assicurazioni: true,
   noleggio_breve: false,
-  assicurazioni: false,
+};
+
+/** Dove porta ciascun modulo per creare una nuova offerta. */
+const DOVE: Partial<Record<Modulo, '/offerte/nuova' | '/offerte/nuova-lungo' | '/offerte/nuova-assicurazione'>> = {
+  vendita: '/offerte/nuova',
+  noleggio_lungo: '/offerte/nuova-lungo',
+  assicurazioni: '/offerte/nuova-assicurazione',
 };
 
 export default function Moduli() {
@@ -81,12 +88,7 @@ export default function Moduli() {
           key={m.modulo}
           stato={m}
           onPress={
-            PRONTO[m.modulo]
-              ? () =>
-                  router.push(
-                    m.modulo === 'vendita' ? '/offerte/nuova' : '/offerte/nuova-lungo'
-                  )
-              : undefined
+            DOVE[m.modulo] ? () => router.push(DOVE[m.modulo]!) : undefined
           }
         />
       ))}
