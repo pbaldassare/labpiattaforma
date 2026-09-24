@@ -1,5 +1,5 @@
 import * as Clipboard from 'expo-clipboard';
-import { useLocalSearchParams , useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 
 import {
@@ -14,21 +14,54 @@ import {
 import { Testo as Text } from '@/components/testo';
 import QRCode from 'react-native-qrcode-svg';
 import {
+  ETICHETTA_MODULO,
   formattaEuro,
   urlPagina,
   type Modulo,
   type Offerta,
   type OffertaVendita,
+  type StatoOfferta,
   type TipoPagina,
 } from '@lab/shared';
 
 import { tab } from '@lab/shared';
+import { Pillola } from '@/components/base';
 import { Fotografie, type Foto } from '@/components/foto';
-import { Sezione } from '@/components/modulo';
+import { Icona } from '@/components/icone';
+import { Bottone, Scelta, Sezione } from '@/components/modulo';
 import { supabase } from '@/lib/supabase';
 import { TOCCO_MINIMO, colori, raggio, spazi } from '@/lib/tema';
 
 const DOMINIO = process.env.EXPO_PUBLIC_DOMINIO_LANDING ?? 'https://dominio-da-decidere.it';
+
+/** Dove si riapre l'offerta per correggerla, modulo per modulo. */
+const DOVE_MODIFICA = {
+  vendita: '/offerte/nuova',
+  noleggio_breve: '/offerte/nuova-breve',
+  noleggio_lungo: '/offerte/nuova-lungo',
+  assicurazioni: '/offerte/nuova-assicurazione',
+} as const satisfies Record<Modulo, string>;
+
+/**
+ * Gli stati che il venditore cambia a mano.
+ *
+ * "Venduta" non toglie la pagina dal mondo: chi ha il link vede che il mezzo
+ * non c'e' piu', invece di trovare un indirizzo morto. Sparisce solo dalla
+ * vetrina, che e' la cosa giusta.
+ */
+const STATI: { valore: StatoOfferta; etichetta: string }[] = [
+  { valore: 'bozza', etichetta: 'Bozza' },
+  { valore: 'attiva', etichetta: 'Pubblicata' },
+  { valore: 'sospesa', etichetta: 'Sospesa' },
+  { valore: 'venduta', etichetta: 'Venduta' },
+];
+
+const SPIEGAZIONE: Record<StatoOfferta, string> = {
+  bozza: 'Non compare da nessuna parte: la stai ancora preparando.',
+  attiva: 'In vetrina, e il link funziona.',
+  sospesa: 'Fuori dalla vetrina. Chi ha il link legge che non è più disponibile.',
+  venduta: 'Fuori dalla vetrina. Chi ha il link legge che non è più disponibile.',
+};
 
 /** Le tariffe del noleggio breve, per mostrarle al venditore come i prezzi di vendita. */
 interface TariffeBrevi {
@@ -47,6 +80,7 @@ interface Contatori {
 
 export default function DettaglioOfferta() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
 
   const [offerta, setOfferta] = useState<Offerta | null>(null);
   const [vendita, setVendita] = useState<OffertaVendita | null>(null);
@@ -55,6 +89,7 @@ export default function DettaglioOfferta() {
   const [foto, setFoto] = useState<Foto[]>([]);
   const [caricamento, setCaricamento] = useState(true);
   const [errore, setErrore] = useState<string | null>(null);
+  const [chiedeConferma, setChiedeConferma] = useState(false);
 
   const carica = useCallback(async () => {
     const [o, v, b, p, f] = await Promise.all([
@@ -104,6 +139,32 @@ export default function DettaglioOfferta() {
     }
   }
 
+  async function cambiaStato(nuovo: StatoOfferta) {
+    if (!offerta || nuovo === offerta.stato) return;
+    // Ottimistico: l'etichetta deve cambiare sotto il dito.
+    setOfferta({ ...offerta, stato: nuovo });
+    const { error } = await supabase.from(tab('offerta')).update({ stato: nuovo }).eq('id', id);
+    if (error) {
+      setErrore(error.message);
+      void carica();
+    }
+  }
+
+  /**
+   * Cancellare porta via anche le pagine e le pratiche collegate, per via dei
+   * vincoli sul database. Percio' si chiede conferma una volta sola ma con
+   * scritto cosa sparisce, invece di un "sei sicuro?" che non dice niente.
+   */
+  async function elimina() {
+    const { error } = await supabase.from(tab('offerta')).delete().eq('id', id);
+    if (error) {
+      setErrore(error.message);
+      setChiedeConferma(false);
+      return;
+    }
+    router.replace('/offerte');
+  }
+
   if (caricamento) {
     return (
       <View style={stili.centrato}>
@@ -123,7 +184,10 @@ export default function DettaglioOfferta() {
   return (
     <ScrollView style={stili.contenitore} contentContainerStyle={stili.scorrimento}>
       <View style={stili.intestazione}>
-        <Text style={stili.titolo}>{offerta.titolo}</Text>
+        <View style={stili.rigaTitolo}>
+          <Text style={stili.titolo}>{offerta.titolo}</Text>
+          <Pillola testo={ETICHETTA_MODULO[offerta.modulo]} />
+        </View>
         {vendita && (
           <View style={stili.prezzi}>
             <Prezzo etichetta="Al pubblico" centesimi={vendita.prezzo_pubblico_cent} />
@@ -144,6 +208,27 @@ export default function DettaglioOfferta() {
 
       {errore ? <Text style={stili.errore}>{errore}</Text> : null}
 
+      <Bottone
+        testo="Modifica l’offerta"
+        icona="matita"
+        onPress={() =>
+          router.push({
+            pathname: DOVE_MODIFICA[offerta.modulo],
+            params: { id },
+          })
+        }
+      />
+
+      <Sezione titolo="Stato">
+        <Scelta
+          valore={offerta.stato}
+          consentiVuoto={false}
+          opzioni={STATI}
+          onCambia={(v) => void cambiaStato((v ?? 'bozza') as StatoOfferta)}
+        />
+        <Text style={stili.nota}>{SPIEGAZIONE[offerta.stato]}</Text>
+      </Sezione>
+
       <Sezione titolo="Foto">
         <Fotografie offertaId={id} foto={foto} onCambiate={() => void carica()} />
       </Sezione>
@@ -163,6 +248,28 @@ export default function DettaglioOfferta() {
           anche quella riservata.
         </Text>
       )}
+
+      <View style={stili.fondo}>
+        {chiedeConferma ? (
+          <View style={stili.conferma}>
+            <View style={stili.rigaConferma}>
+              <Icona nome="attenzione" dimensione={18} colore={colori.azione} />
+              <Text style={stili.testoConferma}>
+                Sparisce l’offerta con le sue foto, le sue pagine e le pratiche collegate. I link
+                già mandati smettono di funzionare. Non si torna indietro.
+              </Text>
+            </View>
+            <Bottone tipo="azione" testo="Sì, elimina" onPress={() => void elimina()} />
+            <Bottone tenue testo="Lascia stare" onPress={() => setChiedeConferma(false)} />
+          </View>
+        ) : (
+          <Bottone
+            tipo="nudo"
+            testo="Elimina l’offerta"
+            onPress={() => setChiedeConferma(true)}
+          />
+        )}
+      </View>
     </ScrollView>
   );
 }
@@ -260,6 +367,18 @@ function Contatore({ numero, etichetta }: { numero: number; etichetta: string })
 }
 
 const stili = StyleSheet.create({
+  rigaTitolo: { flexDirection: 'row', alignItems: 'center', gap: spazi.s, flexWrap: 'wrap' },
+  fondo: { paddingTop: spazi.xxl, gap: spazi.s },
+  conferma: {
+    gap: spazi.s,
+    padding: spazi.l,
+    borderRadius: raggio.m,
+    borderWidth: 1,
+    borderColor: colori.azione,
+    backgroundColor: colori.superficie,
+  },
+  rigaConferma: { flexDirection: 'row', gap: spazi.s, alignItems: 'flex-start' },
+  testoConferma: { flex: 1, fontSize: 13, lineHeight: 18, color: colori.testo },
   contenitore: { flex: 1, backgroundColor: colori.sfondo },
   centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
   scorrimento: { padding: spazi.l, gap: spazi.m, paddingBottom: spazi.xxl },

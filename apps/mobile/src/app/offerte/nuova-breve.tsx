@@ -1,7 +1,24 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { eModuloEsaurito, aGiorno, aggiungiGiorni, analizzaEuro, fn, formattaEuro } from '@lab/shared';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import {
+  aGiorno,
+  aggiungiGiorni,
+  analizzaEuro,
+  eModuloEsaurito,
+  fn,
+  formattaEuro,
+  giorniFra,
+  perCampo,
+  tab,
+} from '@lab/shared';
 
 import { Scheda } from '@/components/base';
 import { Bottone, Campo, Input, Scelta, Sezione } from '@/components/modulo';
@@ -24,6 +41,11 @@ const FINESTRE = [
 
 export default function NuovaBreve() {
   const router = useRouter();
+  // Con un id si sta correggendo un'offerta che esiste gia': stessa schermata,
+  // perche' i campi sono gli stessi e mantenerne due vorrebbe dire tenerle
+  // allineate per sempre.
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const modifica = typeof id === 'string' && id.length > 0;
   const oggi = aGiorno(new Date());
 
   const [modello, setModello] = useState('');
@@ -44,6 +66,54 @@ export default function NuovaBreve() {
 
   const [inCorso, setInCorso] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
+  const [caricando, setCaricando] = useState(modifica);
+
+  useEffect(() => {
+    if (!modifica) return;
+    let vivo = true;
+
+    void (async () => {
+      const { data, error } = await supabase
+        .from(tab('offerta_noleggio_breve'))
+        .select('*')
+        .eq('offerta_id', id)
+        .maybeSingle();
+
+      if (!vivo) return;
+      if (error || !data) {
+        setErrore(error?.message ?? 'Offerta non trovata.');
+        setCaricando(false);
+        return;
+      }
+
+      const b = data as Record<string, unknown>;
+      setModello((b.modello as string) ?? '');
+      setTarga((b.targa as string) ?? '');
+      setTariffa(perCampo(b.tariffa_giorno_cent as number));
+      setTariffaRiv(perCampo(b.tariffa_giorno_rivenditore_cent as number | null));
+      setOltre3(perCampo(b.tariffa_oltre_3_cent as number | null));
+      setOltre7(perCampo(b.tariffa_oltre_7_cent as number | null));
+      setOltre15(perCampo(b.tariffa_oltre_15_cent as number | null));
+      setKmInclusi(b.km_inclusi_giorno == null ? '' : String(b.km_inclusi_giorno));
+      setKmExtra(perCampo(b.costo_km_extra_cent as number | null));
+      setDeposito(perCampo(b.deposito_cent as number | null));
+      setEta(b.eta_minima == null ? '' : String(b.eta_minima));
+      setPatente(b.patente_anni == null ? '' : String(b.patente_anni));
+
+      // La finestra torna la scelta piu' vicina alla durata salvata: il campo
+      // e' a scelte fisse, non a date libere.
+      const durata = giorniFra(b.disponibile_dal as string, b.disponibile_al as string);
+      const vicina = FINESTRE.reduce((a, f) =>
+        Math.abs(f.giorni - durata) < Math.abs(a.giorni - durata) ? f : a
+      );
+      setFinestra(vicina.giorni);
+      setCaricando(false);
+    })();
+
+    return () => {
+      vivo = false;
+    };
+  }, [id, modifica]);
 
   const tariffaCent = analizzaEuro(tariffa);
   const puoSalvare = modello.trim() !== '' && tariffaCent != null && tariffaCent > 0;
@@ -53,6 +123,7 @@ export default function NuovaBreve() {
     setInCorso(true);
 
     const { data, error } = await supabase.rpc(fn('salva_offerta_noleggio_breve'), {
+      p_offerta_id: modifica ? id : null,
       p_dati: {
         modello: modello.trim(),
         targa: targa.trim() || null,
@@ -68,7 +139,7 @@ export default function NuovaBreve() {
         deposito_cent: analizzaEuro(deposito),
         eta_minima: eta.trim() === '' ? null : Number(eta.replace(/\D/g, '')),
         patente_anni: patente.trim() === '' ? null : Number(patente.replace(/\D/g, '')),
-        stato,
+        stato: modifica ? undefined : stato,
       },
     });
 
@@ -90,11 +161,24 @@ export default function NuovaBreve() {
     router.replace(`/offerte/${data as string}`);
   }
 
+  if (caricando) {
+    return (
+      <View style={stili.attesa}>
+        <ActivityIndicator color={colori.primario} />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={stili.contenitore}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* Il titolo dice cosa si sta facendo: "Nuova offerta" mentre si corregge
+          un'offerta che esiste gia' e' una bugia piccola ma fastidiosa. */}
+      <Stack.Screen
+        options={{ title: modifica ? 'Modifica · Noleggio breve' : 'Nuova offerta · Noleggio breve' }}
+      />
       <ScrollView contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
         <Sezione titolo="Il mezzo">
           <Campo etichetta="Modello" obbligatorio>
@@ -248,18 +332,29 @@ export default function NuovaBreve() {
         {errore ? <Text style={stili.errore}>{errore}</Text> : null}
 
         <View style={stili.azioni}>
-          <Bottone
-            testo="Salva e pubblica"
-            inCorso={inCorso}
-            disabilitato={!puoSalvare}
-            onPress={() => void salva('attiva')}
-          />
-          <Bottone
-            tenue
-            testo="Salva come bozza"
-            disabilitato={!puoSalvare || inCorso}
-            onPress={() => void salva('bozza')}
-          />
+          {modifica ? (
+            <Bottone
+              testo="Salva le modifiche"
+              inCorso={inCorso}
+              disabilitato={!puoSalvare}
+              onPress={() => void salva('attiva')}
+            />
+          ) : (
+            <>
+              <Bottone
+                testo="Salva e pubblica"
+                inCorso={inCorso}
+                disabilitato={!puoSalvare}
+                onPress={() => void salva('attiva')}
+              />
+              <Bottone
+                tenue
+                testo="Salva come bozza"
+                disabilitato={!puoSalvare || inCorso}
+                onPress={() => void salva('bozza')}
+              />
+            </>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -302,6 +397,7 @@ function Riga({
 
 const stili = StyleSheet.create({
   contenitore: { flex: 1, backgroundColor: colori.sfondo },
+  attesa: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
   scorrimento: { padding: spazi.l, paddingBottom: spazi.xxxl * 2, gap: spazi.m },
   soglie: { flexDirection: 'row', gap: spazi.s },
   meta: { flex: 1 },

@@ -1,6 +1,7 @@
-import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -9,6 +10,8 @@ import {
   View,
 } from 'react-native';
 import {
+  tab,
+  perCampo,
   eModuloEsaurito,
   ETICHETTA_SERVIZIO,
   SERVIZI,
@@ -33,6 +36,11 @@ type Listino = 'pubblico' | 'rivenditore';
 
 export default function NuovaOffertaLungo() {
   const router = useRouter();
+  // Con un id si sta correggendo un'offerta che esiste gia': stessa schermata,
+  // perche' i campi sono gli stessi e tenerne due vorrebbe dire tenerle
+  // allineate per sempre.
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const modifica = typeof id === 'string' && id.length > 0;
 
   const [marca, setMarca] = useState('');
   const [modello, setModello] = useState('');
@@ -56,6 +64,62 @@ export default function NuovaOffertaLungo() {
 
   const [inCorso, setInCorso] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
+  const [caricando, setCaricando] = useState(modifica);
+
+  useEffect(() => {
+    if (!modifica) return;
+    let vivo = true;
+
+    void (async () => {
+      const [o, c] = await Promise.all([
+        supabase.from(tab('offerta_noleggio_lungo')).select('*').eq('offerta_id', id).maybeSingle(),
+        supabase.from(tab('canone_lungo')).select('*').eq('offerta_id', id),
+      ]);
+
+      if (!vivo) return;
+      if (o.error || !o.data) {
+        setErrore(o.error?.message ?? 'Offerta non trovata.');
+        setCaricando(false);
+        return;
+      }
+
+      const l = o.data as Record<string, unknown>;
+      setMarca((l.marca as string) ?? '');
+      setModello((l.modello as string) ?? '');
+      setAllestimento((l.allestimento as string) ?? '');
+      setAnticipo(perCampo(l.anticipo_cent as number | null));
+      setConsegna((l.tempi_consegna as string) ?? '');
+      if (Array.isArray(l.servizi)) setServizi(l.servizi as ServizioIncluso[]);
+
+      // La griglia torna com'era: durate, chilometraggi e ogni casella piena.
+      const righe = (c.data ?? []) as {
+        durata_mesi: number;
+        km_annui: number;
+        canone_pubblico_cent: number | null;
+        canone_rivenditore_cent: number | null;
+      }[];
+
+      if (righe.length > 0) {
+        setDurate([...new Set(righe.map((r) => r.durata_mesi))].sort((a, b) => a - b));
+        setKm([...new Set(righe.map((r) => r.km_annui))].sort((a, b) => a - b));
+
+        const celle: Record<string, string> = {};
+        for (const r of righe) {
+          celle[`${r.durata_mesi}-${r.km_annui}-pubblico`] = perCampo(r.canone_pubblico_cent);
+          celle[`${r.durata_mesi}-${r.km_annui}-rivenditore`] = perCampo(
+            r.canone_rivenditore_cent
+          );
+        }
+        setCanoni(celle);
+      }
+
+      setCaricando(false);
+    })();
+
+    return () => {
+      vivo = false;
+    };
+  }, [id, modifica]);
 
   function chiave(d: number, k: number, l: Listino) {
     return `${d}-${k}-${l}`;
@@ -104,6 +168,7 @@ export default function NuovaOffertaLungo() {
     setInCorso(true);
 
     const { data, error } = await supabase.rpc(fn('salva_offerta_noleggio_lungo'), {
+      p_offerta_id: modifica ? id : null,
       p_dati: {
         marca: marca.trim(),
         modello: modello.trim(),
@@ -112,7 +177,8 @@ export default function NuovaOffertaLungo() {
         servizi,
         tempi_consegna: consegna.trim() || null,
         riscatto_previsto: false,
-        stato,
+        // In modifica lo stato si cambia dalla scheda dell'offerta.
+        stato: modifica ? undefined : stato,
         griglia,
       },
     });
@@ -135,11 +201,25 @@ export default function NuovaOffertaLungo() {
     router.replace(`/offerte/${data as string}`);
   }
 
+  if (caricando) {
+    return (
+      <View style={stili.attesa}>
+        <ActivityIndicator color={colori.primario} />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={stili.contenitore}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* Il titolo dice cosa si sta facendo. */}
+      <Stack.Screen
+        options={{
+          title: modifica ? 'Modifica · Noleggio lungo' : 'Nuova offerta · Noleggio lungo',
+        }}
+      />
       <ScrollView contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
         <Sezione titolo="Il mezzo">
           <Campo etichetta="Marca" obbligatorio>
@@ -274,6 +354,15 @@ export default function NuovaOffertaLungo() {
         {errore ? <Text style={stili.errore}>{errore}</Text> : null}
 
         <View style={stili.azioni}>
+          {modifica ? (
+            <Bottone
+              testo="Salva le modifiche"
+              inCorso={inCorso}
+              disabilitato={!puoSalvare}
+              onPress={() => void salva('attiva')}
+            />
+          ) : (
+            <>
           <Bottone
             testo="Salva e pubblica"
             inCorso={inCorso}
@@ -286,6 +375,8 @@ export default function NuovaOffertaLungo() {
             disabilitato={!puoSalvare}
             onPress={() => void salva('bozza')}
           />
+            </>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -315,6 +406,7 @@ function Pasticca({
 
 const stili = StyleSheet.create({
   contenitore: { flex: 1, backgroundColor: colori.sfondo },
+  attesa: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
   scorrimento: { padding: spazi.xl, paddingBottom: spazi.xxl * 2, gap: spazi.m },
   pasticche: { flexDirection: 'row', flexWrap: 'wrap', gap: spazi.s },
   pasticca: {

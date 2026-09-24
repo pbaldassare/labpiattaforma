@@ -1,6 +1,7 @@
-import { useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -15,6 +16,7 @@ import {
   TIPI_RISCHIO,
   analizzaEuro,
   fn,
+  perCampo,
   tab,
   type Garanzia,
   type TipoRischio,
@@ -30,6 +32,9 @@ import { TOCCO_MINIMO, colori, raggio, spazi, testi } from '@/lib/tema';
 
 export default function NuovaAssicurazione() {
   const router = useRouter();
+  // Con un id si sta correggendo una polizza che esiste gia'.
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const modifica = typeof id === 'string' && id.length > 0;
 
   const [compagnia, setCompagnia] = useState('');
   const [prodotto, setProdotto] = useState('');
@@ -46,6 +51,49 @@ export default function NuovaAssicurazione() {
   const [rui, setRui] = useState<string | null>(null);
   const [inCorso, setInCorso] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
+  const [caricando, setCaricando] = useState(modifica);
+
+  useEffect(() => {
+    if (!modifica) return;
+    let vivo = true;
+
+    void (async () => {
+      const [a, g] = await Promise.all([
+        supabase.from(tab('offerta_assicurazione')).select('*').eq('offerta_id', id).maybeSingle(),
+        supabase.from(tab('garanzia')).select('*').eq('offerta_id', id).order('ordine'),
+      ]);
+
+      if (!vivo) return;
+      if (a.error || !a.data) {
+        setErrore(a.error?.message ?? 'Polizza non trovata.');
+        setCaricando(false);
+        return;
+      }
+
+      const o = a.data as Record<string, unknown>;
+      setCompagnia((o.compagnia as string) ?? '');
+      setProdotto((o.nome_prodotto as string) ?? '');
+      setRischio((o.tipo_rischio as TipoRischio) ?? 'auto');
+      setPremio(perCampo(o.premio_partenza_cent as number | null));
+      setProvvigione(perCampo(o.provvigione_cent as number | null));
+      setMassimale(perCampo(o.massimale_cent as number | null));
+      setFranchigia(perCampo(o.franchigia_cent as number | null));
+      setDurata(o.durata_mesi == null ? '12' : String(o.durata_mesi));
+
+      const elenco = (g.data ?? []) as { nome: string; inclusa: boolean; dettaglio: string | null }[];
+      if (elenco.length > 0) {
+        setGaranzie(
+          elenco.map((x) => ({ nome: x.nome, inclusa: x.inclusa, dettaglio: x.dettaglio }))
+        );
+      }
+
+      setCaricando(false);
+    })();
+
+    return () => {
+      vivo = false;
+    };
+  }, [id, modifica]);
 
   useEffect(() => {
     void (async () => {
@@ -84,6 +132,7 @@ export default function NuovaAssicurazione() {
     setInCorso(true);
 
     const { data, error } = await supabase.rpc(fn('salva_offerta_assicurazione'), {
+      p_offerta_id: modifica ? id : null,
       p_dati: {
         compagnia: compagnia.trim(),
         nome_prodotto: prodotto.trim(),
@@ -118,11 +167,21 @@ export default function NuovaAssicurazione() {
     router.replace(`/offerte/${data as string}`);
   }
 
+  if (caricando) {
+    return (
+      <View style={stili.attesa}>
+        <ActivityIndicator color={colori.primario} />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={stili.contenitore}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* Il titolo dice cosa si sta facendo. */}
+      <Stack.Screen options={{ title: modifica ? 'Modifica polizza' : 'Nuova polizza' }} />
       <ScrollView contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
         {/* Avvisare prima, non dopo aver compilato tutto e premuto salva. */}
         {rui !== null && !haRui && (
@@ -259,6 +318,15 @@ export default function NuovaAssicurazione() {
         {errore ? <Text style={stili.errore}>{errore}</Text> : null}
 
         <View style={stili.azioni}>
+          {modifica ? (
+            <Bottone
+              testo="Salva le modifiche"
+              inCorso={inCorso}
+              disabilitato={!puoSalvare}
+              onPress={() => void salva('attiva')}
+            />
+          ) : (
+            <>
           <Bottone
             testo="Salva e pubblica"
             inCorso={inCorso}
@@ -271,6 +339,8 @@ export default function NuovaAssicurazione() {
             disabilitato={!puoSalvare || inCorso}
             onPress={() => void salva('bozza')}
           />
+            </>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -279,6 +349,7 @@ export default function NuovaAssicurazione() {
 
 const stili = StyleSheet.create({
   contenitore: { flex: 1, backgroundColor: colori.sfondo },
+  attesa: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
   scorrimento: { padding: spazi.l, paddingBottom: spazi.xxxl * 2, gap: spazi.m },
 
   avviso: {

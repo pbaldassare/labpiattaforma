@@ -1,6 +1,7 @@
-import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -24,7 +25,7 @@ import {
 } from '@lab/shared';
 
 import { Bottone, Campo, Input, Scelta, Sezione } from '@/components/modulo';
-import { fn } from '@lab/shared';
+import { fn, perCampo, tab } from '@lab/shared';
 import { supabase } from '@/lib/supabase';
 import { colori, raggio, spazi } from '@/lib/tema';
 
@@ -42,6 +43,11 @@ const FORMULE: FormulaAcquisto[] = ['contanti', 'finanziamento', 'permuta', 'nol
 
 export default function NuovaOfferta() {
   const router = useRouter();
+  // Con un id si sta correggendo un'offerta che esiste gia': stessa schermata,
+  // perche' i campi sono gli stessi e tenerne due vorrebbe dire tenerle
+  // allineate per sempre.
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const modifica = typeof id === 'string' && id.length > 0;
 
   const [marca, setMarca] = useState('');
   const [modello, setModello] = useState('');
@@ -62,6 +68,49 @@ export default function NuovaOfferta() {
 
   const [inCorso, setInCorso] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
+  const [caricando, setCaricando] = useState(modifica);
+
+  useEffect(() => {
+    if (!modifica) return;
+    let vivo = true;
+
+    void (async () => {
+      const [v, f] = await Promise.all([
+        supabase.from(tab('offerta_vendita')).select('*').eq('offerta_id', id).maybeSingle(),
+        supabase.from(tab('offerta_formula')).select('formula').eq('offerta_id', id),
+      ]);
+
+      if (!vivo) return;
+      if (v.error || !v.data) {
+        setErrore(v.error?.message ?? 'Offerta non trovata.');
+        setCaricando(false);
+        return;
+      }
+
+      const o = v.data as Record<string, unknown>;
+      setMarca((o.marca as string) ?? '');
+      setModello((o.modello as string) ?? '');
+      setTarga((o.targa as string) ?? '');
+      setChilometri(o.chilometri == null ? '' : String(o.chilometri));
+      setAnno(o.anno == null ? '' : String(o.anno));
+      setAlimentazione((o.alimentazione as Alimentazione | null) ?? null);
+      setCambio((o.cambio as Cambio | null) ?? null);
+      setAcquisto(perCampo(o.prezzo_acquisto_cent as number | null));
+      setPubblico(perCampo(o.prezzo_pubblico_cent as number | null));
+      setRivenditore(perCampo(o.prezzo_rivenditore_cent as number | null));
+      setProvenienza((o.provenienza as Provenienza) ?? 'proprio');
+      setFornitore((o.fornitore_nome as string) ?? '');
+
+      const scelte = ((f.data ?? []) as { formula: FormulaAcquisto }[]).map((x) => x.formula);
+      if (scelte.length > 0) setFormule(scelte);
+
+      setCaricando(false);
+    })();
+
+    return () => {
+      vivo = false;
+    };
+  }, [id, modifica]);
 
   // I tre prezzi si rileggono a ogni battuta: e' cio' che permette di vedere
   // il margine cambiare mentre si scrive, invece che dopo aver salvato.
@@ -119,14 +168,19 @@ export default function NuovaOfferta() {
       prezzo_rivenditore_cent: rivenditoreCent,
       provenienza,
       fornitore_nome: provenienza === 'fornitore' ? fornitore.trim() : null,
-      stato,
+      // In modifica lo stato si cambia dalla scheda dell'offerta, dove c'e'
+      // scritto cosa comporta ciascuno.
+      stato: modifica ? undefined : stato,
       formule: formule.map((f) => ({
         formula: f,
         provvigione_cent: PROVVIGIONE_PROPOSTA_CENT[f],
       })),
     };
 
-    const { data, error } = await supabase.rpc(fn('salva_offerta_vendita'), { p_dati: dati });
+    const { data, error } = await supabase.rpc(fn('salva_offerta_vendita'), {
+      p_dati: dati,
+      p_offerta_id: modifica ? id : null,
+    });
     setInCorso(false);
 
     if (error) {
@@ -146,11 +200,24 @@ export default function NuovaOfferta() {
     router.replace(`/offerte/${data as string}`);
   }
 
+  if (caricando) {
+    return (
+      <View style={stili.attesa}>
+        <ActivityIndicator color={colori.primario} />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={stili.contenitore}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* Il titolo dice cosa si sta facendo: "Nuova offerta" mentre si corregge
+          un'offerta che esiste gia' e' una bugia piccola ma fastidiosa. */}
+      <Stack.Screen
+        options={{ title: modifica ? 'Modifica · Vendita' : 'Nuova offerta · Vendita' }}
+      />
       <ScrollView contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
         <Sezione titolo="Il mezzo">
           <Campo etichetta="Marca" obbligatorio>
@@ -305,18 +372,29 @@ export default function NuovaOfferta() {
         {errore ? <Text style={stili.errore}>{errore}</Text> : null}
 
         <View style={stili.azioni}>
-          <Bottone
-            testo="Salva e pubblica"
-            onPress={() => void salva('attiva')}
-            inCorso={inCorso}
-            disabilitato={!puoSalvare}
-          />
-          <Bottone
-            testo="Salva come bozza"
-            tenue
-            onPress={() => void salva('bozza')}
-            disabilitato={!puoSalvare || inCorso}
-          />
+          {modifica ? (
+            <Bottone
+              testo="Salva le modifiche"
+              onPress={() => void salva('attiva')}
+              inCorso={inCorso}
+              disabilitato={!puoSalvare}
+            />
+          ) : (
+            <>
+              <Bottone
+                testo="Salva e pubblica"
+                onPress={() => void salva('attiva')}
+                inCorso={inCorso}
+                disabilitato={!puoSalvare}
+              />
+              <Bottone
+                testo="Salva come bozza"
+                tenue
+                onPress={() => void salva('bozza')}
+                disabilitato={!puoSalvare || inCorso}
+              />
+            </>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -337,6 +415,7 @@ function RigaMargine({ etichetta, valore }: { etichetta: string; valore: number 
 
 const stili = StyleSheet.create({
   contenitore: { flex: 1, backgroundColor: colori.sfondo },
+  attesa: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
   scorrimento: { padding: spazi.xl, paddingBottom: spazi.xxl * 2, gap: spazi.m },
   affiancati: { flexDirection: 'row', gap: spazi.m },
   meta: { flex: 1 },

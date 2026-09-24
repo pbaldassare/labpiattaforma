@@ -9,6 +9,7 @@ import {
   formattaEuroPreciso,
   haPaginaRiservata,
   margineCent,
+  perCampo,
   prezzoPerCliente,
   urlPagina,
 } from './offerta';
@@ -165,5 +166,30 @@ describe('indirizzi delle pagine', () => {
     expect(urlPagina('https://esempio.it', 'assicurazioni', 'abc123')).toBe(
       'https://esempio.it/a/abc123'
     );
+  });
+});
+
+describe('perCampo', () => {
+  it('toglie i centesimi quando sono zero', () => {
+    expect(perCampo(4400)).toBe('44');
+    expect(perCampo(890000)).toBe('8900');
+  });
+
+  it('usa la virgola per i centesimi', () => {
+    expect(perCampo(3050)).toBe('30,50');
+    expect(perCampo(30)).toBe('0,30');
+    expect(perCampo(5)).toBe('0,05');
+  });
+
+  it('per un campo vuoto non scrive niente', () => {
+    expect(perCampo(null)).toBe('');
+    expect(perCampo(undefined)).toBe('');
+  });
+
+  // La ragione per cui esiste: quello che riscrive dev'essere rileggibile.
+  it('torna indietro da analizzaEuro', () => {
+    for (const cent of [0, 5, 30, 999, 4400, 3050, 890000, 123456]) {
+      expect(analizzaEuro(perCampo(cent))).toBe(cent === 0 ? 0 : cent);
+    }
   });
 });

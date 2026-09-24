@@ -126,6 +126,26 @@ export function euroInCentesimi(euro: number): number {
  * Restituisce null se non e' un numero: meglio far correggere il venditore che
  * salvare un prezzo inventato.
  */
+/**
+ * Da centesimi a come si scrive in un campo: 4400 -> "44", 3050 -> "30,50".
+ *
+ * E' il contrario di analizzaEuro, e serve a riaprire un'offerta per
+ * correggerla: il campo deve ritrovare esattamente quello che il venditore
+ * aveva scritto, senza zeri di troppo da cancellare a mano.
+ *
+ * Virgola e non punto: e' il separatore decimale italiano, ed e' quello che
+ * analizzaEuro si aspetta di rileggere.
+ */
+export function perCampo(centesimi: number | null | undefined): string {
+  if (centesimi == null) return '';
+  const segno = centesimi < 0 ? '-' : '';
+  const assoluto = Math.abs(Math.round(centesimi));
+  const euro = Math.floor(assoluto / 100);
+  const resto = assoluto % 100;
+  if (resto === 0) return `${segno}${euro}`;
+  return `${segno}${euro},${String(resto).padStart(2, '0')}`;
+}
+
 export function analizzaEuro(testo: string): number | null {
   const pulito = testo.replace(/[\s €.,]/g, (c) => (c === '.' || c === ',' ? c : ''));
   if (pulito === '') return null;
