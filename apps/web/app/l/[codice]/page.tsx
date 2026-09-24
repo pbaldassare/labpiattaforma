@@ -2,10 +2,8 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import {
-  DESCRIZIONE_FORMULA,
-  ETICHETTA_ALIMENTAZIONE,
-  ETICHETTA_CAMBIO,
-  ETICHETTA_FORMULA,
+  ETICHETTA_SERVIZIO,
+  NON_COMPRESO,
   formattaEuro,
   urlPagina,
 } from '@lab/shared';
@@ -21,93 +19,60 @@ import {
 } from '@/lib/landing';
 import { qrSvg } from '@/lib/qr';
 
-import { FormContatto } from '@/components/form-contatto';
+import { BloccoCanone } from './blocco-canone';
 
 type Props = { params: Promise<{ codice: string }> };
-
-const NUMERO_CHILOMETRI = new Intl.NumberFormat('it-IT');
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { codice } = await params;
   const dati = await caricaPagina(codice);
 
-  if (!dati || !dati.vendita) return { title: 'Offerta non disponibile' };
+  if (!dati || !dati.lungo) return { title: 'Offerta non disponibile' };
 
-  const titolo = dati.offerta.titolo;
-  const prezzo = dati.vendita.prezzo_cent;
-  const disponibile = offertaDisponibile(dati);
-
-  // La maggior parte di queste pagine si apre da un messaggio WhatsApp:
-  // l'anteprima con foto e prezzo e' il primo impatto, non un dettaglio.
-  const descrizione = disponibile && prezzo
-    ? `${titolo} — ${formattaEuro(prezzo)}. ${dati.venditore.nome}`
-    : `${titolo} — offerta non piu' disponibile`;
-
-  const copertina = dati.foto[0];
+  const minimo = dati.lungo.canone_minimo_cent;
+  const descrizione = minimo
+    ? `${dati.offerta.titolo} in noleggio da ${formattaEuro(minimo)} al mese. ${dati.venditore.nome}`
+    : `${dati.offerta.titolo} in noleggio a lungo termine. ${dati.venditore.nome}`;
 
   return {
-    title: `${titolo} | ${dati.venditore.nome}`,
+    title: `${dati.offerta.titolo} | ${dati.venditore.nome}`,
     description: descrizione,
-    // La pagina riservata non deve finire nei motori di ricerca (§3.7).
     robots:
-      dati.pagina.tipo === 'riservata' || !disponibile
+      dati.pagina.tipo === 'riservata' || !offertaDisponibile(dati)
         ? { index: false, follow: false }
         : { index: true, follow: true },
     openGraph: {
-      title: titolo,
+      title: dati.offerta.titolo,
       description: descrizione,
       type: 'website',
-      images: copertina ? [{ url: urlFoto(copertina) }] : undefined,
+      images: dati.foto[0] ? [{ url: urlFoto(dati.foto[0]) }] : undefined,
     },
   };
 }
 
-export default async function PaginaVendita({ params }: Props) {
+export default async function PaginaNoleggioLungo({ params }: Props) {
   const { codice } = await params;
   const dati = await caricaPagina(codice);
 
-  if (!dati || dati.offerta.modulo !== 'vendita' || !dati.vendita) notFound();
+  if (!dati || dati.offerta.modulo !== 'noleggio_lungo' || !dati.lungo) notFound();
 
   await registraApertura(codice);
-
   if (!offertaDisponibile(dati)) return <NonDisponibile dati={dati} />;
 
-  const { vendita, venditore, foto } = dati;
-  const indirizzo = urlPagina(DOMINIO, 'vendita', codice);
+  const { lungo, venditore, foto } = dati;
+  const indirizzo = urlPagina(DOMINIO, 'noleggio_lungo', codice);
   const qr = await qrSvg(indirizzo);
-  const prezzo = vendita.prezzo_cent;
 
-  const messaggio = `Ciao, sono interessato alla ${dati.offerta.titolo}${
-    prezzo ? ` a ${formattaEuro(prezzo)}` : ''
-  }.\n${indirizzo}`;
-
-  const dettagli = [
-    vendita.chilometri != null && {
-      etichetta: 'Chilometri',
-      valore: `${NUMERO_CHILOMETRI.format(vendita.chilometri)} km`,
-    },
-    vendita.anno != null && { etichetta: 'Anno', valore: String(vendita.anno) },
-    vendita.alimentazione && {
-      etichetta: 'Alimentazione',
-      valore: ETICHETTA_ALIMENTAZIONE[vendita.alimentazione],
-    },
-    vendita.cambio && { etichetta: 'Cambio', valore: ETICHETTA_CAMBIO[vendita.cambio] },
-  ].filter(Boolean) as { etichetta: string; valore: string }[];
-
-  const guadagno =
-    vendita.prezzo_consigliato_cent != null && prezzo != null
-      ? vendita.prezzo_consigliato_cent - prezzo
-      : null;
+  const messaggio = `Ciao, sono interessato al noleggio della ${dati.offerta.titolo}.\n${indirizzo}`;
 
   return (
     <div className="pb-28">
       {dati.pagina.tipo === 'riservata' && (
         <p className="bg-primario text-su-primario px-4 py-2 text-center text-sm font-semibold tracking-wide">
-          Prezzo riservato agli operatori
+          Canoni riservati agli operatori
         </p>
       )}
 
-      {/* Foto grande in alto: e' quella che decide se il cliente continua a leggere. */}
       <div className="bg-tenue relative aspect-4/3 w-full sm:aspect-16/9">
         {foto[0] ? (
           <Image
@@ -128,55 +93,81 @@ export default async function PaginaVendita({ params }: Props) {
       <main className="mx-auto max-w-2xl px-4">
         <header className="border-bordo flex flex-col gap-2 border-b py-6">
           <p className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
-            {vendita.marca}
+            {lungo.marca}
           </p>
           <h1 className="font-display text-2xl leading-tight text-balance sm:text-3xl">
-            {vendita.modello}
+            {lungo.modello}
           </h1>
-          {prezzo != null && (
-            <p className="mt-2 text-4xl font-bold sm:text-5xl">{formattaEuro(prezzo)}</p>
+          {lungo.allestimento && (
+            <p className="text-testo-tenue text-sm">{lungo.allestimento}</p>
           )}
 
-          {guadagno != null && (
-            <p className="text-testo-tenue mt-1 text-sm">
-              Prezzo consigliato al pubblico{' '}
-              <span className="text-testo font-semibold">
-                {formattaEuro(vendita.prezzo_consigliato_cent!)}
+          {/* Il canone piu' basso con la dicitura "a partire da" (§6.2): e' il
+              numero che fa fermare a leggere, ma non va spacciato per il prezzo. */}
+          {lungo.canone_minimo_cent != null && (
+            <p className="mt-2">
+              <span className="text-testo-tenue text-sm">a partire da </span>
+              <span className="text-4xl font-bold sm:text-5xl">
+                {formattaEuro(lungo.canone_minimo_cent)}
               </span>
-              {guadagno > 0 && <> · margine {formattaEuro(guadagno)}</>}
+              <span className="text-testo-tenue text-sm"> al mese</span>
             </p>
           )}
         </header>
 
-        {dettagli.length > 0 && (
-          <section className="grid grid-cols-2 gap-px py-6">
-            {dettagli.map((d) => (
-              <div key={d.etichetta} className="bg-superficie border-bordo rounded-xl border p-4">
-                <p className="text-testo-tenue text-xs tracking-wide uppercase">{d.etichetta}</p>
-                <p className="mt-1 text-lg font-semibold">{d.valore}</p>
-              </div>
-            ))}
-          </section>
-        )}
+        <BloccoCanone
+          griglia={lungo.griglia}
+          codice={codice}
+          riservata={dati.pagina.tipo === 'riservata'}
+          titolo={dati.offerta.titolo}
+        />
 
-        {dati.formule.length > 0 && (
+        <section className="border-bordo grid grid-cols-2 gap-2 border-t py-6">
+          {lungo.anticipo_cent != null && (
+            <Riquadro etichetta="Anticipo" valore={formattaEuro(lungo.anticipo_cent)} />
+          )}
+          {lungo.tempi_consegna && (
+            <Riquadro etichetta="Consegna" valore={lungo.tempi_consegna} />
+          )}
+          {lungo.riscatto_previsto && (
+            <Riquadro
+              etichetta="Riscatto finale"
+              valore={
+                lungo.riscatto_valore_cent != null
+                  ? formattaEuro(lungo.riscatto_valore_cent)
+                  : 'Previsto'
+              }
+            />
+          )}
+        </section>
+
+        {lungo.servizi.length > 0 && (
           <section className="border-bordo flex flex-col gap-3 border-t py-6">
             <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
-              Come puoi acquistarla
+              Nel canone è compreso
             </h2>
-            <ul className="flex flex-col gap-2">
-              {dati.formule.map((f) => (
+            <ul className="grid grid-cols-2 gap-2">
+              {lungo.servizi.map((s) => (
                 <li
-                  key={f}
-                  className="bg-superficie border-bordo flex flex-col rounded-xl border px-4 py-3"
+                  key={s}
+                  className="bg-superficie border-bordo rounded-xl border px-3 py-2 text-sm font-medium"
                 >
-                  <span className="font-semibold">{ETICHETTA_FORMULA[f]}</span>
-                  <span className="text-testo-tenue text-sm">{DESCRIZIONE_FORMULA[f]}</span>
+                  {ETICHETTA_SERVIZIO[s]}
                 </li>
               ))}
             </ul>
           </section>
         )}
+
+        {/* Dirlo chiaramente e' una richiesta esplicita del documento (§6.2):
+            un canone che sembra comprendere tutto e poi non comprende il
+            carburante genera una telefonata arrabbiata invece di una vendita. */}
+        <section className="border-bordo flex flex-col gap-2 border-t py-6">
+          <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
+            Non è compreso
+          </h2>
+          <p className="text-testo-tenue text-sm">{NON_COMPRESO.join(' · ')}</p>
+        </section>
 
         {foto.length > 1 && (
           <section className="border-bordo border-t py-6">
@@ -196,13 +187,6 @@ export default async function PaginaVendita({ params }: Props) {
             </div>
           </section>
         )}
-
-        <section id="contatto" className="border-bordo flex flex-col gap-4 border-t py-6">
-          <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
-            Chiedi informazioni
-          </h2>
-          <FormContatto codice={codice} riservata={dati.pagina.tipo === 'riservata'} />
-        </section>
 
         <section className="border-bordo flex items-center gap-4 border-t py-6">
           <div className="flex flex-col gap-1">
@@ -234,6 +218,15 @@ export default async function PaginaVendita({ params }: Props) {
           </a>
         </div>
       )}
+    </div>
+  );
+}
+
+function Riquadro({ etichetta, valore }: { etichetta: string; valore: string }) {
+  return (
+    <div className="bg-superficie border-bordo rounded-xl border p-4">
+      <p className="text-testo-tenue text-xs tracking-wide uppercase">{etichetta}</p>
+      <p className="mt-1 text-lg font-semibold">{valore}</p>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type {
   Alimentazione,
+  DatiNoleggioLungo,
   Cambio,
   FormulaAcquisto,
   Modulo,
@@ -50,6 +51,7 @@ export interface DatiPagina {
     /** Solo sulla pagina riservata. */
     prezzo_consigliato_cent: number | null;
   } | null;
+  lungo: DatiNoleggioLungo | null;
   foto: string[];
   formule: FormulaAcquisto[];
 }

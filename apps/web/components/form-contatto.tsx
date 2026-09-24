@@ -9,11 +9,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-import { inviaContatto, type EsitoContatto } from './azioni';
+import { inviaContatto, type EsitoContatto } from '@/lib/azioni-contatto';
 
 const INIZIALE: EsitoContatto = { stato: 'fermo' };
 
-export function FormContatto({ codice, riservata }: { codice: string; riservata: boolean }) {
+export function FormContatto({
+  codice,
+  riservata,
+  messaggioIniziale,
+}: {
+  codice: string;
+  riservata: boolean;
+  /** Precompilato dal noleggio lungo con la combinazione scelta (§6.2). */
+  messaggioIniziale?: string;
+}) {
   const [esito, azione] = useActionState(inviaContatto, INIZIALE);
 
   if (esito.stato === 'inviato') {
@@ -75,6 +84,11 @@ export function FormContatto({ codice, riservata }: { codice: string; riservata:
           id="messaggio"
           name="messaggio"
           rows={3}
+          // key: cambiando la combinazione il campo si riscrive, a meno che il
+          // cliente non l'abbia gia' modificato a mano. defaultValue da solo
+          // non basterebbe, React non riapplica un valore non controllato.
+          key={messaggioIniziale ?? 'vuoto'}
+          defaultValue={messaggioIniziale}
           placeholder={
             riservata
               ? 'Sono un operatore, vorrei informazioni su questo mezzo.'

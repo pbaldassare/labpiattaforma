@@ -180,8 +180,14 @@ export function centesimiInEuro(centesimi: number): number {
  */
 const SPAZIO_UNITO = ' ';
 
-function raggruppaMigliaia(intero: string): string {
+export function raggruppaMigliaia(intero: string): string {
   return intero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+/** Un numero intero con le migliaia separate: 84000 -> "84.000". */
+export function formattaNumero(n: number): string {
+  const segno = n < 0 ? '-' : '';
+  return `${segno}${raggruppaMigliaia(String(Math.abs(Math.round(n))))}`;
 }
 
 /** Per i prezzi in evidenza: "8.900 €" si legge meglio di "8.900,00 €". */
