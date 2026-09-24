@@ -1,5 +1,12 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { Icona as IconaBase, type NomeIcona } from '@/components/icone';
 import { Testo as Text } from '@/components/testo';
@@ -131,6 +138,49 @@ export function Pastiglia({ icona, tono = 'neutro' }: { icona: NomeIcona; tono?:
   );
 }
 
+/**
+ * La barra dei filtri in cima a un elenco.
+ *
+ * Scorre in orizzontale perche' le voci sono poche ma i loro nomi sono lunghi:
+ * "Noleggio lungo termine (3)" non entra in un quarto di schermo, e mandarle a
+ * capo farebbe saltare l'altezza della barra a ogni cambio di filtro.
+ */
+export function Filtri<T extends string>({
+  valore,
+  opzioni,
+  onCambia,
+}: {
+  valore: T | null;
+  opzioni: { valore: T | null; etichetta: string }[];
+  onCambia: (v: T | null) => void;
+}) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={stili.barraFiltri}
+      contentContainerStyle={stili.filtri}
+    >
+      {opzioni.map((o) => {
+        const attivo = valore === o.valore;
+        return (
+          <Pressable
+            key={o.valore ?? 'tutti'}
+            onPress={() => onCambia(attivo && o.valore != null ? null : o.valore)}
+            style={[stili.filtro, attivo && stili.filtroAttivo]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: attivo }}
+          >
+            <Text style={[stili.filtroTesto, attivo && stili.filtroTestoAttivo]}>
+              {o.etichetta}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
 export function Vuoto({
   icona,
   titolo,
@@ -197,6 +247,28 @@ const stili = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spazi.xs,
   },
+  // alignItems: senza, il contenitore orizzontale stira i filtri per tutta
+  // l'altezza disponibile e diventano rettangoli alti.
+  barraFiltri: { flexGrow: 0 },
+  filtri: {
+    paddingHorizontal: spazi.l,
+    paddingVertical: spazi.m,
+    gap: spazi.s,
+    alignItems: 'center',
+  },
+  filtro: {
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: spazi.m,
+    borderRadius: raggio.s,
+    borderWidth: 1,
+    borderColor: colori.bordo,
+    backgroundColor: colori.superficie,
+  },
+  filtroAttivo: { backgroundColor: colori.primario, borderColor: colori.primario },
+  filtroTesto: { fontSize: 13, color: colori.testo },
+  filtroTestoAttivo: { color: colori.suPrimario, fontWeight: '600' },
+
   vuotoTitolo: { ...testi.sottotitolo, color: colori.testo },
   vuotoTesto: { ...testi.piccolo, color: colori.testoTenue, textAlign: 'center', maxWidth: 260 },
 });

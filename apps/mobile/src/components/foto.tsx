@@ -8,15 +8,9 @@ import { Pillola } from '@/components/base';
 import { Icona } from '@/components/icone';
 import { Bottone } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
+import { urlFoto } from '@/lib/foto';
 import { supabase } from '@/lib/supabase';
 import { colori, raggio, spazi, testi } from '@/lib/tema';
-
-const URL_SUPABASE = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-
-/** Il bucket e' in lettura libera: indirizzo diretto, niente firma. */
-function urlFoto(path: string): string {
-  return `${URL_SUPABASE.replace(/\/$/, '')}/storage/v1/object/public/offerte/${path}`;
-}
 
 export interface Foto {
   id: string;

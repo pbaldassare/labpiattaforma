@@ -14,9 +14,12 @@ import {
 } from '@/lib/landing';
 import { qrSvg } from '@/lib/qr';
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ tipo?: string }>;
+};
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params }: Pick<Props, 'params'>): Promise<Metadata> {
   const { slug } = await params;
   const esito = await caricaVetrina(slug);
 
@@ -34,8 +37,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function Vetrina({ params }: Props) {
+export default async function Vetrina({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { tipo } = await searchParams;
   const esito = await caricaVetrina(slug);
 
   if (!esito) notFound();
@@ -49,9 +53,15 @@ export default async function Vetrina({ params }: Props) {
   const indirizzo = urlVetrina(DOMINIO, venditore.slug);
   const qr = await qrSvg(indirizzo);
 
-  // I filtri per modulo comparirebbero solo con piu' di un modulo in vetrina:
-  // con uno solo sarebbero un bottone che non fa niente (documento §3.5).
+  // I filtri compaiono solo con piu' di un modulo in vetrina: con uno solo
+  // sarebbero un bottone che non fa niente (documento §3.5).
+  //
+  // Filtrano con un parametro nell'indirizzo invece che con lo stato di un
+  // componente: cosi' il venditore puo' mandare direttamente "solo i noleggi"
+  // a un cliente, e la pagina resta leggibile anche senza JavaScript.
   const moduli = [...new Set(offerte.map((o) => o.modulo))];
+  const scelto = moduli.find((m) => m === tipo) ?? null;
+  const visibili = scelto ? offerte.filter((o) => o.modulo === scelto) : offerte;
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-16">
@@ -80,24 +90,28 @@ export default async function Vetrina({ params }: Props) {
 
       {moduli.length > 1 && (
         <nav className="flex flex-wrap gap-2 py-6" aria-label="Filtra per tipo">
+          <Filtro attivo={scelto === null} href={`/${venditore.slug}`}>
+            Tutto ({offerte.length})
+          </Filtro>
           {moduli.map((m) => (
-            <span
+            <Filtro
               key={m}
-              className="border-bordo bg-superficie rounded-full border px-4 py-1.5 text-sm"
+              attivo={scelto === m}
+              href={scelto === m ? `/${venditore.slug}` : `/${venditore.slug}?tipo=${m}`}
             >
-              {ETICHETTA_MODULO[m]}
-            </span>
+              {ETICHETTA_MODULO[m]} ({offerte.filter((o) => o.modulo === m).length})
+            </Filtro>
           ))}
         </nav>
       )}
 
-      {offerte.length === 0 ? (
+      {visibili.length === 0 ? (
         <p className="text-testo-tenue py-16 text-center">
           Nessuna offerta disponibile in questo momento.
         </p>
       ) : (
         <ul className="grid grid-cols-1 gap-4 py-8 sm:grid-cols-2">
-          {offerte.map((o) => (
+          {visibili.map((o) => (
             <SchedaOfferta key={o.codice} offerta={o} />
           ))}
         </ul>
@@ -108,6 +122,30 @@ export default async function Vetrina({ params }: Props) {
         <p className="text-testo-tenue text-sm">{indirizzo}</p>
       </footer>
     </main>
+  );
+}
+
+function Filtro({
+  attivo,
+  href,
+  children,
+}: {
+  attivo: boolean;
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={attivo ? 'true' : undefined}
+      className={
+        attivo
+          ? 'bg-primario text-su-primario rounded-full px-4 py-1.5 text-sm font-semibold'
+          : 'border-bordo bg-superficie hover:border-testo-tenue rounded-full border px-4 py-1.5 text-sm transition-colors'
+      }
+    >
+      {children}
+    </Link>
   );
 }
 
@@ -136,7 +174,15 @@ function SchedaOfferta({ offerta }: { offerta: OffertaInVetrina }) {
         <div className="flex flex-1 flex-col gap-1 p-4">
           <p className="font-semibold text-pretty">{offerta.titolo}</p>
           {offerta.prezzo_cent != null && (
-            <p className="mt-auto text-xl font-bold">{formattaEuro(offerta.prezzo_cent)}</p>
+            <p className="mt-auto text-xl font-bold">
+              {offerta.da_partire && (
+                <span className="text-testo-tenue text-xs font-normal">da </span>
+              )}
+              {formattaEuro(offerta.prezzo_cent)}
+              {offerta.unita && (
+                <span className="text-testo-tenue text-xs font-normal"> {offerta.unita}</span>
+              )}
+            </p>
           )}
         </div>
       </Link>

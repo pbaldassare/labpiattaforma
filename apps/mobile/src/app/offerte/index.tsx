@@ -1,18 +1,21 @@
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
-import { Testo as Text } from '@/components/testo';
+import { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, Image, StyleSheet, View } from 'react-native';
 import {
   ETICHETTA_MODULO,
   formattaEuro,
+  tab,
   type Modulo,
   type StatoOfferta,
 } from '@lab/shared';
 
+import { Filtri, Pillola, Scheda, Vuoto } from '@/components/base';
+import { Icona, type NomeIcona } from '@/components/icone';
 import { Bottone } from '@/components/modulo';
-import { fn, tab } from '@lab/shared';
+import { Testo as Text } from '@/components/testo';
+import { urlFoto } from '@/lib/foto';
 import { supabase } from '@/lib/supabase';
-import { colori, raggio, spazi } from '@/lib/tema';
+import { colori, raggio, spazi, testi } from '@/lib/tema';
 
 interface RigaOfferta {
   id: string;
@@ -22,6 +25,10 @@ interface RigaOfferta {
   updated_at: string;
   prezzo_pubblico_cent: number | null;
   canone_minimo_cent: number | null;
+  tariffa_giorno_cent: number | null;
+  premio_partenza_cent: number | null;
+  foto_path: string | null;
+  quante_foto: number;
 }
 
 const ETICHETTA_STATO: Record<StatoOfferta, string> = {
@@ -31,16 +38,36 @@ const ETICHETTA_STATO: Record<StatoOfferta, string> = {
   venduta: 'Venduta',
 };
 
-const COLORE_STATO: Record<StatoOfferta, string> = {
-  bozza: colori.testoTenue,
-  attiva: colori.primario,
-  sospesa: colori.accento,
-  venduta: colori.testoTenue,
+const ICONA_MODULO: Record<Modulo, NomeIcona> = {
+  vendita: 'auto',
+  noleggio_breve: 'calendario',
+  noleggio_lungo: 'cartellino',
+  assicurazioni: 'documento',
 };
+
+/**
+ * Il numero da mostrare cambia da modulo a modulo, e con lui la parola che gli
+ * sta accanto: un canone senza "al mese" e una tariffa senza "al giorno" si
+ * leggono come un prezzo di vendita.
+ */
+function cifra(r: RigaOfferta): { prima?: string; valore: string; dopo?: string } | null {
+  if (r.prezzo_pubblico_cent != null) return { valore: formattaEuro(r.prezzo_pubblico_cent) };
+  if (r.tariffa_giorno_cent != null) {
+    return { valore: formattaEuro(r.tariffa_giorno_cent), dopo: 'al giorno' };
+  }
+  if (r.canone_minimo_cent != null) {
+    return { prima: 'da', valore: formattaEuro(r.canone_minimo_cent), dopo: 'al mese' };
+  }
+  if (r.premio_partenza_cent != null) {
+    return { prima: 'da', valore: formattaEuro(r.premio_partenza_cent), dopo: "all'anno" };
+  }
+  return null;
+}
 
 export default function Offerte() {
   const router = useRouter();
   const [righe, setRighe] = useState<RigaOfferta[]>([]);
+  const [modulo, setModulo] = useState<Modulo | null>(null);
   const [caricamento, setCaricamento] = useState(true);
   const [errore, setErrore] = useState<string | null>(null);
 
@@ -50,10 +77,12 @@ export default function Offerte() {
       let vivo = true;
       void (async () => {
         const { data, error } = await supabase
-          // Vista che unisce gia' offerta e scheda veicolo: PostgREST non sa
-          // dedurre le relazioni fra viste, e all'elenco serve un prezzo solo.
+          // Vista che unisce gia' offerta e schede dei quattro moduli:
+          // PostgREST non sa dedurre le relazioni fra viste.
           .from(tab('offerta_elenco'))
-          .select('id, titolo, modulo, stato, updated_at, prezzo_pubblico_cent, canone_minimo_cent')
+          .select(
+            'id, titolo, modulo, stato, updated_at, prezzo_pubblico_cent, canone_minimo_cent, tariffa_giorno_cent, premio_partenza_cent, foto_path, quante_foto'
+          )
           .order('updated_at', { ascending: false });
 
         if (!vivo) return;
@@ -67,6 +96,24 @@ export default function Offerte() {
     }, [])
   );
 
+  // I filtri mostrano solo i moduli che il venditore usa davvero: una barra
+  // con quattro voci di cui tre vuote non aiuta nessuno.
+  const filtri = useMemo(() => {
+    const usati = (['vendita', 'noleggio_breve', 'noleggio_lungo', 'assicurazioni'] as Modulo[])
+      .map((m) => ({ m, quante: righe.filter((r) => r.modulo === m).length }))
+      .filter((x) => x.quante > 0);
+
+    return [
+      { valore: null, etichetta: `Tutte (${righe.length})` },
+      ...usati.map((x) => ({
+        valore: x.m,
+        etichetta: `${ETICHETTA_MODULO[x.m]} (${x.quante})`,
+      })),
+    ];
+  }, [righe]);
+
+  const visibili = modulo ? righe.filter((r) => r.modulo === modulo) : righe;
+
   if (caricamento) {
     return (
       <View style={stili.centrato}>
@@ -77,96 +124,126 @@ export default function Offerte() {
 
   return (
     <View style={stili.contenitore}>
+      {filtri.length > 2 && (
+        <Filtri valore={modulo} opzioni={filtri} onCambia={setModulo} />
+      )}
+
       <FlatList
-        data={righe}
+        data={visibili}
         keyExtractor={(r) => r.id}
         contentContainerStyle={stili.lista}
+        ListHeaderComponent={errore ? <Text style={stili.errore}>{errore}</Text> : null}
         ListEmptyComponent={
-          <View style={stili.vuoto}>
-            <Text style={stili.vuotoTitolo}>Nessuna offerta</Text>
-            <Text style={stili.vuotoTesto}>
-              Carica il primo mezzo: dalla scheda esce la pagina da mandare al cliente.
-            </Text>
-          </View>
+          <Vuoto
+            icona="auto"
+            titolo="Nessuna offerta"
+            testo="Carica il primo mezzo: dalla scheda esce la pagina da mandare al cliente."
+          />
         }
-        ListHeaderComponent={
-          errore ? <Text style={stili.errore}>{errore}</Text> : null
-        }
-        renderItem={({ item }) => {
-          // Vendita: il prezzo. Noleggio: il canone piu' basso, con "da".
-          const prezzo = item.prezzo_pubblico_cent ?? item.canone_minimo_cent;
-          const eCanone = item.prezzo_pubblico_cent == null && item.canone_minimo_cent != null;
-          // Non Link asChild: sul web non porta lo stile dentro Pressable.
-          return (
-            <Pressable
-              onPress={() => router.push(`/offerte/${item.id}`)}
-              style={({ pressed }) => [stili.riga, pressed && stili.premuta]}
-            >
-                <View style={stili.rigaTesti}>
-                  <Text style={stili.titolo} numberOfLines={1}>
-                    {item.titolo}
-                  </Text>
-                  <Text style={[stili.stato, { color: COLORE_STATO[item.stato] }]}>
-                    {ETICHETTA_MODULO[item.modulo]} · {ETICHETTA_STATO[item.stato]}
-                  </Text>
-                </View>
-                {prezzo != null && (
-                  <View style={stili.colonnaPrezzo}>
-                    {eCanone && <Text style={stili.daQui}>da</Text>}
-                    <Text style={stili.prezzo}>{formattaEuro(prezzo)}</Text>
-                    {eCanone && <Text style={stili.alMese}>al mese</Text>}
-                  </View>
-                )}
-            </Pressable>
-          );
-        }}
+        renderItem={({ item }) => (
+          <SchedaOfferta item={item} onPress={() => router.push(`/offerte/${item.id}`)} />
+        )}
       />
 
-      {/* Due bottoni invece di uno con menu: con due moduli attivi e' un tocco
-          in meno, e si vede subito quali moduli esistono. */}
+      {/* Quattro moduli sono troppi per quattro bottoni in fondo allo schermo:
+          da "I tuoi moduli" si sceglie quale, e si vede quanto resta di ognuno. */}
       <View style={stili.barra}>
-        <Bottone testo="Nuova vendita" onPress={() => router.push('/offerte/nuova')} />
-        <Bottone
-          tenue
-          testo="Nuovo noleggio lungo"
-          onPress={() => router.push('/offerte/nuova-lungo')}
-        />
+        <Bottone testo="Nuova offerta" icona="piu" onPress={() => router.push('/moduli')} />
       </View>
     </View>
+  );
+}
+
+function SchedaOfferta({ item, onPress }: { item: RigaOfferta; onPress: () => void }) {
+  const numero = cifra(item);
+  const bozza = item.stato === 'bozza';
+
+  return (
+    <Scheda rilievo="bassa" onPress={onPress} style={stili.scheda} accessibilityLabel={item.titolo}>
+      <View style={stili.foto}>
+        {item.foto_path ? (
+          <Image
+            source={{ uri: urlFoto(item.foto_path) }}
+            style={stili.immagine}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={stili.senzaFoto}>
+            <Icona nome={ICONA_MODULO[item.modulo]} dimensione={20} colore={colori.testoDebole} />
+          </View>
+        )}
+        {item.quante_foto > 1 && (
+          <View style={stili.contaFoto}>
+            <Text style={stili.contaFotoTesto}>{item.quante_foto}</Text>
+          </View>
+        )}
+      </View>
+
+      <View style={stili.testi}>
+        <Text style={stili.titolo} numberOfLines={1}>
+          {item.titolo}
+        </Text>
+        <Text style={stili.modulo} numberOfLines={1}>
+          {ETICHETTA_MODULO[item.modulo]}
+        </Text>
+        {numero && (
+          <Text style={stili.prezzo}>
+            {numero.prima && <Text style={stili.prezzoContorno}>{numero.prima} </Text>}
+            {numero.valore}
+            {numero.dopo && <Text style={stili.prezzoContorno}> {numero.dopo}</Text>}
+          </Text>
+        )}
+      </View>
+
+      <View style={stili.coda}>
+        {/* Solo le bozze portano un'etichetta: sono l'unico stato che chiede di
+            tornarci sopra. Le altre si distinguono gia' dal resto della riga. */}
+        {bozza ? (
+          <Pillola testo={ETICHETTA_STATO[item.stato]} />
+        ) : item.stato !== 'attiva' ? (
+          <Pillola
+            testo={ETICHETTA_STATO[item.stato]}
+            tono={item.stato === 'venduta' ? 'successo' : 'attenzione'}
+          />
+        ) : null}
+        <Icona nome="avanti" dimensione={18} colore={colori.testoDebole} />
+      </View>
+    </Scheda>
   );
 }
 
 const stili = StyleSheet.create({
   contenitore: { flex: 1, backgroundColor: colori.sfondo },
   centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
-  lista: { padding: spazi.l, gap: spazi.s, paddingBottom: spazi.xxl * 3 },
-  riga: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spazi.m,
-    backgroundColor: colori.superficie,
-    borderWidth: 1,
-    borderColor: colori.bordoTenue,
+  lista: { padding: spazi.l, gap: spazi.s, paddingBottom: spazi.xxxl * 2 },
+
+  scheda: { flexDirection: 'row', alignItems: 'center', gap: spazi.m, padding: spazi.s },
+  foto: {
+    width: 76,
+    height: 76,
     borderRadius: raggio.m,
-    padding: spazi.l,
+    overflow: 'hidden',
+    backgroundColor: colori.bordoTenue,
   },
-  premuta: { opacity: 0.8 },
-  rigaTesti: { flex: 1, gap: 2 },
-  titolo: { fontSize: 16, fontWeight: '600', color: colori.testo },
-  stato: { fontSize: 12, fontWeight: '600' },
-  colonnaPrezzo: { alignItems: 'flex-end' },
-  daQui: { fontSize: 11, color: colori.testoTenue },
-  alMese: { fontSize: 11, color: colori.testoTenue },
-  prezzo: { fontSize: 16, fontWeight: '700', color: colori.testo },
-  vuoto: { padding: spazi.xl, gap: spazi.s, alignItems: 'center' },
-  vuotoTitolo: { fontSize: 17, fontWeight: '700', color: colori.testo },
-  vuotoTesto: { fontSize: 14, color: colori.testoTenue, textAlign: 'center', lineHeight: 20 },
-  errore: { color: colori.errore, fontSize: 13, paddingBottom: spazi.s },
-  barra: {
+  immagine: { width: '100%', height: '100%' },
+  senzaFoto: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  contaFoto: {
     position: 'absolute',
-    left: spazi.l,
-    right: spazi.l,
-    bottom: spazi.xl,
-    gap: spazi.s,
+    right: 4,
+    bottom: 4,
+    paddingHorizontal: 6,
+    borderRadius: raggio.tondo,
+    backgroundColor: 'rgba(15, 23, 42, 0.72)',
   },
+  contaFotoTesto: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
+
+  testi: { flex: 1, gap: 2 },
+  titolo: { ...testi.corpo, fontWeight: '700', color: colori.testo },
+  modulo: { fontSize: 12, color: colori.testoTenue },
+  prezzo: { fontSize: 17, fontWeight: '700', color: colori.testo, marginTop: 2 },
+  prezzoContorno: { fontSize: 12, fontWeight: '400', color: colori.testoTenue },
+
+  coda: { alignItems: 'flex-end', gap: spazi.xs, paddingRight: spazi.xs },
+  errore: { color: colori.errore, fontSize: 13, paddingBottom: spazi.s },
+  barra: { position: 'absolute', left: spazi.l, right: spazi.l, bottom: spazi.xl },
 });

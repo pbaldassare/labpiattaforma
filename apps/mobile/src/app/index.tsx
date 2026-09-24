@@ -155,7 +155,12 @@ export default function Home() {
               icona="auto"
               onPress={() => router.push('/offerte')}
             />
-            <Cifra numero={numeri.aperture} etichetta="aperture" icona="occhio" />
+            <Cifra
+              numero={numeri.aperture}
+              etichetta="aperture"
+              icona="occhio"
+              onPress={() => router.push('/numeri')}
+            />
           </View>
         </>
       )}
@@ -177,6 +182,18 @@ export default function Home() {
           testo="Le tue pratiche"
           icona="telefona"
           onPress={() => router.push('/pratiche')}
+        />
+        <Bottone
+          tenue
+          testo="I tuoi clienti"
+          icona="utenti"
+          onPress={() => router.push('/clienti')}
+        />
+        <Bottone
+          tenue
+          testo="I tuoi numeri"
+          icona="occhio"
+          onPress={() => router.push('/numeri')}
         />
         <Bottone
           tenue

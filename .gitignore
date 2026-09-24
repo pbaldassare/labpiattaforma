@@ -17,3 +17,6 @@ dist/
 .DS_Store
 Thumbs.db
 npm-debug.log*
+
+# Cartella di lavoro della CLI di Supabase.
+supabase/.temp/

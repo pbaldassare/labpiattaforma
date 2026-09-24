@@ -124,6 +124,10 @@ export interface OffertaInVetrina {
   modulo: Modulo;
   codice: string;
   prezzo_cent: number | null;
+  /** "al giorno", "al mese", "all'anno"; null per la vendita. */
+  unita: string | null;
+  /** Il numero e' un minimo, non il prezzo finale: va letto "da 269 € al mese". */
+  da_partire: boolean;
   copertina: string | null;
   aggiornata: string;
 }

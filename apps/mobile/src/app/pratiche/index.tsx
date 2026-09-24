@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import {
   ETICHETTA_STATO_PRATICA,
   quandoBreve,
@@ -9,6 +9,7 @@ import {
   type TipoCliente,
 } from '@lab/shared';
 
+import { Filtri, Vuoto } from '@/components/base';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
 import { TOCCO_MINIMO, colori, raggio, spazi } from '@/lib/tema';
@@ -75,28 +76,19 @@ export default function Pratiche() {
 
   return (
     <View style={stili.contenitore}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={stili.filtri}
-        style={stili.barraFiltri}
-      >
-        <Filtro
-          etichetta={`Tutte (${righe.length})`}
-          attivo={filtro === null}
-          onPress={() => setFiltro(null)}
-        />
-        {conteggi
-          .filter((c) => c.quanti > 0)
-          .map((c) => (
-            <Filtro
-              key={c.stato}
-              etichetta={`${ETICHETTA_STATO_PRATICA[c.stato]} (${c.quanti})`}
-              attivo={filtro === c.stato}
-              onPress={() => setFiltro(filtro === c.stato ? null : c.stato)}
-            />
-          ))}
-      </ScrollView>
+      <Filtri
+        valore={filtro}
+        onCambia={setFiltro}
+        opzioni={[
+          { valore: null, etichetta: `Tutte (${righe.length})` },
+          ...conteggi
+            .filter((c) => c.quanti > 0)
+            .map((c) => ({
+              valore: c.stato,
+              etichetta: `${ETICHETTA_STATO_PRATICA[c.stato]} (${c.quanti})`,
+            })),
+        ]}
+      />
 
       <FlatList
         data={visibili}
@@ -104,13 +96,11 @@ export default function Pratiche() {
         contentContainerStyle={stili.lista}
         ListHeaderComponent={errore ? <Text style={stili.errore}>{errore}</Text> : null}
         ListEmptyComponent={
-          <View style={stili.vuoto}>
-            <Text style={stili.vuotoTitolo}>Nessuna pratica</Text>
-            <Text style={stili.vuotoTesto}>
-              Quando un cliente compila il form su una tua pagina, lo trovi qui già pronto da
-              richiamare.
-            </Text>
-          </View>
+          <Vuoto
+            icona="telefona"
+            titolo="Nessuna pratica"
+            testo="Quando un cliente compila il form su una tua pagina, lo trovi qui già pronto da richiamare."
+          />
         }
         renderItem={({ item }) => (
           <Pressable
@@ -149,51 +139,9 @@ export default function Pratiche() {
   );
 }
 
-function Filtro({
-  etichetta,
-  attivo,
-  onPress,
-}: {
-  etichetta: string;
-  attivo: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[stili.filtro, attivo && stili.filtroAttivo]}
-      accessibilityRole="button"
-      accessibilityState={{ selected: attivo }}
-    >
-      <Text style={[stili.filtroTesto, attivo && stili.filtroTestoAttivo]}>{etichetta}</Text>
-    </Pressable>
-  );
-}
-
 const stili = StyleSheet.create({
   contenitore: { flex: 1, backgroundColor: colori.sfondo },
   centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
-  // alignItems: senza, il contenitore orizzontale stira i filtri per tutta
-  // l'altezza disponibile e diventano rettangoli alti.
-  filtri: {
-    paddingHorizontal: spazi.l,
-    paddingVertical: spazi.m,
-    gap: spazi.s,
-    alignItems: 'center',
-  },
-  filtro: {
-    minHeight: 36,
-    justifyContent: 'center',
-    paddingHorizontal: spazi.m,
-    borderRadius: raggio.s,
-    borderWidth: 1,
-    borderColor: colori.bordo,
-    backgroundColor: colori.superficie,
-  },
-  filtroAttivo: { backgroundColor: colori.primario, borderColor: colori.primario },
-  filtroTesto: { fontSize: 13, color: colori.testo },
-  filtroTestoAttivo: { color: colori.suPrimario, fontWeight: '600' },
-  barraFiltri: { flexGrow: 0 },
   lista: { paddingHorizontal: spazi.l, paddingBottom: spazi.xxl, gap: spazi.s },
   riga: {
     backgroundColor: colori.superficie,
@@ -218,8 +166,5 @@ const stili = StyleSheet.create({
   messaggio: { fontSize: 13, color: colori.testoTenue, lineHeight: 18 },
   stato: { fontSize: 12, fontWeight: '600', color: colori.testoTenue, marginTop: spazi.xs },
   statoUrgente: { color: colori.accento },
-  vuoto: { padding: spazi.xl, gap: spazi.s, alignItems: 'center' },
-  vuotoTitolo: { fontSize: 17, fontWeight: '700', color: colori.testo },
-  vuotoTesto: { fontSize: 14, color: colori.testoTenue, textAlign: 'center', lineHeight: 20 },
   errore: { color: colori.errore, fontSize: 13, paddingBottom: spazi.s },
 });
