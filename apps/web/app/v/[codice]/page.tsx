@@ -21,6 +21,8 @@ import {
 } from '@/lib/landing';
 import { qrSvg } from '@/lib/qr';
 
+import { FormContatto } from './form-contatto';
+
 type Props = { params: Promise<{ codice: string }> };
 
 const NUMERO_CHILOMETRI = new Intl.NumberFormat('it-IT');
@@ -194,6 +196,13 @@ export default async function PaginaVendita({ params }: Props) {
             </div>
           </section>
         )}
+
+        <section id="contatto" className="border-bordo flex flex-col gap-4 border-t py-6">
+          <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
+            Chiedi informazioni
+          </h2>
+          <FormContatto codice={codice} riservata={dati.pagina.tipo === 'riservata'} />
+        </section>
 
         <section className="border-bordo flex items-center gap-4 border-t py-6">
           <div className="flex flex-col gap-1">

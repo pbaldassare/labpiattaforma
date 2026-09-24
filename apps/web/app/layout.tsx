@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Syncopate } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+
 
 /**
  * Syncopate solo per i titoli: e' largo, meccanico, automobilistico, e su una
@@ -30,7 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="it"
-      className={`${titoli.variable} ${testo.variable} h-full antialiased`}
+      className={cn("h-full antialiased font-sans", titoli.variable, testo.variable)}
     >
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
