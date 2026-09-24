@@ -79,6 +79,7 @@ export default function Pratiche() {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={stili.filtri}
+        style={stili.barraFiltri}
       >
         <Filtro
           etichetta={`Tutte (${righe.length})`}
@@ -172,7 +173,14 @@ function Filtro({
 const stili = StyleSheet.create({
   contenitore: { flex: 1, backgroundColor: colori.sfondo },
   centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
-  filtri: { paddingHorizontal: spazi.l, paddingVertical: spazi.m, gap: spazi.s },
+  // alignItems: senza, il contenitore orizzontale stira i filtri per tutta
+  // l'altezza disponibile e diventano rettangoli alti.
+  filtri: {
+    paddingHorizontal: spazi.l,
+    paddingVertical: spazi.m,
+    gap: spazi.s,
+    alignItems: 'center',
+  },
   filtro: {
     minHeight: 36,
     justifyContent: 'center',
@@ -185,6 +193,7 @@ const stili = StyleSheet.create({
   filtroAttivo: { backgroundColor: colori.primario, borderColor: colori.primario },
   filtroTesto: { fontSize: 13, color: colori.testo },
   filtroTestoAttivo: { color: colori.suPrimario, fontWeight: '600' },
+  barraFiltri: { flexGrow: 0 },
   lista: { paddingHorizontal: spazi.l, paddingBottom: spazi.xxl, gap: spazi.s },
   riga: {
     backgroundColor: colori.superficie,

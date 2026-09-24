@@ -1,7 +1,8 @@
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import {
+  ETICHETTA_FORMULA,
   ETICHETTA_ORIGINE,
   ETICHETTA_STATO_PRATICA,
   formattaEuro,
@@ -9,6 +10,7 @@ import {
   quandoBreve,
   tab,
   urlPagina,
+  type FormulaAcquisto,
   type StatoPratica,
   type TipoCliente,
   type VoceStorico,
@@ -44,6 +46,14 @@ interface DettaglioPratica {
   codice_pagina: string | null;
 }
 
+interface RigaPreventivo {
+  id: string;
+  numero: number;
+  formula: FormulaAcquisto;
+  prezzo_cent: number;
+  firmato_il: string | null;
+}
+
 /** Scorciatoie invece di un calendario: il richiamo si fissa in due tocchi. */
 const QUANDO = [
   { etichetta: 'Domani', giorni: 1 },
@@ -53,26 +63,34 @@ const QUANDO = [
 
 export default function DettaglioPraticaSchermata() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
 
   const [pratica, setPratica] = useState<DettaglioPratica | null>(null);
   const [storico, setStorico] = useState<VoceStorico[]>([]);
+  const [preventivi, setPreventivi] = useState<RigaPreventivo[]>([]);
   const [caricamento, setCaricamento] = useState(true);
   const [nota, setNota] = useState('');
   const [errore, setErrore] = useState<string | null>(null);
 
   const carica = useCallback(async () => {
-    const [p, s] = await Promise.all([
+    const [p, s, pv] = await Promise.all([
       supabase.from(tab('pratica_elenco')).select('*').eq('id', id).maybeSingle(),
       supabase
         .from(tab('storico_pratica'))
         .select('id, pratica_id, origine, testo, creato_il')
         .eq('pratica_id', id)
         .order('creato_il', { ascending: false }),
+      supabase
+        .from(tab('preventivo'))
+        .select('id, numero, formula, prezzo_cent, firmato_il')
+        .eq('pratica_id', id)
+        .order('numero', { ascending: false }),
     ]);
 
     if (p.error) setErrore(p.error.message);
     setPratica((p.data as DettaglioPratica | null) ?? null);
     setStorico((s.data ?? []) as VoceStorico[]);
+    setPreventivi((pv.data ?? []) as RigaPreventivo[]);
     setCaricamento(false);
   }, [id]);
 
@@ -201,6 +219,28 @@ export default function DettaglioPraticaSchermata() {
         />
       </Sezione>
 
+      <Sezione titolo="Preventivo">
+        {preventivi.length > 0 ? (
+          preventivi.map((pv) => (
+            <View key={pv.id} style={stili.preventivo}>
+              <Text style={stili.preventivoNumero}>Preventivo n. {pv.numero}</Text>
+              <Text style={stili.preventivoDati}>
+                {ETICHETTA_FORMULA[pv.formula]} · {formattaEuro(pv.prezzo_cent)} ·{' '}
+                {quandoBreve(pv.firmato_il)}
+              </Text>
+            </View>
+          ))
+        ) : (
+          <Text style={stili.vuoto}>Nessun preventivo ancora.</Text>
+        )}
+        {pratica.offerta_id && (
+          <Bottone
+            testo={preventivi.length > 0 ? 'Fai un altro preventivo' : 'Fai il preventivo'}
+            onPress={() => router.push({ pathname: '/preventivo/[pratica]', params: { pratica: id } })}
+          />
+        )}
+      </Sezione>
+
       <Sezione titolo="Quando richiamarlo">
         {pratica.prossimo_promemoria && (
           <Text style={stili.promemoria}>
@@ -302,4 +342,13 @@ const stili = StyleSheet.create({
   voceQuando: { fontSize: 12, color: colori.testoTenue },
   voceTesto: { fontSize: 14, color: colori.testoTenue, lineHeight: 19 },
   vuoto: { fontSize: 13, color: colori.testoTenue },
+  preventivo: {
+    borderWidth: 1,
+    borderColor: colori.bordo,
+    borderRadius: raggio.m,
+    padding: spazi.m,
+    gap: 2,
+  },
+  preventivoNumero: { fontSize: 14, fontWeight: '700', color: colori.testo },
+  preventivoDati: { fontSize: 13, color: colori.testoTenue },
 });

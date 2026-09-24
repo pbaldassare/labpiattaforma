@@ -77,6 +77,7 @@ export default function Layout() {
       <Stack.Screen name="offerte/[id]" options={{ title: 'Offerta' }} />
       <Stack.Screen name="pratiche/index" options={{ title: 'Le tue pratiche' }} />
       <Stack.Screen name="pratiche/[id]" options={{ title: 'Pratica' }} />
+      <Stack.Screen name="preventivo/[pratica]" options={{ title: 'Preventivo' }} />
     </Stack>
   );
 }
