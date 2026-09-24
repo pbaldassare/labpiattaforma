@@ -5,22 +5,24 @@ elenca i punti in cui l'implementazione se ne discosta di proposito, con il
 motivo: senza, al prossimo aggiornamento della direzione qualcuno li
 "correggerebbe" riportando indietro i problemi.
 
-## Tutte e due le superfici
+## App venditore
 
 **Cruscotto notturno: fondo scuro e un colore per modulo.**
 La direzione generata propone, per l'automotive, grafite `#1E293B` e rosso su
-fondo chiaro. È corretta ma anonima: sembra un gestionale. La versione che
-usiamo è scura — fondo `#0A0E17`, superfici che salgono di tono — con blu
-elettrico `#2563EB` come azione e ambra `#FBBF24` per l'attenzione.
+fondo chiaro. È corretta ma anonima: nell'app sembrava un gestionale. La
+versione che usiamo è scura — fondo `#0A0E17`, superfici che salgono di tono —
+con blu elettrico `#2563EB` come azione e ambra `#FBBF24` per l'attenzione.
+
+**Solo l'app.** Le landing restano chiare: sono la superficie di vendita, le
+guarda un cliente per trenta secondi da un link, e lì il chiaro funziona. Le
+due superfici non devono per forza avere lo stesso fondo — devono avere la
+stessa famiglia di forme, la stessa tipografia e lo stesso rosso d'azione.
 
 I colori non sono decorazione. Ogni modulo ha il suo (vendita blu, noleggio
 breve arancio, noleggio lungo viola, assicurazioni verde), così una schermata
 che ne mostra quattro insieme si legge senza leggere. Non portano mai da soli
 un'informazione: accanto c'è sempre l'icona e il nome scritto, perché chi
 confonde i colori deve poter usare l'app lo stesso.
-
-Sulle landing il fondo scuro serve alle foto: un'auto su bianco compete con la
-pagina, su nero sta da sola.
 
 **Due cose da sapere prima di cambiare idea.**
 Il blu pieno regge solo sotto il bianco: come testo o icona su fondo scuro sta

@@ -11,19 +11,23 @@ import {
   type Venditore,
 } from '@lab/shared';
 
-import { Pillola, Scheda } from '@/components/base';
+import { LinearGradient } from 'expo-linear-gradient';
+
+import { BloccoIcona, Pillola, Scheda } from '@/components/base';
 import { Icona, type NomeIcona } from '@/components/icone';
 import { Bottone, Sezione } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
 import {
+  bagliore,
   colori,
   coloriModulo,
-  coloriModuloTenue,
   elevazione,
+  gradienti,
   raggio,
   spazi,
   testi,
+  vetro,
 } from '@/lib/tema';
 
 const DOMINIO = process.env.EXPO_PUBLIC_DOMINIO_LANDING ?? 'https://dominio-da-decidere.it';
@@ -137,11 +141,16 @@ export default function Home() {
       {/* La vetrina in cima: e' l'indirizzo che il venditore manda dieci volte
           al giorno, e cercarlo dentro il profilo ogni volta sarebbe assurdo. */}
       {venditore ? (
-        <Scheda rilievo="media" style={stili.intestazione}>
+        /* L'intestazione e' un cruscotto, non una riga di testo: identita' a
+           sinistra e le tre cifre che contano sotto, sempre le stesse tre. */
+        <LinearGradient
+          colors={gradienti.testa as unknown as [string, string]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[stili.cruscotto, elevazione.media]}
+        >
           <View style={stili.rigaNome}>
-            <View style={stili.logo}>
-              <Icona nome="negozio" dimensione={20} colore={colori.suPrimario} />
-            </View>
+            <BloccoIcona icona="negozio" gradiente={gradienti.azione} dimensione={46} />
             <View style={stili.testiNome}>
               <Text style={stili.nome} numberOfLines={1}>
                 {venditore.nome_visualizzato}
@@ -159,7 +168,24 @@ export default function Home() {
               <Icona nome="apri" dimensione={18} colore={colori.primarioChiaro} />
             </Pressable>
           </View>
-        </Scheda>
+
+          {numeri && (
+            <View style={stili.strisciaNumeri}>
+              <Cifretta
+                valore={numeri.offerte_attive}
+                etichetta={numeri.offerte_attive === 1 ? 'offerta attiva' : 'offerte attive'}
+              />
+              <View style={stili.divisoreSottile} />
+              <Cifretta valore={numeri.aperture_30} etichetta="aperture, 30 giorni" />
+              <View style={stili.divisoreSottile} />
+              <Cifretta
+                valore={numeri.contatti_30}
+                etichetta={numeri.contatti_30 === 1 ? 'ti ha scritto' : 'ti hanno scritto'}
+                tono={numeri.contatti_30 > 0 ? colori.accento : undefined}
+              />
+            </View>
+          )}
+        </LinearGradient>
       ) : (
         <Scheda rilievo="media" style={stili.intestazione}>
           <Text style={stili.nome}>Benvenuto</Text>
@@ -258,40 +284,23 @@ export default function Home() {
         ))}
       </Sezione>
 
-      {/* Come vanno le pagine, con il periodo accanto: "49" senza un tempo
-          poteva voler dire questo mese o tre anni fa. */}
-      {numeri && numeri.aperture > 0 && (
-        <Sezione titolo="Come vanno le tue pagine">
-          <Scheda onPress={() => router.push('/numeri')} style={stili.pagine}>
-            <View style={stili.rigaPagine}>
-              <View style={stili.mezzo}>
-                <Text style={stili.cifraPagine}>{numeri.aperture_30}</Text>
-                <Text style={stili.etichettaPagine}>
-                  {numeri.aperture_30 === 1 ? 'apertura' : 'aperture'} negli ultimi 30 giorni
-                </Text>
-              </View>
-              <View style={stili.divisore} />
-              <View style={stili.mezzo}>
-                <Text style={[stili.cifraPagine, { color: colori.accento }]}>
-                  {numeri.contatti_30}
-                </Text>
-                <Text style={stili.etichettaPagine}>
-                  {numeri.contatti_30 === 1 ? 'cliente ti ha scritto' : 'clienti ti hanno scritto'}
-                </Text>
-              </View>
-            </View>
-
-            {numeri.migliore && (
-              <Text style={stili.migliore}>
-                La più vista è <Text style={stili.migliorePezzo}>{numeri.migliore.titolo}</Text>:{' '}
-                {numeri.migliore.aperture}{' '}
-                {numeri.migliore.aperture === 1 ? 'apertura' : 'aperture'},{' '}
-                {numeri.migliore.contatti}{' '}
-                {numeri.migliore.contatti === 1 ? 'contatto' : 'contatti'}.
-              </Text>
-            )}
-          </Scheda>
-        </Sezione>
+      {/* Le cifre stanno gia' in cima: qui resta solo cio' che quelle non
+          dicono, cioe' quale annuncio sta tirando. */}
+      {numeri?.migliore && (
+        <Scheda onPress={() => router.push('/numeri')} style={stili.migliore}>
+          <BloccoIcona icona="occhio" gradiente={gradienti.azione} dimensione={38} />
+          <View style={stili.testiMigliore}>
+            <Text style={stili.etichettaMigliore}>La più vista del mese</Text>
+            <Text style={stili.titoloMigliore} numberOfLines={1}>
+              {numeri.migliore.titolo}
+            </Text>
+            <Text style={stili.dettaglioMigliore}>
+              {numeri.migliore.aperture} aperture · {numeri.migliore.contatti}{' '}
+              {numeri.migliore.contatti === 1 ? 'contatto' : 'contatti'}
+            </Text>
+          </View>
+          <Icona nome="avanti" dimensione={16} colore={colori.testoDebole} />
+        </Scheda>
       )}
 
       <Sezione titolo="Cosa fai adesso">
@@ -325,6 +334,26 @@ export default function Home() {
   );
 }
 
+/** Una delle tre cifre dell'intestazione: numero grosso, parola sotto. */
+function Cifretta({
+  valore,
+  etichetta,
+  tono,
+}: {
+  valore: number;
+  etichetta: string;
+  tono?: string;
+}) {
+  return (
+    <View style={stili.cifretta}>
+      <Text style={[stili.cifrettaValore, tono ? { color: tono } : null]}>{valore}</Text>
+      <Text style={stili.cifrettaEtichetta} numberOfLines={2}>
+        {etichetta}
+      </Text>
+    </View>
+  );
+}
+
 /**
  * Un modulo in home.
  *
@@ -347,26 +376,19 @@ function SchedaModulo({
     <Scheda
       style={[
         stili.modulo,
-        { borderLeftColor: vuoto ? colori.bordo : coloriModulo[stato.modulo] },
+        !vuoto && bagliore(coloriModulo[stato.modulo], 0.14),
         vuoto && stili.moduloVuoto,
       ]}
       onPress={vuoto ? onNuova : onApri}
       accessibilityLabel={ETICHETTA_MODULO[stato.modulo]}
     >
       {/* Il colore del modulo: si riconosce prima di leggere il nome. */}
-      <View
-        style={[
-          stili.quadrato,
-          { backgroundColor: coloriModuloTenue[stato.modulo] },
-          vuoto && stili.quadratoSpento,
-        ]}
-      >
-        <Icona
-          nome={ICONA_MODULO[stato.modulo]}
-          dimensione={18}
-          colore={vuoto ? colori.testoDebole : coloriModulo[stato.modulo]}
-        />
-      </View>
+      <BloccoIcona
+        icona={ICONA_MODULO[stato.modulo]}
+        gradiente={gradienti[stato.modulo]}
+        dimensione={42}
+        spento={vuoto}
+      />
 
       <View style={stili.testiModulo}>
         <Text style={stili.nomeModulo} numberOfLines={1}>
@@ -420,14 +442,36 @@ const stili = StyleSheet.create({
   contenuto: { padding: spazi.l, gap: spazi.m, paddingBottom: spazi.xxxl },
 
   intestazione: { gap: spazi.m },
+  cruscotto: {
+    borderRadius: raggio.xl,
+    padding: spazi.l,
+    gap: spazi.l,
+    borderWidth: 1,
+    borderColor: colori.bordo,
+    ...vetro,
+  },
   rigaNome: { flexDirection: 'row', alignItems: 'center', gap: spazi.m },
-  logo: {
-    width: 40,
-    height: 40,
-    borderRadius: raggio.m,
-    backgroundColor: colori.primario,
-    alignItems: 'center',
-    justifyContent: 'center',
+
+  strisciaNumeri: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    paddingTop: spazi.m,
+  },
+  cifretta: { flex: 1, gap: 2 },
+  cifrettaValore: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: colori.testo,
+    letterSpacing: -0.8,
+  },
+  cifrettaEtichetta: { fontSize: 11, lineHeight: 14, color: colori.testoTenue },
+  divisoreSottile: {
+    width: 1,
+    alignSelf: 'stretch',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginHorizontal: spazi.m,
   },
   testiNome: { flex: 1, gap: 2 },
   nome: { ...testi.sottotitolo, color: colori.testo },
@@ -471,42 +515,17 @@ const stili = StyleSheet.create({
   perChiamata: { fontSize: 12, color: colori.testoTenue },
   quandoChiamata: { fontSize: 11, color: colori.testoDebole },
 
-  modulo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spazi.m,
-    padding: spazi.m,
-    // Una riga di colore a sinistra: si vede anche con la coda dell'occhio.
-    borderLeftWidth: 3,
-  },
+  modulo: { flexDirection: 'row', alignItems: 'center', gap: spazi.m, padding: spazi.m },
   moduloVuoto: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colori.bordo },
-  quadrato: {
-    width: 34,
-    height: 34,
-    borderRadius: raggio.s,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quadratoSpento: { backgroundColor: colori.bordoTenue },
   testiModulo: { flex: 1, gap: 1 },
   nomeModulo: { fontSize: 15, fontWeight: '700', color: colori.testo },
   dettaglioModulo: { fontSize: 12, color: colori.testoTenue },
 
-  pagine: { gap: spazi.m },
-  rigaPagine: { flexDirection: 'row', alignItems: 'center' },
-  mezzo: { flex: 1, gap: 2 },
-  divisore: { width: 1, height: 36, backgroundColor: colori.bordo, marginHorizontal: spazi.m },
-  cifraPagine: { fontSize: 30, fontWeight: '800', color: colori.testo },
-  etichettaPagine: { fontSize: 12, color: colori.testoTenue, lineHeight: 16 },
-  migliore: {
-    fontSize: 12,
-    lineHeight: 17,
-    color: colori.testoTenue,
-    borderTopWidth: 1,
-    borderTopColor: colori.bordoTenue,
-    paddingTop: spazi.s,
-  },
-  migliorePezzo: { fontWeight: '700', color: colori.testo },
+  migliore: { flexDirection: 'row', alignItems: 'center', gap: spazi.m, padding: spazi.m },
+  testiMigliore: { flex: 1, gap: 1 },
+  etichettaMigliore: { ...testi.etichetta, fontSize: 10, color: colori.testoDebole },
+  titoloMigliore: { fontSize: 15, fontWeight: '700', color: colori.testo },
+  dettaglioMigliore: { fontSize: 12, color: colori.testoTenue },
 
   esci: { paddingTop: spazi.xl },
 });

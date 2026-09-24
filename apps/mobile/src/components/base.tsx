@@ -8,9 +8,20 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import { LinearGradient } from 'expo-linear-gradient';
+
 import { Icona as IconaBase, type NomeIcona } from '@/components/icone';
 import { Testo as Text } from '@/components/testo';
-import { TOCCO_MINIMO, colori, elevazione, raggio, spazi, testi } from '@/lib/tema';
+import {
+  TOCCO_MINIMO,
+  bagliore,
+  colori,
+  elevazione,
+  raggio,
+  spazi,
+  testi,
+  vetro,
+} from '@/lib/tema';
 
 /**
  * Mattoni comuni dell'interfaccia.
@@ -139,6 +150,50 @@ export function Pastiglia({ icona, tono = 'neutro' }: { icona: NomeIcona; tono?:
 }
 
 /**
+ * Il blocco icona di un modulo.
+ *
+ * L'icona sta dentro un quadrato in sfumatura che getta il proprio colore
+ * intorno a se': e' quello che distingue una tessera da un rettangolo con
+ * dentro un simbolo. La dimensione cambia col contesto, il resto no.
+ */
+export function BloccoIcona({
+  icona,
+  gradiente,
+  dimensione = 44,
+  spento,
+}: {
+  icona: NomeIcona;
+  gradiente: readonly [string, string];
+  dimensione?: number;
+  spento?: boolean;
+}) {
+  const lato = { width: dimensione, height: dimensione, borderRadius: dimensione * 0.32 };
+
+  if (spento) {
+    return (
+      <View style={[stili.bloccoSpento, lato]}>
+        <IconaBase
+          nome={icona}
+          dimensione={dimensione * 0.45}
+          colore={colori.testoDebole}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <LinearGradient
+      colors={gradiente as unknown as [string, string]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[stili.blocco, lato, bagliore(gradiente[0], 0.45)]}
+    >
+      <IconaBase nome={icona} dimensione={dimensione * 0.45} colore="#FFFFFF" />
+    </LinearGradient>
+  );
+}
+
+/**
  * La barra dei filtri in cima a un elenco.
  *
  * Scorre in orizzontale perche' le voci sono poche ma i loro nomi sono lunghi:
@@ -208,6 +263,9 @@ const stili = StyleSheet.create({
     backgroundColor: colori.superficie,
     borderRadius: raggio.l,
     padding: spazi.l,
+    // La linea di luce in cima: fa sembrare la scheda illuminata invece che
+    // dipinta. Si nota solo quando manca.
+    ...vetro,
   },
   premuta: { opacity: 0.7 },
 
@@ -268,6 +326,15 @@ const stili = StyleSheet.create({
   filtroAttivo: { backgroundColor: colori.primario, borderColor: colori.primario },
   filtroTesto: { fontSize: 13, color: colori.testo },
   filtroTestoAttivo: { color: colori.suPrimario, fontWeight: '600' },
+
+  blocco: { alignItems: 'center', justifyContent: 'center' },
+  bloccoSpento: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colori.bordoTenue,
+    borderWidth: 1,
+    borderColor: colori.bordo,
+  },
 
   vuotoTitolo: { ...testi.sottotitolo, color: colori.testo },
   vuotoTesto: { ...testi.piccolo, color: colori.testoTenue, textAlign: 'center', maxWidth: 260 },

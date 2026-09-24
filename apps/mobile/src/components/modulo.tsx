@@ -8,16 +8,20 @@ import {
   type TextInputProps,
 } from 'react-native';
 
+import { LinearGradient } from 'expo-linear-gradient';
+
 import { Icona, type NomeIcona } from '@/components/icone';
 import { Testo as Text } from '@/components/testo';
 import {
   TOCCO_MINIMO,
+  bagliore,
   caratteri,
   colori,
-  elevazione,
+  gradienti,
   raggio,
   spazi,
   testi,
+  vetro,
 } from '@/lib/tema';
 
 /**
@@ -147,11 +151,24 @@ export function Bottone({
         scelto === 'azione' && stili.bottoneAzione,
         scelto === 'tenue' && stili.bottoneTenue,
         scelto === 'nudo' && stili.bottoneNudo,
-        (scelto === 'pieno' || scelto === 'azione') && !spento && elevazione.bassa,
+        // Il bagliore sotto il pulsante principale: e' l'unica cosa in pagina
+        // che deve sembrare accesa.
+        scelto === 'pieno' && !spento && bagliore(colori.primario, 0.4),
+        scelto === 'azione' && !spento && bagliore(colori.azione, 0.35),
         pressed && !spento && stili.premuto,
         spento && stili.spento,
       ]}
     >
+      {/* La sfumatura sta dietro al contenuto: una tinta piatta su un bottone
+          grande si vede subito che e' piatta. */}
+      {scelto === 'pieno' && !spento && (
+        <LinearGradient
+          colors={gradienti.azione as unknown as [string, string]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={stili.sfumatura}
+        />
+      )}
       {inCorso ? (
         <ActivityIndicator color={colorePrimoPiano} />
       ) : (
@@ -227,7 +244,8 @@ const stili = StyleSheet.create({
     borderRadius: raggio.m,
     paddingHorizontal: spazi.xl,
   },
-  bottonePieno: { backgroundColor: colori.primario },
+  bottonePieno: { backgroundColor: colori.primario, overflow: 'hidden', ...vetro },
+  sfumatura: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: raggio.m },
   bottoneAzione: { backgroundColor: colori.azione },
   bottoneTenue: {
     backgroundColor: colori.superficie,

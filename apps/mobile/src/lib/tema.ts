@@ -69,6 +69,54 @@ export const coloriModulo = {
   assicurazioni: '#34D399',
 } as const;
 
+/**
+ * Le sfumature.
+ *
+ * Una superficie piatta e' una superficie finta: due toni dello stesso colore,
+ * anche vicinissimi, bastano a far sembrare che la luce arrivi da qualche
+ * parte. Su fondo scuro e' la differenza fra una scheda e un rettangolo.
+ */
+export const gradienti = {
+  vendita: ['#2563EB', '#1E40AF'],
+  noleggio_breve: ['#EA580C', '#9A3412'],
+  noleggio_lungo: ['#9333EA', '#6B21A8'],
+  assicurazioni: ['#059669', '#065F46'],
+  /** L'intestazione: il fondo che si schiarisce appena verso l'alto. */
+  testa: ['#182133', '#0C1220'],
+  azione: ['#3B82F6', '#2563EB'],
+} as const;
+
+/**
+ * Il bagliore colorato sotto una tessera.
+ *
+ * Non e' un'ombra: e' la luce che il colore della tessera getta intorno a se'.
+ * Su Android sotto la 28 l'ombra resta nera, e va bene lo stesso.
+ */
+export function bagliore(colore: string, forza = 0.35): ViewStyle {
+  return Platform.select<ViewStyle>({
+    ios: {
+      shadowColor: colore,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: forza,
+      shadowRadius: 14,
+    },
+    android: { shadowColor: colore, elevation: 8 },
+    default: { boxShadow: `0 6px 18px ${colore}${Math.round(forza * 255).toString(16)}` } as ViewStyle,
+  })!;
+}
+
+/**
+ * La linea di luce in cima a una scheda.
+ *
+ * Un bordo chiaro di un pixel solo sul lato alto: e' il dettaglio che fa
+ * sembrare la scheda illuminata invece che dipinta. Costa niente e si nota
+ * solo quando manca.
+ */
+export const vetro: ViewStyle = {
+  borderTopWidth: 1,
+  borderTopColor: 'rgba(255,255,255,0.07)',
+};
+
 /** Lo stesso colore appena accennato, per i fondi delle pastiglie. */
 export const coloriModuloTenue = {
   vendita: '#152744',
