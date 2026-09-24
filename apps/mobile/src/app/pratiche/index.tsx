@@ -1,28 +1,48 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, StyleSheet, View } from 'react-native';
 import {
+  ETICHETTA_MODULO,
   ETICHETTA_STATO_PRATICA,
   quandoBreve,
   tab,
+  type Modulo,
   type StatoPratica,
   type TipoCliente,
 } from '@lab/shared';
 
-import { Filtri, Vuoto } from '@/components/base';
+import { Filtri, Iniziali, Pillola, Scheda, Vuoto } from '@/components/base';
+import { Icona, type NomeIcona } from '@/components/icone';
 import { Testo as Text } from '@/components/testo';
+import { urlFoto } from '@/lib/foto';
 import { supabase } from '@/lib/supabase';
-import { TOCCO_MINIMO, colori, raggio, spazi } from '@/lib/tema';
+import { colori, raggio, spazi, testi } from '@/lib/tema';
 
 interface RigaPratica {
   id: string;
   stato: StatoPratica;
+  modulo: Modulo;
   cliente_nome: string;
   cliente_tipo: TipoCliente;
   offerta_titolo: string | null;
   ultimo_messaggio: string | null;
   ultimo_contatto: string | null;
+  foto_path: string | null;
 }
+
+const ICONA_MODULO: Record<Modulo, NomeIcona> = {
+  vendita: 'auto',
+  noleggio_breve: 'calendario',
+  noleggio_lungo: 'cartellino',
+  assicurazioni: 'documento',
+};
+
+/** Gli stati che chiedono di fare qualcosa si vedono da lontano. */
+const TONO_STATO: Partial<Record<StatoPratica, 'attenzione' | 'successo'>> = {
+  da_richiamare: 'attenzione',
+  venduto: 'successo',
+  prenotato: 'successo',
+};
 
 /** L'ordine in cui il venditore li guarda: prima chi aspetta una risposta. */
 const ORDINE: StatoPratica[] = [
@@ -48,7 +68,7 @@ export default function Pratiche() {
         const { data, error } = await supabase
           .from(tab('pratica_elenco'))
           .select(
-            'id, stato, cliente_nome, cliente_tipo, offerta_titolo, ultimo_messaggio, ultimo_contatto'
+            'id, stato, modulo, cliente_nome, cliente_tipo, offerta_titolo, ultimo_messaggio, ultimo_contatto, foto_path'
           )
           .order('ultimo_contatto', { ascending: false, nullsFirst: false });
 
@@ -103,39 +123,67 @@ export default function Pratiche() {
           />
         }
         renderItem={({ item }) => (
-          <Pressable
-            onPress={() => router.push(`/pratiche/${item.id}`)}
-            style={({ pressed }) => [stili.riga, pressed && stili.premuta]}
-          >
-            <View style={stili.testa}>
-              <Text style={stili.nome} numberOfLines={1}>
-                {item.cliente_nome}
-              </Text>
-              {item.cliente_tipo === 'rivenditore' && (
-                <Text style={stili.etichettaRivenditore}>rivenditore</Text>
-              )}
-              <Text style={stili.quando}>{quandoBreve(item.ultimo_contatto)}</Text>
-            </View>
-
-            {item.offerta_titolo && (
-              <Text style={stili.offerta} numberOfLines={1}>
-                {item.offerta_titolo}
-              </Text>
-            )}
-
-            {item.ultimo_messaggio && (
-              <Text style={stili.messaggio} numberOfLines={2}>
-                {item.ultimo_messaggio}
-              </Text>
-            )}
-
-            <Text style={[stili.stato, item.stato === 'da_richiamare' && stili.statoUrgente]}>
-              {ETICHETTA_STATO_PRATICA[item.stato]}
-            </Text>
-          </Pressable>
+          <SchedaPratica item={item} onPress={() => router.push(`/pratiche/${item.id}`)} />
         )}
       />
     </View>
+  );
+}
+
+/**
+ * Una pratica a scheda.
+ *
+ * Il mezzo si riconosce prima dalla foto che dal titolo: chi scorre l'elenco
+ * per capire chi richiamare guarda l'auto, non la riga di testo. E' la stessa
+ * copertina che il cliente ha visto in pagina, quindi stanno guardando la
+ * stessa cosa.
+ */
+function SchedaPratica({ item, onPress }: { item: RigaPratica; onPress: () => void }) {
+  return (
+    <Scheda
+      onPress={onPress}
+      style={stili.scheda}
+      accessibilityLabel={`${item.cliente_nome}, ${ETICHETTA_STATO_PRATICA[item.stato]}`}
+    >
+      <View style={stili.testa}>
+        {item.foto_path ? (
+          <Image source={{ uri: urlFoto(item.foto_path) }} style={stili.foto} resizeMode="cover" />
+        ) : item.offerta_titolo ? (
+          <View style={[stili.foto, stili.senzaFoto]}>
+            <Icona nome={ICONA_MODULO[item.modulo]} dimensione={18} colore={colori.testoDebole} />
+          </View>
+        ) : (
+          <Iniziali
+            nome={item.cliente_nome}
+            tono={item.cliente_tipo === 'rivenditore' ? 'attenzione' : 'neutro'}
+          />
+        )}
+
+        <View style={stili.testi}>
+          <View style={stili.rigaNome}>
+            <Text style={stili.nome} numberOfLines={1}>
+              {item.cliente_nome}
+            </Text>
+            {item.cliente_tipo === 'rivenditore' && (
+              <Pillola testo="rivenditore" tono="attenzione" />
+            )}
+          </View>
+          <Text style={stili.offerta} numberOfLines={1}>
+            {item.offerta_titolo ?? ETICHETTA_MODULO[item.modulo]}
+          </Text>
+        </View>
+
+        <Text style={stili.quando}>{quandoBreve(item.ultimo_contatto)}</Text>
+      </View>
+
+      {item.ultimo_messaggio && (
+        <Text style={stili.messaggio} numberOfLines={2}>
+          {item.ultimo_messaggio}
+        </Text>
+      )}
+
+      <Pillola testo={ETICHETTA_STATO_PRATICA[item.stato]} tono={TONO_STATO[item.stato]} />
+    </Scheda>
   );
 }
 
@@ -143,28 +191,20 @@ const stili = StyleSheet.create({
   contenitore: { flex: 1, backgroundColor: colori.sfondo },
   centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
   lista: { paddingHorizontal: spazi.l, paddingBottom: spazi.xxl, gap: spazi.s },
-  riga: {
-    backgroundColor: colori.superficie,
-    borderWidth: 1,
-    borderColor: colori.bordoTenue,
-    borderRadius: raggio.m,
-    padding: spazi.l,
-    gap: spazi.xs,
-    minHeight: TOCCO_MINIMO,
+  scheda: { gap: spazi.s, padding: spazi.m, alignItems: 'flex-start' },
+  testa: { flexDirection: 'row', alignItems: 'center', gap: spazi.m, alignSelf: 'stretch' },
+  foto: {
+    width: 48,
+    height: 48,
+    borderRadius: raggio.s,
+    backgroundColor: colori.bordoTenue,
   },
-  premuta: { opacity: 0.8 },
-  testa: { flexDirection: 'row', alignItems: 'center', gap: spazi.s },
-  nome: { fontSize: 16, fontWeight: '700', color: colori.testo, flexShrink: 1 },
-  etichettaRivenditore: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colori.accento,
-    textTransform: 'uppercase',
-  },
-  quando: { fontSize: 12, color: colori.testoTenue, marginLeft: 'auto' },
-  offerta: { fontSize: 13, color: colori.primario, fontWeight: '600' },
+  senzaFoto: { alignItems: 'center', justifyContent: 'center' },
+  testi: { flex: 1, gap: 2 },
+  rigaNome: { flexDirection: 'row', alignItems: 'center', gap: spazi.s },
+  nome: { ...testi.corpo, fontWeight: '700', color: colori.testo, flexShrink: 1 },
+  offerta: { fontSize: 12, color: colori.testoTenue },
+  quando: { fontSize: 11, color: colori.testoDebole },
   messaggio: { fontSize: 13, color: colori.testoTenue, lineHeight: 18 },
-  stato: { fontSize: 12, fontWeight: '600', color: colori.testoTenue, marginTop: spazi.xs },
-  statoUrgente: { color: colori.accento },
   errore: { color: colori.errore, fontSize: 13, paddingBottom: spazi.s },
 });

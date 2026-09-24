@@ -37,10 +37,12 @@ export function Calendario({
   breve,
   occupati,
   codice,
+  slugVenditore,
 }: {
   breve: DatiNoleggioBreve;
   occupati: PeriodoOccupato[];
   codice: string;
+  slugVenditore: string;
 }) {
   const oggi = aGiorno(new Date());
   const primoMese = daGiorno(breve.disponibile_dal > oggi ? breve.disponibile_dal : oggi);
@@ -216,7 +218,16 @@ export function Calendario({
               <input type="checkbox" name="consenso" required className="mt-1 size-4" />
               <span>
                 Acconsento al trattamento dei miei dati per essere ricontattato riguardo a questa
-                prenotazione.
+                prenotazione.{' '}
+                <a
+                  href={`/${slugVenditore}/privacy`}
+                  target="_blank"
+                  rel="noopener"
+                  className="font-semibold underline"
+                >
+                  Come li trattiamo
+                </a>
+                .
               </span>
             </label>
 

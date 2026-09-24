@@ -120,6 +120,7 @@ export default async function PaginaNoleggioLungo({ params }: Props) {
           codice={codice}
           riservata={dati.pagina.tipo === 'riservata'}
           titolo={dati.offerta.titolo}
+          slugVenditore={venditore.slug}
         />
 
         <section className="border-bordo grid grid-cols-2 gap-2 border-t py-6">
@@ -206,6 +207,15 @@ export default async function PaginaNoleggioLungo({ params }: Props) {
             dangerouslySetInnerHTML={{ __html: qr }}
           />
         </section>
+
+        <footer className="border-bordo border-t py-6">
+          <a
+            href={`/${venditore.slug}/privacy`}
+            className="text-testo-tenue text-sm underline"
+          >
+            Come trattiamo i tuoi dati
+          </a>
+        </footer>
       </main>
 
       {venditore.whatsapp && (

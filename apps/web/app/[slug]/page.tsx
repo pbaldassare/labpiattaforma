@@ -120,6 +120,12 @@ export default async function Vetrina({ params, searchParams }: Props) {
       <footer className="border-bordo flex flex-col items-center gap-3 border-t py-10">
         <div className="size-32" aria-label="Codice QR di questa vetrina" dangerouslySetInnerHTML={{ __html: qr }} />
         <p className="text-testo-tenue text-sm">{indirizzo}</p>
+        <Link
+          href={`/${venditore.slug}/privacy`}
+          className="text-testo-tenue text-sm underline"
+        >
+          Come trattiamo i tuoi dati
+        </Link>
       </footer>
     </main>
   );

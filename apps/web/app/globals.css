@@ -24,6 +24,9 @@
   --tenue: #e9edf1;
   --testo-tenue: #475569;
   --bordo: #e2e8f0;
+  /* Lo stesso ambra dell'app: "guarda qui", distinto dal rosso dell'azione. */
+  --accento: #b45309;
+  --accento-tenue: #fef3c7;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -71,6 +74,8 @@
     --su-azione: #ffffff;
     --tenue: #1e293b;
     --testo-tenue: #94a3b8;
+    --accento: #fbbf24;
+    --accento-tenue: #422006;
     --bordo: #334155;
   }
 }
@@ -87,6 +92,8 @@
   --color-tenue: var(--tenue);
   --color-testo-tenue: var(--testo-tenue);
   --color-bordo: var(--bordo);
+  --color-accento: var(--accento);
+  --color-accento-tenue: var(--accento-tenue);
   --font-sans: var(--font-sans);
   --font-display: var(--font-titoli);
   --font-heading: var(--font-sans);

@@ -27,11 +27,13 @@ export function BloccoCanone({
   codice,
   riservata,
   titolo,
+  slugVenditore,
 }: {
   griglia: CellaCanone[];
   codice: string;
   riservata: boolean;
   titolo: string;
+  slugVenditore: string;
 }) {
   const durate = useMemo(() => durateDisponibili(griglia), [griglia]);
   const [durata, setDurata] = useState(durate[0] ?? 0);
@@ -57,7 +59,7 @@ export function BloccoCanone({
         <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
           Chiedi informazioni
         </h2>
-        <FormContatto codice={codice} riservata={riservata} />
+        <FormContatto codice={codice} riservata={riservata} slugVenditore={slugVenditore} />
       </section>
     );
   }
@@ -108,7 +110,12 @@ export function BloccoCanone({
         <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
           Richiedi il preventivo
         </h2>
-        <FormContatto codice={codice} riservata={riservata} messaggioIniziale={messaggio} />
+        <FormContatto
+          codice={codice}
+          riservata={riservata}
+          messaggioIniziale={messaggio}
+          slugVenditore={slugVenditore}
+        />
       </section>
     </>
   );

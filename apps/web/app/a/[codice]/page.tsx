@@ -166,6 +166,7 @@ export default async function PaginaAssicurazione({ params }: Props) {
             codice={codice}
             riservata={false}
             messaggioIniziale={`Vorrei un preventivo per ${a.nome_prodotto} di ${a.compagnia}.`}
+            slugVenditore={venditore.slug}
           />
         </section>
 
@@ -190,6 +191,15 @@ export default async function PaginaAssicurazione({ params }: Props) {
             dangerouslySetInnerHTML={{ __html: qr }}
           />
         </section>
+
+        <footer className="border-bordo border-t py-6">
+          <a
+            href={`/${venditore.slug}/privacy`}
+            className="text-testo-tenue text-sm underline"
+          >
+            Come trattiamo i tuoi dati
+          </a>
+        </footer>
       </main>
 
       {venditore.whatsapp && (

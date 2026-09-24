@@ -17,11 +17,14 @@ export function FormContatto({
   codice,
   riservata,
   messaggioIniziale,
+  slugVenditore,
 }: {
   codice: string;
   riservata: boolean;
   /** Precompilato dal noleggio lungo con la combinazione scelta (§6.2). */
   messaggioIniziale?: string;
+  /** Serve a puntare l'informativa del venditore giusto. */
+  slugVenditore?: string;
 }) {
   const [esito, azione] = useActionState(inviaContatto, INIZIALE);
 
@@ -102,6 +105,22 @@ export function FormContatto({
         <Label htmlFor="consenso" className="text-testo-tenue text-sm leading-snug font-normal">
           Acconsento al trattamento dei miei dati per essere ricontattato riguardo a questa
           offerta.
+          {/* Un consenso senza informativa non e' un consenso: il link deve
+              stare qui, dove si spunta, non solo in fondo alla pagina. */}
+          {slugVenditore && (
+            <>
+              {' '}
+              <a
+                href={`/${slugVenditore}/privacy`}
+                target="_blank"
+                rel="noopener"
+                className="font-semibold underline"
+              >
+                Come li trattiamo
+              </a>
+              .
+            </>
+          )}
         </Label>
       </div>
 

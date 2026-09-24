@@ -201,7 +201,11 @@ export default async function PaginaVendita({ params }: Props) {
           <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
             Chiedi informazioni
           </h2>
-          <FormContatto codice={codice} riservata={dati.pagina.tipo === 'riservata'} />
+          <FormContatto
+            codice={codice}
+            riservata={dati.pagina.tipo === 'riservata'}
+            slugVenditore={venditore.slug}
+          />
         </section>
 
         <section className="border-bordo flex items-center gap-4 border-t py-6">
@@ -222,6 +226,15 @@ export default async function PaginaVendita({ params }: Props) {
             dangerouslySetInnerHTML={{ __html: qr }}
           />
         </section>
+
+        <footer className="border-bordo border-t py-6">
+          <a
+            href={`/${venditore.slug}/privacy`}
+            className="text-testo-tenue text-sm underline"
+          >
+            Come trattiamo i tuoi dati
+          </a>
+        </footer>
       </main>
 
       {venditore.whatsapp && (

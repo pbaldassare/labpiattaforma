@@ -119,7 +119,12 @@ export default async function PaginaNoleggioBreve({ params }: Props) {
           <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
             Quando ti serve
           </h2>
-          <Calendario breve={breve} occupati={occupati} codice={codice} />
+          <Calendario
+            breve={breve}
+            occupati={occupati}
+            codice={codice}
+            slugVenditore={venditore.slug}
+          />
         </section>
 
         <section className="border-bordo grid grid-cols-2 gap-2 border-t py-6">
@@ -182,6 +187,15 @@ export default async function PaginaNoleggioBreve({ params }: Props) {
             dangerouslySetInnerHTML={{ __html: qr }}
           />
         </section>
+
+        <footer className="border-bordo border-t py-6">
+          <a
+            href={`/${venditore.slug}/privacy`}
+            className="text-testo-tenue text-sm underline"
+          >
+            Come trattiamo i tuoi dati
+          </a>
+        </footer>
       </main>
 
       {venditore.whatsapp && (
