@@ -6,3 +6,4 @@ export * from './pratica';
 export * from './noleggio-lungo';
 export * from './assicurazione';
 export * from './noleggio-breve';
+export * from './acquisti';

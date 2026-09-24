@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import {
+  eModuloEsaurito,
   ETICHETTA_RISCHIO,
   GARANZIE_AUTO_PROPOSTE,
   TIPI_RISCHIO,
@@ -99,6 +100,12 @@ export default function NuovaAssicurazione() {
 
     setInCorso(false);
     if (error) {
+      // Operazioni gratuite finite: il blocco e' una schermata a se', non un
+      // messaggio rosso sotto un campo (§8.5).
+      if (eModuloEsaurito(error.message)) {
+        router.push({ pathname: '/blocco', params: { modulo: 'assicurazioni' } });
+        return;
+      }
       setErrore(
         error.message.includes('rui_mancante')
           ? 'Per pubblicare una polizza serve il tuo numero RUI. Aggiungilo nel profilo, oppure salva come bozza.'

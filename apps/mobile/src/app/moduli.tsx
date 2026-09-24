@@ -69,6 +69,17 @@ export default function Moduli() {
     }, [])
   );
 
+  /** Modulo finito: si apre il blocco, non un form che poi rifiuta. */
+  function apri(m: StatoModulo) {
+    const esaurito =
+      m.acquistato_fino_a == null && m.utilizzi_consumati >= m.utilizzi_inclusi;
+    if (esaurito) {
+      router.push({ pathname: '/blocco', params: { modulo: m.modulo } });
+      return;
+    }
+    router.push(DOVE[m.modulo]);
+  }
+
   if (!caricato) {
     return (
       <View style={stili.centrato}>
@@ -88,9 +99,7 @@ export default function Moduli() {
         <SchedaModulo
           key={m.modulo}
           stato={m}
-          onPress={
-            PRONTO[m.modulo] ? () => router.push(DOVE[m.modulo]) : undefined
-          }
+          onPress={PRONTO[m.modulo] ? () => apri(m) : undefined}
         />
       ))}
     </ScrollView>

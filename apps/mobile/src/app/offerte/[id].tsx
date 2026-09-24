@@ -1,7 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams , useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
+
 import {
   ActivityIndicator,
   Pressable,
@@ -22,7 +22,7 @@ import {
   type TipoPagina,
 } from '@lab/shared';
 
-import { fn, tab } from '@lab/shared';
+import { tab } from '@lab/shared';
 import { Fotografie, type Foto } from '@/components/foto';
 import { Sezione } from '@/components/modulo';
 import { supabase } from '@/lib/supabase';

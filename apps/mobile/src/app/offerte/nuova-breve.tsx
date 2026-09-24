@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { aGiorno, aggiungiGiorni, analizzaEuro, fn, formattaEuro } from '@lab/shared';
+import { eModuloEsaurito, aGiorno, aggiungiGiorni, analizzaEuro, fn, formattaEuro } from '@lab/shared';
 
 import { Scheda } from '@/components/base';
 import { Bottone, Campo, Input, Scelta, Sezione } from '@/components/modulo';
@@ -74,6 +74,12 @@ export default function NuovaBreve() {
 
     setInCorso(false);
     if (error) {
+      // Operazioni gratuite finite: il blocco e' una schermata a se', non un
+      // messaggio rosso sotto un campo (§8.5).
+      if (eModuloEsaurito(error.message)) {
+        router.push({ pathname: '/blocco', params: { modulo: 'noleggio_breve' } });
+        return;
+      }
       setErrore(
         error.message.includes('modello_obbligatorio')
           ? 'Il modello è obbligatorio.'

@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import {
+  eModuloEsaurito,
   ETICHETTA_SERVIZIO,
   SERVIZI,
   analizzaEuro,
@@ -118,6 +119,12 @@ export default function NuovaOffertaLungo() {
 
     setInCorso(false);
     if (error) {
+      // Operazioni gratuite finite: il blocco e' una schermata a se', non un
+      // messaggio rosso sotto un campo (§8.5).
+      if (eModuloEsaurito(error.message)) {
+        router.push({ pathname: '/blocco', params: { modulo: 'noleggio_lungo' } });
+        return;
+      }
       setErrore(
         error.message.includes('marca_e_modello_obbligatori')
           ? 'Marca e modello sono obbligatori.'

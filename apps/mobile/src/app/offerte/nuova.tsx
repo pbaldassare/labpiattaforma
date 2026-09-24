@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Testo as Text } from '@/components/testo';
 import {
+  eModuloEsaurito,
   ETICHETTA_ALIMENTAZIONE,
   ETICHETTA_CAMBIO,
   ETICHETTA_FORMULA,
@@ -23,7 +24,7 @@ import {
 } from '@lab/shared';
 
 import { Bottone, Campo, Input, Scelta, Sezione } from '@/components/modulo';
-import { fn, tab } from '@lab/shared';
+import { fn } from '@lab/shared';
 import { supabase } from '@/lib/supabase';
 import { colori, raggio, spazi } from '@/lib/tema';
 
@@ -129,6 +130,12 @@ export default function NuovaOfferta() {
     setInCorso(false);
 
     if (error) {
+      // Operazioni gratuite finite: il blocco e' una schermata a se', non un
+      // messaggio rosso sotto un campo (§8.5).
+      if (eModuloEsaurito(error.message)) {
+        router.push({ pathname: '/blocco', params: { modulo: 'vendita' } });
+        return;
+      }
       setErrore(
         error.message === 'marca_e_modello_obbligatori'
           ? 'Marca e modello sono obbligatori.'
