@@ -7,9 +7,18 @@ import {
   View,
   type TextInputProps,
 } from 'react-native';
-import { Testo as Text } from '@/components/testo';
 
-import { TOCCO_MINIMO, caratteri, colori, raggio, spazi } from '@/lib/tema';
+import { Icona, type NomeIcona } from '@/components/icone';
+import { Testo as Text } from '@/components/testo';
+import {
+  TOCCO_MINIMO,
+  caratteri,
+  colori,
+  elevazione,
+  raggio,
+  spazi,
+  testi,
+} from '@/lib/tema';
 
 /**
  * Pezzi di modulo condivisi fra le schermate.
@@ -50,7 +59,7 @@ export function Input({ style, ...resto }: TextInputProps) {
   return (
     <TextInput
       style={[stili.input, style]}
-      placeholderTextColor={colori.testoTenue}
+      placeholderTextColor={colori.testoDebole}
       {...resto}
     />
   );
@@ -76,7 +85,11 @@ export function Scelta<T extends string>({
           <Pressable
             key={o.valore}
             onPress={() => onCambia(attiva && consentiVuoto ? null : o.valore)}
-            style={[stili.scelta, attiva && stili.sceltaAttiva]}
+            style={({ pressed }) => [
+              stili.scelta,
+              attiva && stili.sceltaAttiva,
+              pressed && stili.premuto,
+            ]}
             accessibilityRole="button"
             accessibilityState={{ selected: attiva }}
           >
@@ -90,44 +103,80 @@ export function Scelta<T extends string>({
   );
 }
 
+type Tipo = 'pieno' | 'azione' | 'tenue' | 'nudo';
+
+/**
+ * Un solo pulsante d'azione per schermata, come chiede il pattern della
+ * direzione grafica: "azione" è rosso e va usato per il gesto che chiude il
+ * lavoro, "pieno" per tutto il resto.
+ */
 export function Bottone({
   testo,
   onPress,
+  tipo = 'pieno',
+  icona,
   inCorso,
   disabilitato,
+  /** Retrocompatibilità: `tenue` era un booleano. */
   tenue,
 }: {
   testo: string;
   onPress: () => void;
+  tipo?: Tipo;
+  icona?: NomeIcona;
   inCorso?: boolean;
   disabilitato?: boolean;
   tenue?: boolean;
 }) {
+  const scelto: Tipo = tenue ? 'tenue' : tipo;
   const spento = disabilitato || inCorso;
+  const colorePrimoPiano =
+    scelto === 'tenue' || scelto === 'nudo' ? colori.primario : colori.suPrimario;
+
   return (
     <Pressable
       onPress={onPress}
       disabled={spento}
       accessibilityRole="button"
+      accessibilityState={{ disabled: !!spento }}
       style={({ pressed }) => [
-        tenue ? stili.bottoneTenue : stili.bottone,
+        stili.bottone,
+        scelto === 'pieno' && stili.bottonePieno,
+        scelto === 'azione' && stili.bottoneAzione,
+        scelto === 'tenue' && stili.bottoneTenue,
+        scelto === 'nudo' && stili.bottoneNudo,
+        (scelto === 'pieno' || scelto === 'azione') && !spento && elevazione.bassa,
         pressed && !spento && stili.premuto,
         spento && stili.spento,
       ]}
     >
       {inCorso ? (
-        <ActivityIndicator color={tenue ? colori.primario : colori.suPrimario} />
+        <ActivityIndicator color={colorePrimoPiano} />
       ) : (
-        <Text style={tenue ? stili.bottoneTenueTesto : stili.bottoneTesto}>{testo}</Text>
+        <>
+          {icona && <Icona nome={icona} dimensione={18} colore={colorePrimoPiano} />}
+          <Text style={[stili.bottoneTesto, { color: colorePrimoPiano }]}>{testo}</Text>
+        </>
       )}
     </Pressable>
   );
 }
 
-export function Sezione({ titolo, children }: { titolo: string; children: ReactNode }) {
+export function Sezione({
+  titolo,
+  azione,
+  children,
+}: {
+  titolo: string;
+  azione?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <View style={stili.sezione}>
-      <Text style={stili.titoloSezione}>{titolo}</Text>
+      <View style={stili.testaSezione}>
+        <Text style={stili.titoloSezione}>{titolo}</Text>
+        {azione}
+      </View>
       {children}
     </View>
   );
@@ -136,62 +185,60 @@ export function Sezione({ titolo, children }: { titolo: string; children: ReactN
 const stili = StyleSheet.create({
   campo: { gap: spazi.xs },
   etichetta: { fontSize: 13, fontWeight: '600', color: colori.testo },
-  obbligatorio: { color: colori.accento },
-  aiuto: { fontSize: 12, color: colori.testoTenue, lineHeight: 17 },
+  obbligatorio: { color: colori.azione },
+  aiuto: { fontSize: 12, lineHeight: 17, color: colori.testoTenue },
   errore: { fontSize: 12, color: colori.errore },
+
   input: {
-    fontFamily: caratteri.normale,
-    minHeight: TOCCO_MINIMO,
+    minHeight: TOCCO_MINIMO + 4,
     backgroundColor: colori.superficie,
     borderWidth: 1,
     borderColor: colori.bordo,
     borderRadius: raggio.m,
-    paddingHorizontal: spazi.m,
-    paddingVertical: spazi.s,
+    paddingHorizontal: spazi.l,
+    paddingVertical: spazi.m,
     fontSize: 16,
     color: colori.testo,
+    fontFamily: caratteri.normale,
   },
+
   scelte: { flexDirection: 'row', flexWrap: 'wrap', gap: spazi.s },
   scelta: {
     minHeight: TOCCO_MINIMO,
     justifyContent: 'center',
     paddingHorizontal: spazi.l,
-    borderRadius: raggio.m,
+    borderRadius: raggio.tondo,
     borderWidth: 1,
     borderColor: colori.bordo,
     backgroundColor: colori.superficie,
   },
   sceltaAttiva: { backgroundColor: colori.primario, borderColor: colori.primario },
-  sceltaTesto: { fontSize: 15, color: colori.testo },
+  sceltaTesto: { fontSize: 14, fontWeight: '500', color: colori.testo },
   sceltaTestoAttivo: { color: colori.suPrimario, fontWeight: '600' },
+
   bottone: {
-    minHeight: TOCCO_MINIMO,
-    backgroundColor: colori.primario,
-    borderRadius: raggio.m,
+    minHeight: TOCCO_MINIMO + 4,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spazi.l,
-  },
-  bottoneTesto: { color: colori.suPrimario, fontSize: 16, fontWeight: '600' },
-  bottoneTenue: {
-    minHeight: TOCCO_MINIMO,
+    gap: spazi.s,
     borderRadius: raggio.m,
+    paddingHorizontal: spazi.xl,
+  },
+  bottonePieno: { backgroundColor: colori.primario },
+  bottoneAzione: { backgroundColor: colori.azione },
+  bottoneTenue: {
+    backgroundColor: colori.superficie,
     borderWidth: 1,
     borderColor: colori.bordo,
-    backgroundColor: colori.superficie,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spazi.l,
   },
-  bottoneTenueTesto: { color: colori.primario, fontSize: 15, fontWeight: '600' },
-  premuto: { opacity: 0.85 },
-  spento: { opacity: 0.5 },
-  sezione: { gap: spazi.m, paddingTop: spazi.l },
-  titoloSezione: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: colori.testoTenue,
-  },
+  bottoneNudo: { backgroundColor: 'transparent' },
+  bottoneTesto: { fontSize: 16, fontWeight: '600' },
+
+  premuto: { opacity: 0.75 },
+  spento: { opacity: 0.4 },
+
+  sezione: { gap: spazi.m, paddingTop: spazi.xl },
+  testaSezione: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  titoloSezione: { ...testi.etichetta, color: colori.testoTenue },
 });
