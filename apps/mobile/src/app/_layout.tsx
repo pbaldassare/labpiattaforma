@@ -7,11 +7,44 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
 
+import { Icona } from '@/components/icone';
 import { supabase } from '@/lib/supabase';
-import { colori } from '@/lib/tema';
+import { colori, raggio } from '@/lib/tema';
+
+/**
+ * Il tasto per tornare alla home da qualunque punto.
+ *
+ * Usa `navigate` e non `push`: se la home e' gia' nella pila ci torna sopra
+ * invece di impilarne una seconda, altrimenti dopo dieci tocchi il tasto
+ * indietro dovrebbe attraversare dieci home.
+ */
+function TastoCasa() {
+  const router = useRouter();
+  return (
+    <Pressable
+      onPress={() => router.navigate('/')}
+      accessibilityRole="button"
+      accessibilityLabel="Torna alla home"
+      hitSlop={8}
+      style={({ pressed }) => [
+        {
+          width: 36,
+          height: 36,
+          borderRadius: raggio.tondo,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colori.bordoTenue,
+        },
+        pressed && { opacity: 0.6 },
+      ]}
+    >
+      <Icona nome="casa" dimensione={18} colore={colori.primario} />
+    </Pressable>
+  );
+}
 
 export default function Layout() {
   const [sessione, setSessione] = useState<Session | null>(null);
@@ -63,11 +96,17 @@ export default function Layout() {
 
   return (
     <Stack
-      screenOptions={{
+      // Il tasto casa sta nell'intestazione, su ogni schermata tranne la home
+      // stessa: e' l'unico posto sempre visibile che non copre niente e non
+      // litiga con le barre in fondo (i form, l'elenco offerte) ne' con la
+      // tastiera aperta.
+      screenOptions={({ route }) => ({
         headerStyle: { backgroundColor: colori.sfondo },
         headerTintColor: colori.testo,
         contentStyle: { backgroundColor: colori.sfondo },
-      }}
+        headerRight:
+          route.name === 'index' || route.name === 'accedi' ? undefined : () => <TastoCasa />,
+      })}
     >
       <Stack.Screen name="accedi" options={{ title: 'Accedi', headerShown: false }} />
       <Stack.Screen name="index" options={{ title: 'Lab Piattaforma' }} />

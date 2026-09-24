@@ -17,6 +17,7 @@ import type { ComponentProps } from 'react';
 type NomeFeather = ComponentProps<typeof Feather>['name'];
 
 const MAPPA = {
+  casa: 'home',
   negozio: 'shopping-bag',
   apri: 'external-link',
   auto: 'truck',

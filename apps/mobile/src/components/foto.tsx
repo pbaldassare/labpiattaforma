@@ -12,6 +12,9 @@ import { urlFoto } from '@/lib/foto';
 import { supabase } from '@/lib/supabase';
 import { colori, raggio, spazi, testi } from '@/lib/tema';
 
+/** Fuori da qualunque ordine reale: serve solo mentre si riordina. */
+const PARCHEGGIO = 1000;
+
 export interface Foto {
   id: string;
   path: string;
@@ -117,11 +120,13 @@ export function Fotografie({
     setInCorso(true);
     const riordinate = [f, ...foto.filter((x) => x.id !== f.id)];
     for (let i = 0; i < riordinate.length; i++) {
-      // Ordini negativi come passaggio intermedio: il vincolo di unicita' su
+      // Un passaggio intermedio fuori portata: il vincolo di unicita' su
       // (offerta, ordine) non permette di scambiare due valori direttamente.
+      // Non valori negativi, che il vincolo `ordine >= 0` rifiuta: con quelli
+      // il cambio di copertina falliva in silenzio.
       await supabase
         .from(tab('offerta_foto'))
-        .update({ ordine: -1 - i })
+        .update({ ordine: PARCHEGGIO + i })
         .eq('id', riordinate[i]!.id);
     }
     for (let i = 0; i < riordinate.length; i++) {
