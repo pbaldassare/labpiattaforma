@@ -130,8 +130,10 @@ export function Bottone({
 }) {
   const scelto: Tipo = tenue ? 'tenue' : tipo;
   const spento = disabilitato || inCorso;
+  // Sul fondo scuro dei bottoni tenui il blu pieno starebbe sotto il contrasto
+  // minimo: li' serve la versione accesa. Il pieno regge solo sotto il bianco.
   const colorePrimoPiano =
-    scelto === 'tenue' || scelto === 'nudo' ? colori.primario : colori.suPrimario;
+    scelto === 'tenue' || scelto === 'nudo' ? colori.primarioChiaro : colori.suPrimario;
 
   return (
     <Pressable

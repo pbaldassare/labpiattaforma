@@ -7,44 +7,45 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  Token delle landing — direzione "Hero-Centric".
-  Volutamente diversi da quelli dell'app venditore: qui si deve vendere,
-  nell'app si deve lavorare.
+  Token delle landing — stessa famiglia dell'app: cruscotto notturno.
+  Il fondo scuro fa risaltare le foto dei mezzi, che sono il contenuto vero
+  della pagina: su bianco competono con la pagina, su nero stanno da sole.
+  Il rosso resta l'unica azione forte, e su questo fondo si vede da lontano.
 */
 :root {
-  --sfondo: #f8fafc;
-  --testo: #0f172a;
-  --superficie: #ffffff;
-  --testo-superficie: #0f172a;
-  --primario: #1e293b;
+  --sfondo: #0a0e17;
+  --testo: #f1f5f9;
+  --superficie: #141a26;
+  --testo-superficie: #f1f5f9;
+  --primario: #2563eb;
   --su-primario: #ffffff;
-  --secondario: #334155;
+  --secondario: #1d2534;
   --azione: #dc2626;
   --su-azione: #ffffff;
-  --tenue: #e9edf1;
-  --testo-tenue: #475569;
-  --bordo: #e2e8f0;
+  --tenue: #1b2333;
+  --testo-tenue: #a3b1c6;
+  --bordo: #27324a;
   /* Lo stesso ambra dell'app: "guarda qui", distinto dal rosso dell'azione. */
-  --accento: #b45309;
-  --accento-tenue: #fef3c7;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --accento: #fbbf24;
+  --accento-tenue: #3b2f0b;
+  --background: #0a0e17;
+  --foreground: #f1f5f9;
+  --card: #141a26;
+  --card-foreground: #f1f5f9;
+  --popover: #141a26;
+  --popover-foreground: #f1f5f9;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #1d2534;
+  --secondary-foreground: #f1f5f9;
+  --muted: #1b2333;
+  --muted-foreground: #a3b1c6;
+  --accent: #1d2534;
+  --accent-foreground: #f1f5f9;
+  --destructive: #ef4444;
+  --border: #27324a;
+  --input: #27324a;
+  --ring: #60a5fa;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -61,24 +62,10 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --sfondo: #0f172a;
-    --testo: #f8fafc;
-    --superficie: #1e293b;
-    --testo-superficie: #f8fafc;
-    --primario: #f8fafc;
-    --su-primario: #0f172a;
-    --secondario: #cbd5e1;
-    --azione: #ef4444;
-    --su-azione: #ffffff;
-    --tenue: #1e293b;
-    --testo-tenue: #94a3b8;
-    --accento: #fbbf24;
-    --accento-tenue: #422006;
-    --bordo: #334155;
-  }
-}
+/*
+  Niente blocco per il tema scuro del sistema: la pagina e' scura sempre, e un
+  secondo scuro leggermente diverso farebbe solo litigare i due.
+*/
 
 @theme inline {
   --color-sfondo: var(--sfondo);

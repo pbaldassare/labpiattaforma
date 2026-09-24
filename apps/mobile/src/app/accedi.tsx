@@ -243,7 +243,7 @@ const stili = StyleSheet.create({
   campo: { gap: spazi.xs },
   rigaEtichetta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   etichetta: { fontSize: 13, fontWeight: '600', color: colori.testo },
-  dimenticata: { fontSize: 13, fontWeight: '600', color: colori.primario },
+  dimenticata: { fontSize: 13, fontWeight: '600', color: colori.primarioChiaro },
   input: {
     fontFamily: caratteri.normale,
     minHeight: TOCCO_MINIMO,
@@ -267,7 +267,7 @@ const stili = StyleSheet.create({
     justifyContent: 'center',
   },
   errore: { color: colori.errore, fontSize: 14 },
-  avviso: { color: colori.primario, fontSize: 14, lineHeight: 20 },
+  avviso: { color: colori.primarioChiaro, fontSize: 14, lineHeight: 20 },
   bottone: {
     minHeight: TOCCO_MINIMO,
     backgroundColor: colori.primario,
@@ -279,5 +279,5 @@ const stili = StyleSheet.create({
   bottonePremuto: { opacity: 0.85 },
   bottoneTesto: { color: colori.suPrimario, fontSize: 16, fontWeight: '600' },
   cambioModo: { minHeight: TOCCO_MINIMO, alignItems: 'center', justifyContent: 'center' },
-  cambioModoTesto: { color: colori.primario, fontSize: 14, fontWeight: '600' },
+  cambioModoTesto: { color: colori.primarioChiaro, fontSize: 14, fontWeight: '600' },
 });

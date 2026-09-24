@@ -12,7 +12,7 @@ import { Pillola, Scheda } from '@/components/base';
 import { Icona, type NomeIcona } from '@/components/icone';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
-import { colori, raggio, spazi, testi } from '@/lib/tema';
+import { colori, coloriModulo, coloriModuloTenue, raggio, spazi, testi } from '@/lib/tema';
 
 interface StatoModulo {
   modulo: Modulo;
@@ -119,11 +119,17 @@ function SchedaModulo({ stato, onPress }: { stato: StatoModulo; onPress?: () => 
       accessibilityLabel={ETICHETTA_MODULO[stato.modulo]}
     >
       <View style={stili.testa}>
-        <View style={[stili.quadrato, inArrivo && stili.quadratoSpento]}>
+        <View
+          style={[
+            stili.quadrato,
+            { backgroundColor: coloriModuloTenue[stato.modulo] },
+            inArrivo && stili.quadratoSpento,
+          ]}
+        >
           <Icona
             nome={ICONA[stato.modulo]}
             dimensione={22}
-            colore={inArrivo ? colori.testoDebole : colori.suPrimario}
+            colore={inArrivo ? colori.testoDebole : coloriModulo[stato.modulo]}
           />
         </View>
         <View style={stili.testi}>
@@ -152,6 +158,7 @@ function SchedaModulo({ stato, onPress }: { stato: StatoModulo; onPress?: () => 
                   <View
                     style={[
                       stili.barraPiena,
+                      { backgroundColor: coloriModulo[stato.modulo] },
                       {
                         width: `${Math.min(100, (stato.utilizzi_consumati / Math.max(1, stato.utilizzi_inclusi)) * 100)}%`,
                       },
@@ -195,7 +202,6 @@ const stili = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: raggio.m,
-    backgroundColor: colori.primario,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -217,7 +223,7 @@ const stili = StyleSheet.create({
     backgroundColor: colori.bordoTenue,
     overflow: 'hidden',
   },
-  barraPiena: { height: 4, borderRadius: raggio.tondo, backgroundColor: colori.primario },
+  barraPiena: { height: 4, borderRadius: raggio.tondo },
   barraEsaurita: { backgroundColor: colori.azione },
   residui: { fontSize: 11, color: colori.testoTenue },
   residuiPochi: { color: colori.accento, fontWeight: '600' },

@@ -178,12 +178,13 @@ function Grande({
   icona: NomeIcona;
   tono?: 'accento';
 }) {
-  const colore = tono === 'accento' ? colori.accento : colori.primario;
+  const colore = tono === 'accento' ? colori.accento : colori.primarioChiaro;
   return (
     <Scheda rilievo="media" style={stili.grande}>
       <View style={stili.grandeTesta}>
+        {/* Icona scura sul colore acceso: il bianco su questi toni si perde. */}
         <View style={[stili.pastiglia, { backgroundColor: colore }]}>
-          <Icona nome={icona} dimensione={18} colore={colori.suPrimario} />
+          <Icona nome={icona} dimensione={18} colore={colori.sfondo} />
         </View>
         <Text style={stili.grandeEtichetta}>{etichetta}</Text>
       </View>

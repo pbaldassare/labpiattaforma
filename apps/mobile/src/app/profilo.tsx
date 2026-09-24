@@ -283,10 +283,10 @@ const stili = StyleSheet.create({
     color: colori.testo,
   },
   inputAlto: { minHeight: TOCCO_MINIMO * 2, textAlignVertical: 'top' },
-  anteprimaUrl: { fontSize: 13, color: colori.primario, fontWeight: '600' },
+  anteprimaUrl: { fontSize: 13, color: colori.primarioChiaro, fontWeight: '600' },
   aiuto: { fontSize: 12, color: colori.testoTenue, lineHeight: 17 },
   errore: { color: colori.errore, fontSize: 13 },
-  avviso: { color: colori.primario, fontSize: 13, fontWeight: '600' },
+  avviso: { color: colori.primarioChiaro, fontSize: 13, fontWeight: '600' },
   bottone: {
     minHeight: TOCCO_MINIMO,
     backgroundColor: colori.primario,

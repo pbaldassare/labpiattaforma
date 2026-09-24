@@ -389,7 +389,7 @@ const stili = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  segnoSi: { backgroundColor: '#DCFCE7' },
+  segnoSi: { backgroundColor: colori.successoTenue },
   segnoNo: { backgroundColor: colori.bordoTenue },
   garanziaNome: { ...testi.corpo, color: colori.testo, flex: 1 },
   garanziaEsclusa: { color: colori.testoTenue, textDecorationLine: 'line-through' },

@@ -16,7 +16,7 @@ import { Icona, type NomeIcona } from '@/components/icone';
 import { Testo as Text } from '@/components/testo';
 import { urlFoto } from '@/lib/foto';
 import { supabase } from '@/lib/supabase';
-import { colori, raggio, spazi, testi } from '@/lib/tema';
+import { colori, coloriModulo, coloriModuloTenue, raggio, spazi, testi } from '@/lib/tema';
 
 interface RigaPratica {
   id: string;
@@ -149,8 +149,18 @@ function SchedaPratica({ item, onPress }: { item: RigaPratica; onPress: () => vo
         {item.foto_path ? (
           <Image source={{ uri: urlFoto(item.foto_path) }} style={stili.foto} resizeMode="cover" />
         ) : item.offerta_titolo ? (
-          <View style={[stili.foto, stili.senzaFoto]}>
-            <Icona nome={ICONA_MODULO[item.modulo]} dimensione={18} colore={colori.testoDebole} />
+          <View
+            style={[
+              stili.foto,
+              stili.senzaFoto,
+              { backgroundColor: coloriModuloTenue[item.modulo] },
+            ]}
+          >
+            <Icona
+              nome={ICONA_MODULO[item.modulo]}
+              dimensione={18}
+              colore={coloriModulo[item.modulo]}
+            />
           </View>
         ) : (
           <Iniziali

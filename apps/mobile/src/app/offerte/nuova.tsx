@@ -429,7 +429,7 @@ const stili = StyleSheet.create({
   },
   rigaMargine: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   margineEtichetta: { fontSize: 13, color: colori.testoTenue },
-  margineValore: { fontSize: 17, fontWeight: '700', color: colori.primario },
+  margineValore: { fontSize: 17, fontWeight: '700', color: colori.primarioChiaro },
   marginePerdita: { color: colori.errore },
   formule: { gap: spazi.s },
   nota: { fontSize: 12, color: colori.testoTenue, lineHeight: 17 },

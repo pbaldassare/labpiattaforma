@@ -15,7 +15,7 @@ import { Bottone } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { urlFoto } from '@/lib/foto';
 import { supabase } from '@/lib/supabase';
-import { colori, raggio, spazi, testi } from '@/lib/tema';
+import { colori, coloriModulo, coloriModuloTenue, raggio, spazi, testi } from '@/lib/tema';
 
 interface RigaOfferta {
   id: string;
@@ -168,8 +168,12 @@ function SchedaOfferta({ item, onPress }: { item: RigaOfferta; onPress: () => vo
             resizeMode="cover"
           />
         ) : (
-          <View style={stili.senzaFoto}>
-            <Icona nome={ICONA_MODULO[item.modulo]} dimensione={20} colore={colori.testoDebole} />
+          <View style={[stili.senzaFoto, { backgroundColor: coloriModuloTenue[item.modulo] }]}>
+            <Icona
+              nome={ICONA_MODULO[item.modulo]}
+              dimensione={20}
+              colore={coloriModulo[item.modulo]}
+            />
           </View>
         )}
         {item.quante_foto > 1 && (
@@ -183,7 +187,7 @@ function SchedaOfferta({ item, onPress }: { item: RigaOfferta; onPress: () => vo
         <Text style={stili.titolo} numberOfLines={1}>
           {item.titolo}
         </Text>
-        <Text style={stili.modulo} numberOfLines={1}>
+        <Text style={[stili.modulo, { color: coloriModulo[item.modulo] }]} numberOfLines={1}>
           {ETICHETTA_MODULO[item.modulo]}
         </Text>
         {numero && (

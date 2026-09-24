@@ -5,9 +5,32 @@ elenca i punti in cui l'implementazione se ne discosta di proposito, con il
 motivo: senza, al prossimo aggiornamento della direzione qualcuno li
 "correggerebbe" riportando indietro i problemi.
 
-## App venditore
+## Tutte e due le superfici
 
-**Niente teal: l'app usa il grafite delle landing.**
+**Cruscotto notturno: fondo scuro e un colore per modulo.**
+La direzione generata propone, per l'automotive, grafite `#1E293B` e rosso su
+fondo chiaro. È corretta ma anonima: sembra un gestionale. La versione che
+usiamo è scura — fondo `#0A0E17`, superfici che salgono di tono — con blu
+elettrico `#2563EB` come azione e ambra `#FBBF24` per l'attenzione.
+
+I colori non sono decorazione. Ogni modulo ha il suo (vendita blu, noleggio
+breve arancio, noleggio lungo viola, assicurazioni verde), così una schermata
+che ne mostra quattro insieme si legge senza leggere. Non portano mai da soli
+un'informazione: accanto c'è sempre l'icona e il nome scritto, perché chi
+confonde i colori deve poter usare l'app lo stesso.
+
+Sulle landing il fondo scuro serve alle foto: un'auto su bianco compete con la
+pagina, su nero sta da sola.
+
+**Due cose da sapere prima di cambiare idea.**
+Il blu pieno regge solo sotto il bianco: come testo o icona su fondo scuro sta
+sotto 4,5:1, e lì va usato `#60A5FA`. E lo scuro, sotto il sole in piazzale,
+legge peggio del chiaro: se il venditore se ne lamenta la strada è un tema
+chiaro gemello, non buttare via questi colori.
+
+## Storia: perché non il teal
+
+**Niente teal: prima l'app aveva preso il grafite delle landing.**
 La prima versione seguiva il profilo "strumento di lavoro" della direzione
 generata, che propone un teal. Era sbagliata per due motivi. Il verde acqua su
 un'applicazione di compravendita auto stona, e basta guardarla per accorgersene.
@@ -15,9 +38,9 @@ E faceva sembrare l'app e le pagine pubbliche due prodotti diversi, mentre sono
 lo stesso: il venditore passa dall'una alle altre tutto il giorno.
 
 Il profilo *Automotive* della stessa direzione propone grafite `#1E293B` e
-rosso, ed è quello giusto per entrambe le superfici. Lo sfondo `#F8FAFC` resta
-appena tinto di blu-grigio invece che bianco puro: distingue la pagina dalle
-schede senza dover disegnare bordi ovunque.
+rosso: è stato il passo intermedio, prima dello scuro descritto qui sopra. La
+regola che resta valida è quella: app e pagine pubbliche sono lo stesso
+prodotto, e il venditore ci passa in mezzo tutto il giorno.
 
 **L'ambra `#B45309` per ciò che chiede attenzione.**
 Una pratica da richiamare, un cliente rivenditore. Tenuta distinta dal rosso,

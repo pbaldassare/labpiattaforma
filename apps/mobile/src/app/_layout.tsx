@@ -41,7 +41,7 @@ function TastoCasa() {
         pressed && { opacity: 0.6 },
       ]}
     >
-      <Icona nome="casa" dimensione={18} colore={colori.primario} />
+      <Icona nome="casa" dimensione={18} colore={colori.primarioChiaro} />
     </Pressable>
   );
 }

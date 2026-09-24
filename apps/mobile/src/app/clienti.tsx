@@ -277,7 +277,7 @@ function Tasto({
       accessibilityRole="button"
       style={({ pressed }) => [stili.tasto, pressed && stili.premuta]}
     >
-      <Icona nome={icona} dimensione={15} colore={colori.primario} />
+      <Icona nome={icona} dimensione={15} colore={colori.primarioChiaro} />
       <Text style={stili.tastoTesto}>{testo}</Text>
     </Pressable>
   );
@@ -317,7 +317,7 @@ const stili = StyleSheet.create({
     borderWidth: 1,
     borderColor: colori.bordo,
   },
-  tastoTesto: { fontSize: 13, fontWeight: '600', color: colori.primario },
+  tastoTesto: { fontSize: 13, fontWeight: '600', color: colori.primarioChiaro },
   premuta: { opacity: 0.7 },
 
   storico: {

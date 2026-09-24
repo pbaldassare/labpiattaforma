@@ -16,7 +16,15 @@ import { Icona, type NomeIcona } from '@/components/icone';
 import { Bottone, Sezione } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
-import { colori, elevazione, raggio, spazi, testi } from '@/lib/tema';
+import {
+  colori,
+  coloriModulo,
+  coloriModuloTenue,
+  elevazione,
+  raggio,
+  spazi,
+  testi,
+} from '@/lib/tema';
 
 const DOMINIO = process.env.EXPO_PUBLIC_DOMINIO_LANDING ?? 'https://dominio-da-decidere.it';
 
@@ -148,7 +156,7 @@ export default function Home() {
               accessibilityRole="button"
               style={({ pressed }) => [stili.tondo, pressed && stili.premuto]}
             >
-              <Icona nome="apri" dimensione={18} colore={colori.primario} />
+              <Icona nome="apri" dimensione={18} colore={colori.primarioChiaro} />
             </Pressable>
           </View>
         </Scheda>
@@ -337,15 +345,26 @@ function SchedaModulo({
 
   return (
     <Scheda
-      style={[stili.modulo, vuoto && stili.moduloVuoto]}
+      style={[
+        stili.modulo,
+        { borderLeftColor: vuoto ? colori.bordo : coloriModulo[stato.modulo] },
+        vuoto && stili.moduloVuoto,
+      ]}
       onPress={vuoto ? onNuova : onApri}
       accessibilityLabel={ETICHETTA_MODULO[stato.modulo]}
     >
-      <View style={[stili.quadrato, vuoto && stili.quadratoSpento]}>
+      {/* Il colore del modulo: si riconosce prima di leggere il nome. */}
+      <View
+        style={[
+          stili.quadrato,
+          { backgroundColor: coloriModuloTenue[stato.modulo] },
+          vuoto && stili.quadratoSpento,
+        ]}
+      >
         <Icona
           nome={ICONA_MODULO[stato.modulo]}
           dimensione={18}
-          colore={vuoto ? colori.testoDebole : colori.suPrimario}
+          colore={vuoto ? colori.testoDebole : coloriModulo[stato.modulo]}
         />
       </View>
 
@@ -424,7 +443,7 @@ const stili = StyleSheet.create({
     justifyContent: 'center',
   },
   premuto: { opacity: 0.7 },
-  tutte: { fontSize: 13, fontWeight: '600', color: colori.primario },
+  tutte: { fontSize: 13, fontWeight: '600', color: colori.primarioChiaro },
 
   promemoria: {
     flexDirection: 'row',
@@ -452,13 +471,19 @@ const stili = StyleSheet.create({
   perChiamata: { fontSize: 12, color: colori.testoTenue },
   quandoChiamata: { fontSize: 11, color: colori.testoDebole },
 
-  modulo: { flexDirection: 'row', alignItems: 'center', gap: spazi.m, padding: spazi.m },
+  modulo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spazi.m,
+    padding: spazi.m,
+    // Una riga di colore a sinistra: si vede anche con la coda dell'occhio.
+    borderLeftWidth: 3,
+  },
   moduloVuoto: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colori.bordo },
   quadrato: {
     width: 34,
     height: 34,
     borderRadius: raggio.s,
-    backgroundColor: colori.primario,
     alignItems: 'center',
     justifyContent: 'center',
   },

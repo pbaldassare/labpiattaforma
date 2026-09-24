@@ -400,7 +400,7 @@ const stili = StyleSheet.create({
   schedaRiservata: { borderColor: colori.primarioChiaro },
   schedaTesta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   schedaTitolo: { fontSize: 15, fontWeight: '700', color: colori.testo },
-  indirizzo: { fontSize: 13, color: colori.primario },
+  indirizzo: { fontSize: 13, color: colori.primarioChiaro },
   qrRiga: { flexDirection: 'row', alignItems: 'center', gap: spazi.xl },
   qr: { padding: spazi.s, backgroundColor: colori.superficie },
   contatori: { gap: spazi.m },
@@ -416,7 +416,7 @@ const stili = StyleSheet.create({
     borderWidth: 1,
     borderColor: colori.bordo,
   },
-  azioneTesto: { fontSize: 15, fontWeight: '600', color: colori.primario },
+  azioneTesto: { fontSize: 15, fontWeight: '600', color: colori.primarioChiaro },
   sospesa: { fontSize: 12, color: colori.accento, lineHeight: 17 },
   nota: { fontSize: 12, color: colori.testoTenue, lineHeight: 17 },
 });

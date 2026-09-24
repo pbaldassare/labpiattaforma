@@ -14,7 +14,7 @@ import { Pillola, Scheda } from '@/components/base';
 import { Icona, type NomeIcona } from '@/components/icone';
 import { Bottone } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
-import { colori, raggio, spazi, testi } from '@/lib/tema';
+import { colori, coloriModulo, coloriModuloTenue, raggio, spazi, testi } from '@/lib/tema';
 
 const ICONA_MODULO: Record<Modulo, NomeIcona> = {
   vendita: 'auto',
@@ -45,8 +45,8 @@ export default function Blocco() {
   return (
     <ScrollView style={stili.contenitore} contentContainerStyle={stili.contenuto}>
       <View style={stili.testa}>
-        <View style={stili.cerchio}>
-          <Icona nome={ICONA_MODULO[esaurito]} dimensione={26} colore={colori.accento} />
+        <View style={[stili.cerchio, { backgroundColor: coloriModuloTenue[esaurito] }]}>
+          <Icona nome={ICONA_MODULO[esaurito]} dimensione={26} colore={coloriModulo[esaurito]} />
         </View>
         <Text style={stili.titolo}>{ETICHETTA_MODULO[esaurito]}</Text>
         <Text style={stili.sottotitolo}>
@@ -133,7 +133,6 @@ const stili = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: raggio.tondo,
-    backgroundColor: colori.accentoTenue,
     alignItems: 'center',
     justifyContent: 'center',
   },

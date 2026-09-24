@@ -428,7 +428,7 @@ const stili = StyleSheet.create({
   kmEtichetta: { fontSize: 11, color: colori.testoTenue, textAlign: 'center' },
   casellaInput: { textAlign: 'center', paddingHorizontal: spazi.xs },
   nota: { fontSize: 12, color: colori.testoTenue, lineHeight: 17 },
-  riepilogo: { fontSize: 13, color: colori.primario, fontWeight: '600', lineHeight: 18 },
+  riepilogo: { fontSize: 13, color: colori.primarioChiaro, fontWeight: '600', lineHeight: 18 },
   errore: { fontSize: 14, color: colori.errore },
   azioni: { gap: spazi.s, paddingTop: spazi.l },
 });

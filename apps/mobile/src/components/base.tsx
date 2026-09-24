@@ -59,10 +59,10 @@ export function Scheda({
 type Tono = 'neutro' | 'attenzione' | 'successo' | 'azione';
 
 const TONI: Record<Tono, { sfondo: string; testo: string }> = {
-  neutro: { sfondo: colori.bordoTenue, testo: colori.testoTenue },
+  neutro: { sfondo: colori.superficieAlta, testo: colori.testoTenue },
   attenzione: { sfondo: colori.accentoTenue, testo: colori.accento },
-  successo: { sfondo: '#DCFCE7', testo: colori.successo },
-  azione: { sfondo: '#FEE2E2', testo: colori.azione },
+  successo: { sfondo: colori.successoTenue, testo: colori.successo },
+  azione: { sfondo: colori.azioneTenue, testo: colori.azione },
 };
 
 export function Pillola({ testo, tono = 'neutro' }: { testo: string; tono?: Tono }) {

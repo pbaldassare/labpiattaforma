@@ -324,10 +324,10 @@ const stili = StyleSheet.create({
     color: colori.accento,
     textTransform: 'uppercase',
   },
-  offerta: { fontSize: 14, color: colori.primario, fontWeight: '600' },
+  offerta: { fontSize: 14, color: colori.primarioChiaro, fontWeight: '600' },
   recapiti: { gap: spazi.s, marginTop: spazi.xs },
   errore: { color: colori.errore, fontSize: 13 },
-  promemoria: { fontSize: 13, color: colori.primario, fontWeight: '600' },
+  promemoria: { fontSize: 13, color: colori.primarioChiaro, fontWeight: '600' },
   quando: { gap: spazi.s },
   azioniNota: { gap: spazi.s },
   voce: {
