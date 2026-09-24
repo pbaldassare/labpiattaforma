@@ -49,7 +49,8 @@ export default function Home() {
 
       {/* Link asChild non porta lo stile a Pressable sul web: meglio il bottone
           normale con una navigazione esplicita, come in tutte le altre schermate. */}
-      <Bottone testo="Le tue offerte" onPress={() => router.push('/offerte')} />
+      <Bottone testo="Le tue pratiche" onPress={() => router.push('/pratiche')} />
+      <Bottone tenue testo="Le tue offerte" onPress={() => router.push('/offerte')} />
       <Bottone
         tenue
         testo={venditore ? 'Modifica il profilo' : 'Compila il profilo'}
