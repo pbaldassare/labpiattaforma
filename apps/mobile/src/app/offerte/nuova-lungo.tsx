@@ -1,0 +1,335 @@
+import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import {
+  ETICHETTA_SERVIZIO,
+  SERVIZI,
+  analizzaEuro,
+  fn,
+  formattaDurata,
+  formattaEuro,
+  formattaNumero,
+  type ServizioIncluso,
+} from '@lab/shared';
+
+import { Bottone, Campo, Input, Sezione } from '@/components/modulo';
+import { Testo as Text } from '@/components/testo';
+import { supabase } from '@/lib/supabase';
+import { TOCCO_MINIMO, colori, raggio, spazi } from '@/lib/tema';
+
+/** Le combinazioni che si usano davvero: l'esempio del documento è 24/36/48. */
+const DURATE_POSSIBILI = [12, 24, 36, 48, 60];
+const KM_POSSIBILI = [10000, 15000, 20000, 25000, 30000];
+
+type Listino = 'pubblico' | 'rivenditore';
+
+export default function NuovaOffertaLungo() {
+  const router = useRouter();
+
+  const [marca, setMarca] = useState('');
+  const [modello, setModello] = useState('');
+  const [allestimento, setAllestimento] = useState('');
+
+  const [durate, setDurate] = useState<number[]>([24, 36, 48]);
+  const [km, setKm] = useState<number[]>([10000, 15000, 20000]);
+
+  // Chiave: "durata-km-listino". Un oggetto piatto invece di una matrice:
+  // aggiungere o togliere una durata non deve ricostruire niente.
+  const [canoni, setCanoni] = useState<Record<string, string>>({});
+  const [listino, setListino] = useState<Listino>('pubblico');
+
+  const [anticipo, setAnticipo] = useState('');
+  const [servizi, setServizi] = useState<ServizioIncluso[]>([
+    'assicurazione',
+    'manutenzione',
+    'bollo',
+  ]);
+  const [consegna, setConsegna] = useState('');
+
+  const [inCorso, setInCorso] = useState(false);
+  const [errore, setErrore] = useState<string | null>(null);
+
+  function chiave(d: number, k: number, l: Listino) {
+    return `${d}-${k}-${l}`;
+  }
+
+  function commuta<T>(elenco: T[], valore: T): T[] {
+    return elenco.includes(valore)
+      ? elenco.filter((x) => x !== valore)
+      : [...elenco, valore].sort((a, b) => Number(a) - Number(b));
+  }
+
+  const griglia = useMemo(() => {
+    const righe: {
+      durata_mesi: number;
+      km_annui: number;
+      canone_pubblico_cent: number;
+      canone_rivenditore_cent: number | null;
+    }[] = [];
+
+    for (const d of durate) {
+      for (const k of km) {
+        const pubblico = analizzaEuro(canoni[chiave(d, k, 'pubblico')] ?? '');
+        if (pubblico == null || pubblico <= 0) continue;
+        const riv = analizzaEuro(canoni[chiave(d, k, 'rivenditore')] ?? '');
+        righe.push({
+          durata_mesi: d,
+          km_annui: k,
+          canone_pubblico_cent: pubblico,
+          canone_rivenditore_cent: riv != null && riv > 0 ? riv : null,
+        });
+      }
+    }
+    return righe;
+  }, [durate, km, canoni]);
+
+  const minimo = griglia.length
+    ? Math.min(...griglia.map((r) => r.canone_pubblico_cent))
+    : null;
+  const conRivenditore = griglia.filter((r) => r.canone_rivenditore_cent != null).length;
+
+  const puoSalvare =
+    marca.trim() !== '' && modello.trim() !== '' && griglia.length > 0 && !inCorso;
+
+  async function salva(stato: 'bozza' | 'attiva') {
+    setErrore(null);
+    setInCorso(true);
+
+    const { data, error } = await supabase.rpc(fn('salva_offerta_noleggio_lungo'), {
+      p_dati: {
+        marca: marca.trim(),
+        modello: modello.trim(),
+        allestimento: allestimento.trim() || null,
+        anticipo_cent: analizzaEuro(anticipo),
+        servizi,
+        tempi_consegna: consegna.trim() || null,
+        riscatto_previsto: false,
+        stato,
+        griglia,
+      },
+    });
+
+    setInCorso(false);
+    if (error) {
+      setErrore(
+        error.message.includes('marca_e_modello_obbligatori')
+          ? 'Marca e modello sono obbligatori.'
+          : error.message
+      );
+      return;
+    }
+    router.replace(`/offerte/${data as string}`);
+  }
+
+  return (
+    <KeyboardAvoidingView
+      style={stili.contenitore}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
+        <Sezione titolo="Il mezzo">
+          <Campo etichetta="Marca" obbligatorio>
+            <Input value={marca} onChangeText={setMarca} placeholder="Volkswagen" />
+          </Campo>
+          <Campo etichetta="Modello" obbligatorio>
+            <Input value={modello} onChangeText={setModello} placeholder="T-Roc" />
+          </Campo>
+          <Campo etichetta="Allestimento">
+            <Input
+              value={allestimento}
+              onChangeText={setAllestimento}
+              placeholder="1.0 TSI Life"
+            />
+          </Campo>
+        </Sezione>
+
+        <Sezione titolo="Quali durate offri">
+          <View style={stili.pasticche}>
+            {DURATE_POSSIBILI.map((d) => (
+              <Pasticca
+                key={d}
+                etichetta={formattaDurata(d)}
+                attiva={durate.includes(d)}
+                onPress={() => setDurate(commuta(durate, d))}
+              />
+            ))}
+          </View>
+        </Sezione>
+
+        <Sezione titolo="Quali chilometraggi">
+          <View style={stili.pasticche}>
+            {KM_POSSIBILI.map((k) => (
+              <Pasticca
+                key={k}
+                etichetta={formattaNumero(k)}
+                attiva={km.includes(k)}
+                onPress={() => setKm(commuta(km, k))}
+              />
+            ))}
+          </View>
+        </Sezione>
+
+        <Sezione titolo="Canoni mensili">
+          {/* Due listini separati invece di diciotto caselle sullo stesso
+              schermo: il venditore compila prima quelli al pubblico, e passa
+              ai riservati solo se li usa. */}
+          <View style={stili.pasticche}>
+            <Pasticca
+              etichetta="Al pubblico"
+              attiva={listino === 'pubblico'}
+              onPress={() => setListino('pubblico')}
+            />
+            <Pasticca
+              etichetta={`Rivenditori${conRivenditore > 0 ? ` (${conRivenditore})` : ''}`}
+              attiva={listino === 'rivenditore'}
+              onPress={() => setListino('rivenditore')}
+            />
+          </View>
+
+          {durate.length === 0 || km.length === 0 ? (
+            <Text style={stili.nota}>Scegli almeno una durata e un chilometraggio.</Text>
+          ) : (
+            durate.map((d) => (
+              <View key={d} style={stili.rigaGriglia}>
+                <Text style={stili.durata}>{formattaDurata(d)}</Text>
+                <View style={stili.caselle}>
+                  {km.map((k) => (
+                    <View key={k} style={stili.casella}>
+                      <Text style={stili.kmEtichetta}>{formattaNumero(k)}</Text>
+                      <Input
+                        value={canoni[chiave(d, k, listino)] ?? ''}
+                        onChangeText={(v) =>
+                          setCanoni((x) => ({ ...x, [chiave(d, k, listino)]: v }))
+                        }
+                        keyboardType="decimal-pad"
+                        placeholder="—"
+                        style={stili.casellaInput}
+                      />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))
+          )}
+
+          {listino === 'rivenditore' && (
+            <Text style={stili.nota}>
+              Facoltativi. Se ne compili almeno uno nasce la pagina riservata, con link
+              separato e non pubblicata.
+            </Text>
+          )}
+
+          {minimo != null && (
+            <Text style={stili.riepilogo}>
+              {griglia.length} combinazioni · in pagina comparirà “a partire da{' '}
+              {formattaEuro(minimo)} al mese”
+            </Text>
+          )}
+        </Sezione>
+
+        <Sezione titolo="Condizioni">
+          <Campo etichetta="Anticipo">
+            <Input
+              value={anticipo}
+              onChangeText={setAnticipo}
+              keyboardType="decimal-pad"
+              placeholder="3.000"
+            />
+          </Campo>
+          <Campo etichetta="Tempi di consegna">
+            <Input
+              value={consegna}
+              onChangeText={setConsegna}
+              placeholder="Pronta consegna, oppure 8 settimane"
+            />
+          </Campo>
+          <Campo etichetta="Cosa è compreso nel canone">
+            <View style={stili.pasticche}>
+              {SERVIZI.map((s) => (
+                <Pasticca
+                  key={s}
+                  etichetta={ETICHETTA_SERVIZIO[s]}
+                  attiva={servizi.includes(s)}
+                  onPress={() => setServizi(commuta(servizi, s))}
+                />
+              ))}
+            </View>
+          </Campo>
+        </Sezione>
+
+        {errore ? <Text style={stili.errore}>{errore}</Text> : null}
+
+        <View style={stili.azioni}>
+          <Bottone
+            testo="Salva e pubblica"
+            inCorso={inCorso}
+            disabilitato={!puoSalvare}
+            onPress={() => void salva('attiva')}
+          />
+          <Bottone
+            tenue
+            testo="Salva come bozza"
+            disabilitato={!puoSalvare}
+            onPress={() => void salva('bozza')}
+          />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+function Pasticca({
+  etichetta,
+  attiva,
+  onPress,
+}: {
+  etichetta: string;
+  attiva: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[stili.pasticca, attiva && stili.pasticcaAttiva]}
+      accessibilityRole="button"
+      accessibilityState={{ selected: attiva }}
+    >
+      <Text style={[stili.pasticcaTesto, attiva && stili.pasticcaTestoAttivo]}>{etichetta}</Text>
+    </Pressable>
+  );
+}
+
+const stili = StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: colori.sfondo },
+  scorrimento: { padding: spazi.xl, paddingBottom: spazi.xxl * 2, gap: spazi.m },
+  pasticche: { flexDirection: 'row', flexWrap: 'wrap', gap: spazi.s },
+  pasticca: {
+    minHeight: TOCCO_MINIMO,
+    justifyContent: 'center',
+    paddingHorizontal: spazi.m,
+    borderRadius: raggio.m,
+    borderWidth: 1,
+    borderColor: colori.bordo,
+    backgroundColor: colori.superficie,
+  },
+  pasticcaAttiva: { backgroundColor: colori.primario, borderColor: colori.primario },
+  pasticcaTesto: { fontSize: 14, color: colori.testo },
+  pasticcaTestoAttivo: { color: colori.suPrimario, fontWeight: '600' },
+  rigaGriglia: { gap: spazi.xs },
+  durata: { fontSize: 14, fontWeight: '700', color: colori.testo },
+  caselle: { flexDirection: 'row', gap: spazi.s },
+  casella: { flex: 1, gap: 2 },
+  kmEtichetta: { fontSize: 11, color: colori.testoTenue, textAlign: 'center' },
+  casellaInput: { textAlign: 'center', paddingHorizontal: spazi.xs },
+  nota: { fontSize: 12, color: colori.testoTenue, lineHeight: 17 },
+  riepilogo: { fontSize: 13, color: colori.primario, fontWeight: '600', lineHeight: 18 },
+  errore: { fontSize: 14, color: colori.errore },
+  azioni: { gap: spazi.s, paddingTop: spazi.l },
+});
