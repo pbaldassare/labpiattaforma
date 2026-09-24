@@ -7,10 +7,22 @@ motivo: senza, al prossimo aggiornamento della direzione qualcuno li
 
 ## App venditore
 
-**Il teal dei fondi è `#0F766E`, non `#0D9488`.**
-Col testo bianco sopra, `#0D9488` dà un contrasto di 3,7:1, sotto il minimo di
-4,5:1 richiesto per il testo normale. Il tono chiaro resta in uso per bordi,
-dettagli e l'interruttore di pubblicazione, dove non ci va testo sopra.
+**Niente teal: l'app usa il grafite delle landing.**
+La prima versione seguiva il profilo "strumento di lavoro" della direzione
+generata, che propone un teal. Era sbagliata per due motivi. Il verde acqua su
+un'applicazione di compravendita auto stona, e basta guardarla per accorgersene.
+E faceva sembrare l'app e le pagine pubbliche due prodotti diversi, mentre sono
+lo stesso: il venditore passa dall'una alle altre tutto il giorno.
+
+Il profilo *Automotive* della stessa direzione propone grafite `#1E293B` e
+rosso, ed è quello giusto per entrambe le superfici. Lo sfondo `#F8FAFC` resta
+appena tinto di blu-grigio invece che bianco puro: distingue la pagina dalle
+schede senza dover disegnare bordi ovunque.
+
+**L'ambra `#B45309` per ciò che chiede attenzione.**
+Una pratica da richiamare, un cliente rivenditore. Tenuta distinta dal rosso,
+che nell'app significa soltanto "qualcosa è andato storto": se le due cose
+avessero lo stesso colore, un errore vero passerebbe inosservato.
 
 **Plus Jakarta Sans è applicata tramite un componente, non negli stili.**
 Con i font caricati come file distinti, `fontWeight` non seleziona il peso: ogni

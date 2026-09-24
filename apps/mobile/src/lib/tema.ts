@@ -5,22 +5,34 @@
  * col pollice. E' volutamente diversa da quella delle landing, che devono
  * vendere: qui si lavora.
  */
+/**
+ * Palette dell'app: grafite, la stessa famiglia delle landing.
+ *
+ * La prima versione usava il teal del profilo "strumento di lavoro". Era
+ * sbagliata per due motivi: il verde acqua su un'app di compravendita auto
+ * stona, e faceva sembrare l'app e le pagine due prodotti diversi. Il profilo
+ * Automotive della direzione grafica e' grafite e rosso, ed e' quello giusto
+ * per entrambe le superfici.
+ *
+ * Lo sfondo resta appena tinto di blu-grigio invece che bianco puro: distingue
+ * la pagina dalle schede senza dover disegnare bordi ovunque.
+ */
 export const colori = {
-  /**
-   * Il teal indicato dalla direzione grafica (#0D9488) porta il testo bianco a
-   * 3.7:1, sotto il minimo di 4.5:1. Per i fondi con scritte sopra si usa il
-   * tono piu' scuro; quello chiaro resta per bordi e dettagli.
-   */
-  primario: '#0F766E',
-  primarioChiaro: '#0D9488',
+  primario: '#1E293B',
+  primarioChiaro: '#475569',
   suPrimario: '#FFFFFF',
-  accento: '#EA580C',
-  sfondo: '#F0FDFA',
+  /**
+   * Ambra per cio' che chiede attenzione senza essere un errore: una pratica
+   * da richiamare, un cliente rivenditore. Tenuta distinta dal rosso, che qui
+   * significa solo "qualcosa e' andato storto".
+   */
+  accento: '#B45309',
+  sfondo: '#F8FAFC',
   superficie: '#FFFFFF',
-  testo: '#134E4A',
+  testo: '#0F172A',
   testoTenue: '#475569',
-  bordo: '#99F6E4',
-  bordoTenue: '#E8F1F4',
+  bordo: '#E2E8F0',
+  bordoTenue: '#EEF2F6',
   errore: '#DC2626',
 } as const;
 
