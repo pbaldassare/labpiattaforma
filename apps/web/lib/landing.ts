@@ -109,3 +109,42 @@ export function linkWhatsApp(numero: string, messaggio: string): string {
   const soloCifre = numero.replace(/[^\d]/g, '');
   return `https://wa.me/${soloCifre}?text=${encodeURIComponent(messaggio)}`;
 }
+
+export interface OffertaInVetrina {
+  titolo: string;
+  modulo: Modulo;
+  codice: string;
+  prezzo_cent: number | null;
+  copertina: string | null;
+  aggiornata: string;
+}
+
+export interface DatiVetrina {
+  venditore: {
+    slug: string;
+    nome: string;
+    presentazione: string | null;
+    telefono: string | null;
+    whatsapp: string | null;
+    email: string | null;
+    logo_path: string | null;
+  };
+  offerte: OffertaInVetrina[];
+}
+
+/** Quando lo slug e' stato abbandonato, al posto dei dati arriva quello nuovo. */
+export type EsitoVetrina = DatiVetrina | { redirect_a: string } | null;
+
+export async function caricaVetrina(slug: string): Promise<EsitoVetrina> {
+  const supabase = clientPubblico();
+  const { data, error } = await supabase
+    .schema('public')
+    .rpc('venditori_dati_vetrina', { p_slug: slug });
+
+  if (error) throw error;
+  return (data as EsitoVetrina) ?? null;
+}
+
+export function eRedirect(esito: EsitoVetrina): esito is { redirect_a: string } {
+  return esito !== null && 'redirect_a' in esito;
+}
