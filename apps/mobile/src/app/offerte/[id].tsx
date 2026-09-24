@@ -16,16 +16,25 @@ import QRCode from 'react-native-qrcode-svg';
 import {
   formattaEuro,
   urlPagina,
+  type Modulo,
   type Offerta,
   type OffertaVendita,
   type TipoPagina,
 } from '@lab/shared';
 
 import { fn, tab } from '@lab/shared';
+import { Fotografie, type Foto } from '@/components/foto';
+import { Sezione } from '@/components/modulo';
 import { supabase } from '@/lib/supabase';
 import { TOCCO_MINIMO, colori, raggio, spazi } from '@/lib/tema';
 
 const DOMINIO = process.env.EXPO_PUBLIC_DOMINIO_LANDING ?? 'https://dominio-da-decidere.it';
+
+/** Le tariffe del noleggio breve, per mostrarle al venditore come i prezzi di vendita. */
+interface TariffeBrevi {
+  tariffa_giorno_cent: number;
+  tariffa_giorno_rivenditore_cent: number | null;
+}
 
 interface Contatori {
   pagina_id: string;
@@ -41,21 +50,35 @@ export default function DettaglioOfferta() {
 
   const [offerta, setOfferta] = useState<Offerta | null>(null);
   const [vendita, setVendita] = useState<OffertaVendita | null>(null);
+  const [breve, setBreve] = useState<TariffeBrevi | null>(null);
   const [pagine, setPagine] = useState<Contatori[]>([]);
+  const [foto, setFoto] = useState<Foto[]>([]);
   const [caricamento, setCaricamento] = useState(true);
   const [errore, setErrore] = useState<string | null>(null);
 
   const carica = useCallback(async () => {
-    const [o, v, p] = await Promise.all([
+    const [o, v, b, p, f] = await Promise.all([
       supabase.from(tab('offerta')).select('*').eq('id', id).maybeSingle<Offerta>(),
       supabase.from(tab('offerta_vendita')).select('*').eq('offerta_id', id).maybeSingle<OffertaVendita>(),
+      supabase
+        .from(tab('offerta_noleggio_breve'))
+        .select('tariffa_giorno_cent, tariffa_giorno_rivenditore_cent')
+        .eq('offerta_id', id)
+        .maybeSingle<TariffeBrevi>(),
       supabase.from(tab('pagina_contatori')).select('*').eq('offerta_id', id).order('tipo'),
+      supabase
+        .from(tab('offerta_foto'))
+        .select('id, path, ordine')
+        .eq('offerta_id', id)
+        .order('ordine'),
     ]);
 
     if (o.error) setErrore(o.error.message);
     setOfferta(o.data ?? null);
     setVendita(v.data ?? null);
+    setBreve(b.data ?? null);
     setPagine((p.data ?? []) as Contatori[]);
+    setFoto((f.data ?? []) as Foto[]);
     setCaricamento(false);
   }, [id]);
 
@@ -109,14 +132,27 @@ export default function DettaglioOfferta() {
             )}
           </View>
         )}
+        {breve && (
+          <View style={stili.prezzi}>
+            <Prezzo etichetta="Al giorno" centesimi={breve.tariffa_giorno_cent} />
+            {breve.tariffa_giorno_rivenditore_cent != null && (
+              <Prezzo etichetta="Rivenditori" centesimi={breve.tariffa_giorno_rivenditore_cent} />
+            )}
+          </View>
+        )}
       </View>
 
       {errore ? <Text style={stili.errore}>{errore}</Text> : null}
+
+      <Sezione titolo="Foto">
+        <Fotografie offertaId={id} foto={foto} onCambiate={() => void carica()} />
+      </Sezione>
 
       {pagine.map((p) => (
         <SchedaPagina
           key={p.pagina_id}
           pagina={p}
+          modulo={offerta.modulo}
           onCommuta={(v) => void commutaPubblicazione(p, v)}
         />
       ))}
@@ -142,13 +178,18 @@ function Prezzo({ etichetta, centesimi }: { etichetta: string; centesimi: number
 
 function SchedaPagina({
   pagina,
+  modulo,
   onCommuta,
 }: {
   pagina: Contatori;
+  modulo: Modulo;
   onCommuta: (attiva: boolean) => void;
 }) {
   const [copiato, setCopiato] = useState(false);
-  const indirizzo = urlPagina(DOMINIO, 'vendita', pagina.codice);
+  // Ogni modulo ha il suo indirizzo: /v, /b, /l, /a. Prima era fisso su
+  // "vendita", e le offerte degli altri moduli davano un link che non apriva
+  // niente.
+  const indirizzo = urlPagina(DOMINIO, modulo, pagina.codice);
   const riservata = pagina.tipo === 'riservata';
 
   async function copia() {

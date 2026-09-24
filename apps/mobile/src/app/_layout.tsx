@@ -76,6 +76,7 @@ export default function Layout() {
       <Stack.Screen name="offerte/index" options={{ title: 'Le tue offerte' }} />
       <Stack.Screen name="offerte/nuova" options={{ title: 'Nuova offerta · Vendita' }} />
       <Stack.Screen name="offerte/nuova-lungo" options={{ title: 'Nuova offerta · Noleggio lungo' }} />
+      <Stack.Screen name="offerte/nuova-breve" options={{ title: 'Nuova offerta · Noleggio breve' }} />
       <Stack.Screen
         name="offerte/nuova-assicurazione"
         options={{ title: 'Nuova polizza' }}

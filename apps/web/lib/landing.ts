@@ -1,7 +1,9 @@
 import type {
   Alimentazione,
   DatiAssicurazione,
+  DatiNoleggioBreve,
   DatiNoleggioLungo,
+  PeriodoOccupato,
   Cambio,
   FormulaAcquisto,
   Modulo,
@@ -55,6 +57,7 @@ export interface DatiPagina {
     prezzo_consigliato_cent: number | null;
   } | null;
   lungo: DatiNoleggioLungo | null;
+  breve: DatiNoleggioBreve | null;
   assicurazione: DatiAssicurazione | null;
   foto: string[];
   formule: FormulaAcquisto[];
@@ -153,4 +156,23 @@ export async function caricaVetrina(slug: string): Promise<EsitoVetrina> {
 
 export function eRedirect(esito: EsitoVetrina): esito is { redirect_a: string } {
   return esito !== null && 'redirect_a' in esito;
+}
+
+/**
+ * I giorni gia' occupati, letti a ogni apertura della pagina.
+ *
+ * Il calendario "si aggiorna da solo appena una prenotazione va a buon fine"
+ * (§5.2): siccome la pagina e' resa dal server a ogni visita, lo fa senza
+ * bisogno di alcun aggiornamento automatico.
+ */
+export async function caricaDisponibilita(
+  codice: string
+): Promise<{ occupati: PeriodoOccupato[] } | null> {
+  const supabase = clientPubblico();
+  const { data, error } = await supabase
+    .schema('public')
+    .rpc('venditori_disponibilita', { p_codice: codice });
+
+  if (error) throw error;
+  return (data as { occupati: PeriodoOccupato[] } | null) ?? null;
 }

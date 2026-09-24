@@ -26,7 +26,7 @@ interface StatoModulo {
 /** Cosa fa ciascun modulo, detto in una riga al venditore. */
 const DESCRIZIONE: Record<Modulo, string> = {
   vendita: 'Metti in vendita un mezzo e mandane la pagina al cliente.',
-  noleggio_breve: 'Da un giorno a un mese, con calendario e prenotazione pagata.',
+  noleggio_breve: 'Da un giorno a un mese, con calendario e date bloccate al volo.',
   noleggio_lungo: 'Da uno a cinque anni: il canone lo calcola la pagina.',
   assicurazioni: 'Polizze con garanzie, massimali e scadenze da ricordare.',
 };
@@ -43,15 +43,16 @@ const PRONTO: Record<Modulo, boolean> = {
   vendita: true,
   noleggio_lungo: true,
   assicurazioni: true,
-  noleggio_breve: false,
+  noleggio_breve: true,
 };
 
 /** Dove porta ciascun modulo per creare una nuova offerta. */
-const DOVE: Partial<Record<Modulo, '/offerte/nuova' | '/offerte/nuova-lungo' | '/offerte/nuova-assicurazione'>> = {
+const DOVE = {
   vendita: '/offerte/nuova',
+  noleggio_breve: '/offerte/nuova-breve',
   noleggio_lungo: '/offerte/nuova-lungo',
   assicurazioni: '/offerte/nuova-assicurazione',
-};
+} as const satisfies Record<Modulo, string>;
 
 export default function Moduli() {
   const router = useRouter();
@@ -88,7 +89,7 @@ export default function Moduli() {
           key={m.modulo}
           stato={m}
           onPress={
-            DOVE[m.modulo] ? () => router.push(DOVE[m.modulo]!) : undefined
+            PRONTO[m.modulo] ? () => router.push(DOVE[m.modulo]) : undefined
           }
         />
       ))}
