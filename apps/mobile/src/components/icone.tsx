@@ -24,6 +24,7 @@ const MAPPA = {
   telefona: 'phone-call',
   messaggio: 'message-circle',
   occhio: 'eye',
+  occhioChiuso: 'eye-off',
   campanello: 'bell',
   piu: 'plus',
   impostazioni: 'settings',
