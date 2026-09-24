@@ -164,6 +164,12 @@ export default function Home() {
         <Bottone
           testo="Carica un’offerta"
           icona="piu"
+          onPress={() => router.push('/moduli')}
+        />
+        <Bottone
+          tenue
+          testo="Le tue offerte"
+          icona="auto"
           onPress={() => router.push('/offerte')}
         />
         <Bottone

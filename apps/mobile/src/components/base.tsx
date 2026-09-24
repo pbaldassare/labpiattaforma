@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Icona as IconaBase, type NomeIcona } from '@/components/icone';
 import { Testo as Text } from '@/components/testo';
@@ -26,7 +26,7 @@ export function Scheda({
   children: ReactNode;
   onPress?: () => void;
   rilievo?: 'bassa' | 'media';
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
 }) {
   const base = [stili.scheda, elevazione[rilievo], style];
