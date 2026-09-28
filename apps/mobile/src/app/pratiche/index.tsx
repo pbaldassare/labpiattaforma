@@ -13,7 +13,7 @@ import {
 
 import { Filtri, Iniziali, Pillola, Scheda, Vuoto } from '@/components/base';
 import { Entra } from '@/components/movimento';
-import { Icona, type NomeIcona } from '@/components/icone';
+import { Simbolo } from '@/components/simboli';
 import { Testo as Text } from '@/components/testo';
 import { urlFoto } from '@/lib/foto';
 import { supabase } from '@/lib/supabase';
@@ -38,13 +38,6 @@ interface RigaPratica {
   ultimo_contatto: string | null;
   foto_path: string | null;
 }
-
-const ICONA_MODULO: Record<Modulo, NomeIcona> = {
-  vendita: 'auto',
-  noleggio_breve: 'calendario',
-  noleggio_lungo: 'cartellino',
-  assicurazioni: 'documento',
-};
 
 /** Gli stati che chiedono di fare qualcosa si vedono da lontano. */
 const TONO_STATO: Partial<Record<StatoPratica, 'attenzione' | 'successo'>> = {
@@ -167,11 +160,7 @@ function SchedaPratica({ item, onPress }: { item: RigaPratica; onPress: () => vo
               { backgroundColor: coloriModuloTenue[item.modulo] },
             ]}
           >
-            <Icona
-              nome={ICONA_MODULO[item.modulo]}
-              dimensione={18}
-              colore={coloriModulo[item.modulo]}
-            />
+            <Simbolo modulo={item.modulo} dimensione={24} colore={coloriModulo[item.modulo]} />
           </View>
         ) : (
           <Iniziali

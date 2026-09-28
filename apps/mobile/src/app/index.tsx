@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { BloccoIcona, Pillola, Scheda } from '@/components/base';
 import { Entra } from '@/components/movimento';
-import { Icona, type NomeIcona } from '@/components/icone';
+import { Icona } from '@/components/icone';
 import { Bottone, Sezione } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
@@ -30,6 +30,7 @@ import {
   stiliTema,
   testi,
   vetro,
+  suGradiente,
 } from '@/lib/tema';
 
 const DOMINIO = process.env.EXPO_PUBLIC_DOMINIO_LANDING ?? 'https://dominio-da-decidere.it';
@@ -60,13 +61,6 @@ interface DaRichiamare {
   offerta_titolo: string | null;
   ultimo_contatto: string | null;
 }
-
-const ICONA_MODULO: Record<Modulo, NomeIcona> = {
-  vendita: 'auto',
-  noleggio_breve: 'calendario',
-  noleggio_lungo: 'cartellino',
-  assicurazioni: 'documento',
-};
 
 const DOVE_NUOVA = {
   vendita: '/offerte/nuova',
@@ -392,9 +386,10 @@ function SchedaModulo({
     >
       {/* Il colore del modulo: si riconosce prima di leggere il nome. */}
       <BloccoIcona
-        icona={ICONA_MODULO[stato.modulo]}
+        modulo={stato.modulo}
         gradiente={gradienti[stato.modulo]}
-        dimensione={42}
+        suGradiente={suGradiente[stato.modulo]}
+        dimensione={44}
         spento={vuoto}
       />
 

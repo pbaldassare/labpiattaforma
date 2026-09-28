@@ -8,18 +8,19 @@ import {
   type Modulo,
 } from '@lab/shared';
 
-import { Pillola, Scheda } from '@/components/base';
-import { Icona, type NomeIcona } from '@/components/icone';
+import { Pillola, Scheda , BloccoIcona } from '@/components/base';
 import { Testo as Text } from '@/components/testo';
+
 import { supabase } from '@/lib/supabase';
 import {
   colori,
   coloriModulo,
-  coloriModuloTenue,
   raggio,
   spazi,
   stiliTema,
   testi,
+  gradienti,
+  suGradiente,
 } from '@/lib/tema';
 
 interface StatoModulo {
@@ -37,13 +38,6 @@ const DESCRIZIONE: Record<Modulo, string> = {
   noleggio_breve: 'Da un giorno a un mese, con calendario e date bloccate al volo.',
   noleggio_lungo: 'Da uno a cinque anni: il canone lo calcola la pagina.',
   assicurazioni: 'Polizze con garanzie, massimali e scadenze da ricordare.',
-};
-
-const ICONA: Record<Modulo, NomeIcona> = {
-  vendita: 'auto',
-  noleggio_breve: 'calendario',
-  noleggio_lungo: 'cartellino',
-  assicurazioni: 'documento',
 };
 
 /** Dove porta il tocco. I moduli non ancora costruiti non portano da nessuna parte. */
@@ -127,19 +121,13 @@ function SchedaModulo({ stato, onPress }: { stato: StatoModulo; onPress?: () => 
       accessibilityLabel={ETICHETTA_MODULO[stato.modulo]}
     >
       <View style={stili.testa}>
-        <View
-          style={[
-            stili.quadrato,
-            { backgroundColor: coloriModuloTenue[stato.modulo] },
-            inArrivo && stili.quadratoSpento,
-          ]}
-        >
-          <Icona
-            nome={ICONA[stato.modulo]}
-            dimensione={22}
-            colore={inArrivo ? colori.testoDebole : coloriModulo[stato.modulo]}
-          />
-        </View>
+        <BloccoIcona
+          modulo={stato.modulo}
+          gradiente={gradienti[stato.modulo]}
+          suGradiente={suGradiente[stato.modulo]}
+          dimensione={48}
+          spento={inArrivo}
+        />
         <View style={stili.testi}>
           <Text style={stili.nome}>{ETICHETTA_MODULO[stato.modulo]}</Text>
           <Text style={stili.descrizione}>{DESCRIZIONE[stato.modulo]}</Text>

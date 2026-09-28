@@ -10,26 +10,11 @@ import {
   type Modulo,
 } from '@lab/shared';
 
-import { Pillola, Scheda } from '@/components/base';
-import { Icona, type NomeIcona } from '@/components/icone';
+import { BloccoIcona, Pillola, Scheda } from '@/components/base';
+import { Icona } from '@/components/icone';
 import { Bottone } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
-import {
-  colori,
-  coloriModulo,
-  coloriModuloTenue,
-  raggio,
-  spazi,
-  stiliTema,
-  testi,
-} from '@/lib/tema';
-
-const ICONA_MODULO: Record<Modulo, NomeIcona> = {
-  vendita: 'auto',
-  noleggio_breve: 'calendario',
-  noleggio_lungo: 'cartellino',
-  assicurazioni: 'documento',
-};
+import { colori, raggio, spazi, stiliTema, testi, gradienti, suGradiente } from '@/lib/tema';
 
 const MODULI: Modulo[] = ['vendita', 'noleggio_breve', 'noleggio_lungo', 'assicurazioni'];
 
@@ -53,9 +38,12 @@ export default function Blocco() {
   return (
     <ScrollView style={stili.contenitore} contentContainerStyle={stili.contenuto}>
       <View style={stili.testa}>
-        <View style={[stili.cerchio, { backgroundColor: coloriModuloTenue[esaurito] }]}>
-          <Icona nome={ICONA_MODULO[esaurito]} dimensione={26} colore={coloriModulo[esaurito]} />
-        </View>
+        <BloccoIcona
+          modulo={esaurito}
+          gradiente={gradienti[esaurito]}
+          suGradiente={suGradiente[esaurito]}
+          dimensione={70}
+        />
         <Text style={stili.titolo}>{ETICHETTA_MODULO[esaurito]}</Text>
         <Text style={stili.sottotitolo}>
           Hai usato le {UTILIZZI_GRATUITI_PER_MODULO} operazioni comprese in questo modulo. Per

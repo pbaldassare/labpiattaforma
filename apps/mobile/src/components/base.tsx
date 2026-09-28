@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Icona as IconaBase, type NomeIcona } from '@/components/icone';
+import { Simbolo } from '@/components/simboli';
 import { Testo as Text } from '@/components/testo';
 import {
   bagliore,
@@ -22,6 +23,7 @@ import {
   testi,
   TOCCO_MINIMO,
   vetro,
+  type NomeModulo,
 } from '@/lib/tema';
 
 /**
@@ -159,25 +161,32 @@ export function Pastiglia({ icona, tono = 'neutro' }: { icona: NomeIcona; tono?:
  */
 export function BloccoIcona({
   icona,
+  modulo,
   gradiente,
+  suGradiente = '#FFFFFF',
   dimensione = 44,
   spento,
 }: {
-  icona: NomeIcona;
+  /** Per i blocchi che non sono di un modulo: si usa la famiglia generica. */
+  icona?: NomeIcona;
+  /** Con un modulo si disegna il suo simbolo su misura. */
+  modulo?: NomeModulo;
   gradiente: readonly [string, string];
+  suGradiente?: string;
   dimensione?: number;
   spento?: boolean;
 }) {
-  const lato = { width: dimensione, height: dimensione, borderRadius: dimensione * 0.32 };
+  const lato = { width: dimensione, height: dimensione, borderRadius: dimensione * 0.34 };
+  const dentro = dimensione * 0.52;
 
   if (spento) {
     return (
       <View style={[stili.bloccoSpento, lato]}>
-        <IconaBase
-          nome={icona}
-          dimensione={dimensione * 0.45}
-          colore={colori.testoDebole}
-        />
+        {modulo ? (
+          <Simbolo modulo={modulo} dimensione={dentro} colore={colori.testoDebole} />
+        ) : (
+          icona && <IconaBase nome={icona} dimensione={dentro * 0.85} colore={colori.testoDebole} />
+        )}
       </View>
     );
   }
@@ -185,11 +194,20 @@ export function BloccoIcona({
   return (
     <LinearGradient
       colors={gradiente as unknown as [string, string]}
-      start={{ x: 0, y: 0 }}
+      // In diagonale e non dall'alto in basso: la luce sembra arrivare da
+      // qualche parte invece che da nessuna.
+      start={{ x: 0.1, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={[stili.blocco, lato, bagliore(gradiente[0], 0.45)]}
+      style={[stili.blocco, lato, bagliore(gradiente[0], 0.5)]}
     >
-      <IconaBase nome={icona} dimensione={dimensione * 0.45} colore="#FFFFFF" />
+      {/* Il riflesso: un velo chiaro sulla meta' alta. E' il dettaglio che
+          distingue un blocco da un quadrato colorato. */}
+      <View style={[stili.riflesso, { borderRadius: dimensione * 0.34 }]} pointerEvents="none" />
+      {modulo ? (
+        <Simbolo modulo={modulo} dimensione={dentro} colore={suGradiente} />
+      ) : (
+        icona && <IconaBase nome={icona} dimensione={dentro * 0.85} colore={suGradiente} />
+      )}
     </LinearGradient>
   );
 }
@@ -328,7 +346,15 @@ const stili = stiliTema((c) => StyleSheet.create({
   filtroTesto: { fontSize: 13, color: c.testo },
   filtroTestoAttivo: { color: c.suPrimario, fontWeight: '600' },
 
-  blocco: { alignItems: 'center', justifyContent: 'center' },
+  blocco: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  riflesso: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '52%',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
   bloccoSpento: {
     alignItems: 'center',
     justifyContent: 'center',

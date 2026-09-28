@@ -11,7 +11,8 @@ import {
 
 import { Filtri, Pillola, Scheda, Vuoto } from '@/components/base';
 import { Entra } from '@/components/movimento';
-import { Icona, type NomeIcona } from '@/components/icone';
+import { Simbolo } from '@/components/simboli';
+import { Icona } from '@/components/icone';
 import { Bottone } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { urlFoto } from '@/lib/foto';
@@ -45,13 +46,6 @@ const ETICHETTA_STATO: Record<StatoOfferta, string> = {
   attiva: 'Pubblicata',
   sospesa: 'Sospesa',
   venduta: 'Venduta',
-};
-
-const ICONA_MODULO: Record<Modulo, NomeIcona> = {
-  vendita: 'auto',
-  noleggio_breve: 'calendario',
-  noleggio_lungo: 'cartellino',
-  assicurazioni: 'documento',
 };
 
 /**
@@ -180,11 +174,7 @@ function SchedaOfferta({ item, onPress }: { item: RigaOfferta; onPress: () => vo
           />
         ) : (
           <View style={[stili.senzaFoto, { backgroundColor: coloriModuloTenue[item.modulo] }]}>
-            <Icona
-              nome={ICONA_MODULO[item.modulo]}
-              dimensione={20}
-              colore={coloriModulo[item.modulo]}
-            />
+            <Simbolo modulo={item.modulo} dimensione={26} colore={coloriModulo[item.modulo]} />
           </View>
         )}
         {item.quante_foto > 1 && (

@@ -55,33 +55,35 @@ export const SCURO: Palette = {
   primario: '#C6F432',
   suPrimario: '#14161C',
   primarioChiaro: '#D7F95E',
-  primarioTenue: '#28320D',
+  primarioTenue: '#3A441C',
 
   accento: '#FFB020',
-  accentoTenue: '#352706',
+  accentoTenue: '#4A3A15',
 
   azione: '#FF5A5A',
   suAzione: '#FFFFFF',
-  azioneTenue: '#3A1417',
+  azioneTenue: '#4A2427',
 
-  // Grafite, non nero: il quasi-nero faceva sembrare l'app spenta e schiacciava
-  // le schede, che sparivano nel fondo invece di staccarsene.
-  sfondo: '#16181E',
-  superficie: '#212530',
-  superficieAlta: '#2C313E',
+  // Antracite polveroso, non nero. Due giri di prova per arrivarci: il
+  // quasi-nero faceva sembrare l'app spenta, il grafite era ancora cupo. Qui
+  // il grigio e' alzato e tirato verso il caldo — la polvere e' quel filo di
+  // terra che gli toglie il freddo dell'acciaio.
+  sfondo: '#2B2D31',
+  superficie: '#35383E',
+  superficieAlta: '#40444B',
 
-  testo: '#F5F6F7',
-  testoTenue: '#AEB4C0',
-  testoDebole: '#7B8290',
+  testo: '#F3F4F5',
+  testoTenue: '#BBC0C7',
+  testoDebole: '#949AA3',
 
-  bordo: '#39404F',
-  bordoTenue: '#272C37',
+  bordo: '#4C5058',
+  bordoTenue: '#3A3D44',
 
   errore: '#FF7A7A',
   successo: '#34D399',
-  successoTenue: '#0C2E24',
+  successoTenue: '#1E3D35',
 
-  lucidatura: 'rgba(255,255,255,0.07)',
+  lucidatura: 'rgba(255,255,255,0.08)',
   coloreOmbra: '#000000',
   pesoOmbra: 1,
 };
@@ -143,10 +145,10 @@ const MODULI_CHIARO: Record<NomeModulo, string> = {
 };
 
 const MODULI_TENUE_SCURO: Record<NomeModulo, string> = {
-  vendita: '#28320D',
-  noleggio_breve: '#3A2011',
-  noleggio_lungo: '#2A1F45',
-  assicurazioni: '#0C2B40',
+  vendita: '#3B451F',
+  noleggio_breve: '#4A3123',
+  noleggio_lungo: '#3B3252',
+  assicurazioni: '#26404F',
 };
 
 const MODULI_TENUE_CHIARO: Record<NomeModulo, string> = {
@@ -168,7 +170,7 @@ export const gradienti: Record<NomeModulo | 'azione' | 'testa', readonly [string
   noleggio_lungo: ['#A78BFA', '#7C3AED'],
   assicurazioni: ['#38BDF8', '#0284C7'],
   azione: ['#D4FF3F', '#A3E635'],
-  testa: ['#2C313E', '#191C23'],
+  testa: ['#42464E', '#2A2C30'],
 };
 
 /** Su un blocco cosi' acceso l'icona va scura o chiara secondo il colore. */
