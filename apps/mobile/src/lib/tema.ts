@@ -55,35 +55,39 @@ export const SCURO: Palette = {
   primario: '#C6F432',
   suPrimario: '#14161C',
   primarioChiaro: '#D7F95E',
-  primarioTenue: '#3A441C',
+  primarioTenue: '#495430',
 
   accento: '#FFB020',
-  accentoTenue: '#4A3A15',
+  accentoTenue: '#584727',
 
   azione: '#FF5A5A',
   suAzione: '#FFFFFF',
-  azioneTenue: '#4A2427',
+  azioneTenue: '#573438',
 
   // Antracite polveroso, non nero. Due giri di prova per arrivarci: il
   // quasi-nero faceva sembrare l'app spenta, il grafite era ancora cupo. Qui
   // il grigio e' alzato e tirato verso il caldo — la polvere e' quel filo di
   // terra che gli toglie il freddo dell'acciaio.
-  sfondo: '#2B2D31',
-  superficie: '#35383E',
-  superficieAlta: '#40444B',
+  sfondo: '#383B41',
+  superficie: '#43464D',
+  superficieAlta: '#4E525A',
 
-  testo: '#F3F4F5',
-  testoTenue: '#BBC0C7',
-  testoDebole: '#949AA3',
+  // La scala del testo sale insieme al fondo. Non e' un dettaglio: con il
+  // grigio piu' chiaro, il grigio del testo perde contrasto, e "4 giorni fa"
+  // diventerebbe un'ombra. Questi tre livelli stanno tutti sopra 4,5:1 sulle
+  // schede, che e' dove il testo piccolo vive davvero.
+  testo: '#F7F8F9',
+  testoTenue: '#C8CDD4',
+  testoDebole: '#AEB4BD',
 
-  bordo: '#4C5058',
-  bordoTenue: '#3A3D44',
+  bordo: '#5A5F68',
+  bordoTenue: '#4A4E55',
 
   errore: '#FF7A7A',
   successo: '#34D399',
-  successoTenue: '#1E3D35',
+  successoTenue: '#2C4C44',
 
-  lucidatura: 'rgba(255,255,255,0.08)',
+  lucidatura: 'rgba(255,255,255,0.1)',
   coloreOmbra: '#000000',
   pesoOmbra: 1,
 };
@@ -145,10 +149,10 @@ const MODULI_CHIARO: Record<NomeModulo, string> = {
 };
 
 const MODULI_TENUE_SCURO: Record<NomeModulo, string> = {
-  vendita: '#3B451F',
-  noleggio_breve: '#4A3123',
-  noleggio_lungo: '#3B3252',
-  assicurazioni: '#26404F',
+  vendita: '#485431',
+  noleggio_breve: '#584033',
+  noleggio_lungo: '#48405F',
+  assicurazioni: '#354F5E',
 };
 
 const MODULI_TENUE_CHIARO: Record<NomeModulo, string> = {
@@ -170,7 +174,7 @@ export const gradienti: Record<NomeModulo | 'azione' | 'testa', readonly [string
   noleggio_lungo: ['#A78BFA', '#7C3AED'],
   assicurazioni: ['#38BDF8', '#0284C7'],
   azione: ['#D4FF3F', '#A3E635'],
-  testa: ['#42464E', '#2A2C30'],
+  testa: ['#4F535B', '#34373C'],
 };
 
 /** Su un blocco cosi' acceso l'icona va scura o chiara secondo il colore. */
