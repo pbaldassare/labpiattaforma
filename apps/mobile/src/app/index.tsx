@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { BloccoIcona, Pillola, Scheda } from '@/components/base';
 import { Entra } from '@/components/movimento';
-import { Icona } from '@/components/icone';
+import { Icona, type NomeIcona } from '@/components/icone';
 import { Bottone, Sezione } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
@@ -40,6 +40,7 @@ interface Cruscotto {
   offerte_attive: number;
   da_richiamare: number;
   in_corso: number;
+  clienti: number;
   aperture: number;
   aperture_30: number;
   contatti_30: number;
@@ -306,34 +307,136 @@ export default function Home() {
         </Scheda>
       )}
 
+      {/* Un'azione sola in evidenza, e il resto a riquadri.
+          Sei bottoni larghi in colonna erano un muro: tutti uguali, tutti
+          dello stesso peso, e quello che conta davvero — caricare un'offerta —
+          ci si perdeva dentro. I riquadri stanno in meta' spazio, e portando
+          il proprio numero smettono di essere un menu: dicono anche quanto
+          c'e' dentro. */}
       <Sezione icona="fulmine" titolo="Cosa fai adesso">
         <Bottone testo="Carica un’offerta" icona="piu" onPress={() => router.push('/moduli')} />
-        <Bottone tenue testo="Le tue offerte" icona="auto" onPress={() => router.push('/offerte')} />
-        <Bottone
-          tenue
-          testo="Le tue pratiche"
-          icona="telefona"
-          onPress={() => router.push('/pratiche')}
-        />
-        <Bottone tenue testo="I tuoi clienti" icona="utenti" onPress={() => router.push('/clienti')} />
-        <Bottone tenue testo="I tuoi numeri" icona="occhio" onPress={() => router.push('/numeri')} />
-        <Bottone
-          tenue
-          testo="Modifica il profilo"
-          icona="impostazioni"
-          onPress={() => router.push('/profilo')}
-        />
+
+        <View style={stili.scorciatoie}>
+          <Scorciatoia
+            icona="auto"
+            etichetta="Offerte"
+            valore={numeri?.offerte_attive}
+            unita="attive"
+            onPress={() => router.push('/offerte')}
+          />
+          {/* Quando c'e' qualcuno da richiamare la scheda mostra quello, non il
+              totale: e' l'unico numero su cui si agisce, ed e' il motivo per
+              cui la scheda diventa ambra. */}
+          <Scorciatoia
+            icona="telefona"
+            etichetta="Pratiche"
+            valore={
+              numeri
+                ? numeri.da_richiamare > 0
+                  ? numeri.da_richiamare
+                  : numeri.in_corso
+                : undefined
+            }
+            unita={(numeri?.da_richiamare ?? 0) > 0 ? 'da richiamare' : 'in corso'}
+            urgente={(numeri?.da_richiamare ?? 0) > 0}
+            onPress={() => router.push('/pratiche')}
+          />
+          <Scorciatoia
+            icona="utenti"
+            etichetta="Clienti"
+            valore={numeri?.clienti}
+            unita="in rubrica"
+            onPress={() => router.push('/clienti')}
+          />
+          <Scorciatoia
+            icona="grafico"
+            etichetta="Pagine viste"
+            valore={numeri?.aperture_30}
+            unita="in 30 giorni"
+            onPress={() => router.push('/numeri')}
+          />
+        </View>
       </Sezione>
 
-      <View style={stili.esci}>
-        <Bottone
-          tipo="nudo"
-          testo="Esci"
-          icona="esci"
+      {/* Profilo e uscita non sono cose che si fanno: stanno in fondo, piccole,
+          dove non rubano attenzione a quello che si fa davvero. */}
+      <View style={stili.coda}>
+        <Pressable
+          onPress={() => router.push('/profilo')}
+          accessibilityRole="button"
+          style={({ pressed }) => [stili.vocetta, pressed && stili.premuto]}
+        >
+          <Icona nome="impostazioni" dimensione={15} colore={colori.testoTenue} />
+          <Text style={stili.vocettaTesto}>Il tuo profilo</Text>
+        </Pressable>
+
+        <View style={stili.divisoreCoda} />
+
+        <Pressable
           onPress={() => void supabase.auth.signOut()}
-        />
+          accessibilityRole="button"
+          style={({ pressed }) => [stili.vocetta, pressed && stili.premuto]}
+        >
+          <Icona nome="esci" dimensione={15} colore={colori.testoTenue} />
+          <Text style={stili.vocettaTesto}>Esci</Text>
+        </Pressable>
       </View>
     </ScrollView>
+  );
+}
+
+/**
+ * Un riquadro di scorciatoia.
+ *
+ * Porta il suo numero perche' un menu che dice solo dove porta fa fare un
+ * tocco per scoprire che non c'era niente. Con la cifra davanti, meta' delle
+ * volte il tocco non serve piu'.
+ */
+function Scorciatoia({
+  icona,
+  etichetta,
+  valore,
+  unita,
+  urgente,
+  onPress,
+}: {
+  icona: NomeIcona;
+  etichetta: string;
+  valore?: number;
+  /** La parola che dice cosa conta la cifra: "attive", "da richiamare". */
+  unita: string;
+  urgente?: boolean;
+  onPress: () => void;
+}) {
+  const tinta = urgente ? colori.accento : colori.primarioChiaro;
+
+  return (
+    <Scheda
+      onPress={onPress}
+      style={stili.scorciatoia}
+      accessibilityLabel={`${etichetta}: ${valore ?? 0} ${unita}`}
+    >
+      <View style={stili.testaScorciatoia}>
+        <View style={[stili.pastigliaScorciatoia, { backgroundColor: tinta + '1F' }]}>
+          <Icona nome={icona} dimensione={15} colore={tinta} />
+        </View>
+        {/* Prima il nome, poi la cifra: un numero da solo, prima di sapere
+            cosa conta, si legge due volte. */}
+        <Text style={stili.etichettaScorciatoia}>{etichetta}</Text>
+      </View>
+
+      {/* Cifra e unita' sulla stessa riga: sono una cosa sola, "5 attive".
+          Due testi affiancati e non annidati, se no lo spazio fra i due si
+          perde e si legge "5attive". */}
+      <View style={stili.rigaValore}>
+        <Text style={[stili.valoreScorciatoia, urgente && { color: colori.accento }]}>
+          {valore ?? '—'}
+        </Text>
+        <Text style={stili.unitaScorciatoia} numberOfLines={1}>
+          {unita}
+        </Text>
+      </View>
+    </Scheda>
   );
 }
 
@@ -538,5 +641,28 @@ const stili = stiliTema((c) => StyleSheet.create({
   titoloMigliore: { fontSize: 15, fontWeight: '700', color: c.testo },
   dettaglioMigliore: { fontSize: 12, color: c.testoTenue },
 
-  esci: { paddingTop: spazi.xl },
+  scorciatoie: { flexDirection: 'row', flexWrap: 'wrap', gap: spazi.s },
+  scorciatoia: { width: '47.5%', flexGrow: 1, gap: spazi.s, padding: spazi.m },
+  testaScorciatoia: { flexDirection: 'row', alignItems: 'center', gap: spazi.s },
+  pastigliaScorciatoia: {
+    width: 28,
+    height: 28,
+    borderRadius: raggio.s,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  etichettaScorciatoia: { fontSize: 14, fontWeight: '700', color: c.testo, flexShrink: 1 },
+  rigaValore: { flexDirection: 'row', alignItems: 'baseline', gap: 5 },
+  valoreScorciatoia: { ...testi.cifra, fontSize: 24, color: c.testo },
+  unitaScorciatoia: { fontSize: 12, color: c.testoTenue, flexShrink: 1 },
+
+  coda: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: spazi.xxl,
+  },
+  vocetta: { flexDirection: 'row', alignItems: 'center', gap: spazi.xs, padding: spazi.s },
+  vocettaTesto: { fontSize: 13, fontWeight: '600', color: c.testoTenue },
+  divisoreCoda: { width: 1, height: 14, backgroundColor: c.bordo, marginHorizontal: spazi.s },
 }));
