@@ -8,7 +8,7 @@ import { Icona, type NomeIcona } from '@/components/icone';
 import { Sezione } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
-import { colori, raggio, spazi, testi } from '@/lib/tema';
+import { colori, raggio, spazi, stiliTema, testi } from '@/lib/tema';
 
 /**
  * I numeri del venditore (§8.4).
@@ -224,11 +224,11 @@ function Riquadro({
   );
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
-  centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
+  centrato: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
   contenuto: { padding: spazi.l, gap: spazi.m, paddingBottom: spazi.xxxl },
-  nulla: { ...testi.corpo, color: colori.testoTenue, textAlign: 'center' },
+  nulla: { ...testi.corpo, color: c.testoTenue, textAlign: 'center' },
 
   grande: { gap: spazi.xs },
   grandeTesta: { flexDirection: 'row', alignItems: 'center', gap: spazi.s },
@@ -239,16 +239,16 @@ const stili = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  grandeEtichetta: { ...testi.piccolo, color: colori.testoTenue, flex: 1 },
+  grandeEtichetta: { ...testi.piccolo, color: c.testoTenue, flex: 1 },
   grandeCifra: { fontSize: 44, lineHeight: 50, fontWeight: '800' },
-  grandeDettaglio: { fontSize: 13, color: colori.testoTenue, lineHeight: 18 },
+  grandeDettaglio: { fontSize: 13, color: c.testoTenue, lineHeight: 18 },
 
   risposta: { flexDirection: 'row', alignItems: 'center', gap: spazi.m },
-  rispostaCifra: { fontSize: 30, fontWeight: '800', color: colori.testo },
-  rispostaTesto: { flex: 1, fontSize: 13, color: colori.testoTenue, lineHeight: 18 },
+  rispostaCifra: { fontSize: 30, fontWeight: '800', color: c.testo },
+  rispostaTesto: { flex: 1, fontSize: 13, color: c.testoTenue, lineHeight: 18 },
 
   griglia: { flexDirection: 'row', flexWrap: 'wrap', gap: spazi.s },
   riquadro: { width: '47.5%', flexGrow: 1, gap: 2, paddingVertical: spazi.m },
-  riquadroCifra: { fontSize: 26, fontWeight: '700', color: colori.testo },
-  riquadroEtichetta: { fontSize: 12, color: colori.testoTenue },
-});
+  riquadroCifra: { fontSize: 26, fontWeight: '700', color: c.testo },
+  riquadroEtichetta: { fontSize: 12, color: c.testoTenue },
+}));

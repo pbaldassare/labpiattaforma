@@ -13,14 +13,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Icona, type NomeIcona } from '@/components/icone';
 import { Testo as Text } from '@/components/testo';
 import {
-  TOCCO_MINIMO,
   bagliore,
   caratteri,
   colori,
   gradienti,
   raggio,
   spazi,
+  stiliTema,
   testi,
+  TOCCO_MINIMO,
   vetro,
 } from '@/lib/tema';
 
@@ -181,19 +182,41 @@ export function Bottone({
   );
 }
 
+/**
+ * Il titolo di una sezione.
+ *
+ * L'icona non e' un ornamento: una schermata lunga fatta di sole scritte
+ * maiuscole tutte uguali si scorre senza vedere dove finisce una parte e
+ * comincia l'altra. Un segno colorato davanti fa da appiglio.
+ */
 export function Sezione({
   titolo,
+  icona,
+  tinta,
   azione,
   children,
 }: {
   titolo: string;
+  icona?: NomeIcona;
+  /** Il colore del segno: di norma quello del modulo di cui si parla. */
+  tinta?: string;
   azione?: ReactNode;
   children: ReactNode;
 }) {
+  const colore = tinta ?? colori.primarioChiaro;
+
   return (
     <View style={stili.sezione}>
       <View style={stili.testaSezione}>
+        {icona ? (
+          <View style={[stili.segnoSezione, { backgroundColor: colore + '22' }]}>
+            <Icona nome={icona} dimensione={13} colore={colore} />
+          </View>
+        ) : (
+          <View style={[stili.trattoSezione, { backgroundColor: colore }]} />
+        )}
         <Text style={stili.titoloSezione}>{titolo}</Text>
+        <View style={stili.spinta} />
         {azione}
       </View>
       {children}
@@ -201,23 +224,23 @@ export function Sezione({
   );
 }
 
-const stili = StyleSheet.create({
+const stili = stiliTema((c) => StyleSheet.create({
   campo: { gap: spazi.xs },
-  etichetta: { fontSize: 13, fontWeight: '600', color: colori.testo },
-  obbligatorio: { color: colori.azione },
-  aiuto: { fontSize: 12, lineHeight: 17, color: colori.testoTenue },
-  errore: { fontSize: 12, color: colori.errore },
+  etichetta: { fontSize: 13, fontWeight: '600', color: c.testo },
+  obbligatorio: { color: c.azione },
+  aiuto: { fontSize: 12, lineHeight: 17, color: c.testoTenue },
+  errore: { fontSize: 12, color: c.errore },
 
   input: {
     minHeight: TOCCO_MINIMO + 4,
-    backgroundColor: colori.superficie,
+    backgroundColor: c.superficie,
     borderWidth: 1,
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
     borderRadius: raggio.m,
     paddingHorizontal: spazi.l,
     paddingVertical: spazi.m,
     fontSize: 16,
-    color: colori.testo,
+    color: c.testo,
     fontFamily: caratteri.normale,
   },
 
@@ -228,12 +251,12 @@ const stili = StyleSheet.create({
     paddingHorizontal: spazi.l,
     borderRadius: raggio.tondo,
     borderWidth: 1,
-    borderColor: colori.bordo,
-    backgroundColor: colori.superficie,
+    borderColor: c.bordo,
+    backgroundColor: c.superficie,
   },
-  sceltaAttiva: { backgroundColor: colori.primario, borderColor: colori.primario },
-  sceltaTesto: { fontSize: 14, fontWeight: '500', color: colori.testo },
-  sceltaTestoAttivo: { color: colori.suPrimario, fontWeight: '600' },
+  sceltaAttiva: { backgroundColor: c.primario, borderColor: c.primario },
+  sceltaTesto: { fontSize: 14, fontWeight: '500', color: c.testo },
+  sceltaTestoAttivo: { color: c.suPrimario, fontWeight: '600' },
 
   bottone: {
     minHeight: TOCCO_MINIMO + 4,
@@ -244,13 +267,13 @@ const stili = StyleSheet.create({
     borderRadius: raggio.m,
     paddingHorizontal: spazi.xl,
   },
-  bottonePieno: { backgroundColor: colori.primario, overflow: 'hidden', ...vetro },
+  bottonePieno: { backgroundColor: c.primario, overflow: 'hidden', ...vetro },
   sfumatura: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: raggio.m },
-  bottoneAzione: { backgroundColor: colori.azione },
+  bottoneAzione: { backgroundColor: c.azione },
   bottoneTenue: {
-    backgroundColor: colori.superficie,
+    backgroundColor: c.superficie,
     borderWidth: 1,
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
   },
   bottoneNudo: { backgroundColor: 'transparent' },
   bottoneTesto: { fontSize: 16, fontWeight: '600' },
@@ -259,6 +282,15 @@ const stili = StyleSheet.create({
   spento: { opacity: 0.4 },
 
   sezione: { gap: spazi.m, paddingTop: spazi.xl },
-  testaSezione: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  titoloSezione: { ...testi.etichetta, color: colori.testoTenue },
-});
+  testaSezione: { flexDirection: 'row', alignItems: 'center', gap: spazi.s },
+  spinta: { flex: 1 },
+  segnoSezione: {
+    width: 22,
+    height: 22,
+    borderRadius: raggio.s,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trattoSezione: { width: 3, height: 13, borderRadius: 2 },
+  titoloSezione: { ...testi.etichetta, color: c.testoTenue },
+}));

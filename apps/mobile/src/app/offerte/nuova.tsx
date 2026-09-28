@@ -27,7 +27,7 @@ import {
 import { Bottone, Campo, Input, Scelta, Sezione } from '@/components/modulo';
 import { fn, perCampo, tab } from '@lab/shared';
 import { supabase } from '@/lib/supabase';
-import { colori, raggio, spazi } from '@/lib/tema';
+import { colori, raggio, spazi, stiliTema } from '@/lib/tema';
 
 const ALIMENTAZIONI: Alimentazione[] = [
   'benzina',
@@ -413,26 +413,26 @@ function RigaMargine({ etichetta, valore }: { etichetta: string; valore: number 
   );
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
-  attesa: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
+  attesa: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
   scorrimento: { padding: spazi.xl, paddingBottom: spazi.xxl * 2, gap: spazi.m },
   affiancati: { flexDirection: 'row', gap: spazi.m },
   meta: { flex: 1 },
   margini: {
-    backgroundColor: colori.superficie,
+    backgroundColor: c.superficie,
     borderWidth: 1,
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
     borderRadius: raggio.m,
     padding: spazi.m,
     gap: spazi.xs,
   },
   rigaMargine: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  margineEtichetta: { fontSize: 13, color: colori.testoTenue },
-  margineValore: { fontSize: 17, fontWeight: '700', color: colori.primarioChiaro },
-  marginePerdita: { color: colori.errore },
+  margineEtichetta: { fontSize: 13, color: c.testoTenue },
+  margineValore: { fontSize: 17, fontWeight: '700', color: c.primarioChiaro },
+  marginePerdita: { color: c.errore },
   formule: { gap: spazi.s },
-  nota: { fontSize: 12, color: colori.testoTenue, lineHeight: 17 },
-  errore: { fontSize: 14, color: colori.errore },
+  nota: { fontSize: 12, color: c.testoTenue, lineHeight: 17 },
+  errore: { fontSize: 14, color: c.errore },
   azioni: { gap: spazi.s, paddingTop: spazi.l },
-});
+}));

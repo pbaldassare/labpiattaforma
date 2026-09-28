@@ -14,7 +14,15 @@ import { Pillola, Scheda } from '@/components/base';
 import { Icona, type NomeIcona } from '@/components/icone';
 import { Bottone } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
-import { colori, coloriModulo, coloriModuloTenue, raggio, spazi, testi } from '@/lib/tema';
+import {
+  colori,
+  coloriModulo,
+  coloriModuloTenue,
+  raggio,
+  spazi,
+  stiliTema,
+  testi,
+} from '@/lib/tema';
 
 const ICONA_MODULO: Record<Modulo, NomeIcona> = {
   vendita: 'auto',
@@ -124,8 +132,8 @@ function Proposta({ acquisto, consigliata }: { acquisto: Acquisto; consigliata: 
   );
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
   contenuto: { padding: spazi.l, gap: spazi.m, paddingBottom: spazi.xxxl },
 
   testa: { alignItems: 'center', gap: spazi.s, paddingVertical: spazi.l },
@@ -136,34 +144,34 @@ const stili = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  titolo: { ...testi.titolo, color: colori.testo, textAlign: 'center' },
+  titolo: { ...testi.titolo, color: c.testo, textAlign: 'center' },
   sottotitolo: {
     ...testi.corpo,
-    color: colori.testoTenue,
+    color: c.testoTenue,
     textAlign: 'center',
     maxWidth: 320,
   },
 
   rassicurazione: { flexDirection: 'row', alignItems: 'flex-start', gap: spazi.s },
-  rassicurazioneTesto: { flex: 1, fontSize: 13, lineHeight: 18, color: colori.testoTenue },
+  rassicurazioneTesto: { flex: 1, fontSize: 13, lineHeight: 18, color: c.testoTenue },
 
   proposta: { gap: spazi.s },
-  propostaConsigliata: { borderWidth: 1, borderColor: colori.primario },
+  propostaConsigliata: { borderWidth: 1, borderColor: c.primario },
   rigaProposta: { flexDirection: 'row', alignItems: 'center', gap: spazi.s },
-  titoloProposta: { ...testi.sottotitolo, color: colori.testo, flex: 1 },
-  descrizione: { fontSize: 13, lineHeight: 18, color: colori.testoTenue },
+  titoloProposta: { ...testi.sottotitolo, color: c.testo, flex: 1 },
+  descrizione: { fontSize: 13, lineHeight: 18, color: c.testoTenue },
   rigaPrezzo: { flexDirection: 'row', alignItems: 'baseline', gap: spazi.xs },
-  prezzo: { fontSize: 30, fontWeight: '800', color: colori.testo },
-  periodo: { fontSize: 13, color: colori.testoTenue },
-  risparmio: { fontSize: 12, fontWeight: '600', color: colori.successo },
-  nota: { fontSize: 11, color: colori.testoDebole, textAlign: 'center' },
+  prezzo: { fontSize: 30, fontWeight: '800', color: c.testo },
+  periodo: { fontSize: 13, color: c.testoTenue },
+  risparmio: { fontSize: 12, fontWeight: '600', color: c.successo },
+  nota: { fontSize: 11, color: c.testoDebole, textAlign: 'center' },
 
   avviso: {
     fontSize: 12,
     lineHeight: 17,
-    color: colori.accento,
+    color: c.accento,
     textAlign: 'center',
     paddingHorizontal: spazi.l,
   },
   fondo: { paddingTop: spazi.l },
-});
+}));

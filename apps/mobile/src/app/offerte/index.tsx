@@ -10,12 +10,21 @@ import {
 } from '@lab/shared';
 
 import { Filtri, Pillola, Scheda, Vuoto } from '@/components/base';
+import { Entra } from '@/components/movimento';
 import { Icona, type NomeIcona } from '@/components/icone';
 import { Bottone } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { urlFoto } from '@/lib/foto';
 import { supabase } from '@/lib/supabase';
-import { colori, coloriModulo, coloriModuloTenue, raggio, spazi, testi } from '@/lib/tema';
+import {
+  colori,
+  coloriModulo,
+  coloriModuloTenue,
+  raggio,
+  spazi,
+  stiliTema,
+  testi,
+} from '@/lib/tema';
 
 interface RigaOfferta {
   id: string;
@@ -140,8 +149,10 @@ export default function Offerte() {
             testo="Carica il primo mezzo: dalla scheda esce la pagina da mandare al cliente."
           />
         }
-        renderItem={({ item }) => (
-          <SchedaOfferta item={item} onPress={() => router.push(`/offerte/${item.id}`)} />
+        renderItem={({ item, index }) => (
+          <Entra indice={index}>
+            <SchedaOfferta item={item} onPress={() => router.push(`/offerte/${item.id}`)} />
+          </Entra>
         )}
       />
 
@@ -216,9 +227,9 @@ function SchedaOfferta({ item, onPress }: { item: RigaOfferta; onPress: () => vo
   );
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
-  centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
+  centrato: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
   lista: { padding: spazi.l, gap: spazi.s, paddingBottom: spazi.xxxl * 2 },
 
   scheda: { flexDirection: 'row', alignItems: 'center', gap: spazi.m, padding: spazi.s },
@@ -227,7 +238,7 @@ const stili = StyleSheet.create({
     height: 76,
     borderRadius: raggio.m,
     overflow: 'hidden',
-    backgroundColor: colori.bordoTenue,
+    backgroundColor: c.bordoTenue,
   },
   immagine: { width: '100%', height: '100%' },
   senzaFoto: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -242,12 +253,12 @@ const stili = StyleSheet.create({
   contaFotoTesto: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
 
   testi: { flex: 1, gap: 2 },
-  titolo: { ...testi.corpo, fontWeight: '700', color: colori.testo },
-  modulo: { fontSize: 12, color: colori.testoTenue },
-  prezzo: { fontSize: 17, fontWeight: '700', color: colori.testo, marginTop: 2 },
-  prezzoContorno: { fontSize: 12, fontWeight: '400', color: colori.testoTenue },
+  titolo: { ...testi.corpo, fontWeight: '700', color: c.testo },
+  modulo: { fontSize: 12, color: c.testoTenue },
+  prezzo: { fontSize: 17, fontWeight: '700', color: c.testo, marginTop: 2 },
+  prezzoContorno: { fontSize: 12, fontWeight: '400', color: c.testoTenue },
 
   coda: { alignItems: 'flex-end', gap: spazi.xs, paddingRight: spazi.xs },
-  errore: { color: colori.errore, fontSize: 13, paddingBottom: spazi.s },
+  errore: { color: c.errore, fontSize: 13, paddingBottom: spazi.s },
   barra: { position: 'absolute', left: spazi.l, right: spazi.l, bottom: spazi.xl },
-});
+}));

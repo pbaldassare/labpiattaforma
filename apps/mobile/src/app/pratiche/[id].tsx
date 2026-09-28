@@ -19,7 +19,7 @@ import {
 import { Bottone, Campo, Input, Scelta, Sezione } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
-import { colori, raggio, spazi } from '@/lib/tema';
+import { colori, raggio, spazi, stiliTema } from '@/lib/tema';
 
 const DOMINIO = process.env.EXPO_PUBLIC_DOMINIO_LANDING ?? 'https://dominio-da-decidere.it';
 
@@ -304,51 +304,51 @@ export default function DettaglioPraticaSchermata() {
   );
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
-  centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
+  centrato: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
   scorrimento: { padding: spazi.l, paddingBottom: spazi.xxl * 2, gap: spazi.s },
   scheda: {
-    backgroundColor: colori.superficie,
+    backgroundColor: c.superficie,
     borderWidth: 1,
-    borderColor: colori.bordoTenue,
+    borderColor: c.bordoTenue,
     borderRadius: raggio.l,
     padding: spazi.l,
     gap: spazi.s,
   },
   testa: { flexDirection: 'row', alignItems: 'center', gap: spazi.s },
-  nome: { fontSize: 20, fontWeight: '700', color: colori.testo, flexShrink: 1 },
+  nome: { fontSize: 20, fontWeight: '700', color: c.testo, flexShrink: 1 },
   rivenditore: {
     fontSize: 11,
     fontWeight: '600',
-    color: colori.accento,
+    color: c.accento,
     textTransform: 'uppercase',
   },
-  offerta: { fontSize: 14, color: colori.primarioChiaro, fontWeight: '600' },
+  offerta: { fontSize: 14, color: c.primarioChiaro, fontWeight: '600' },
   recapiti: { gap: spazi.s, marginTop: spazi.xs },
-  errore: { color: colori.errore, fontSize: 13 },
-  promemoria: { fontSize: 13, color: colori.primarioChiaro, fontWeight: '600' },
+  errore: { color: c.errore, fontSize: 13 },
+  promemoria: { fontSize: 13, color: c.primarioChiaro, fontWeight: '600' },
   quando: { gap: spazi.s },
   azioniNota: { gap: spazi.s },
   voce: {
     borderLeftWidth: 2,
-    borderLeftColor: colori.bordo,
+    borderLeftColor: c.bordo,
     paddingLeft: spazi.m,
     paddingVertical: spazi.xs,
     gap: 2,
   },
   voceTesta: { flexDirection: 'row', justifyContent: 'space-between' },
-  voceOrigine: { fontSize: 12, fontWeight: '600', color: colori.testo },
-  voceQuando: { fontSize: 12, color: colori.testoTenue },
-  voceTesto: { fontSize: 14, color: colori.testoTenue, lineHeight: 19 },
-  vuoto: { fontSize: 13, color: colori.testoTenue },
+  voceOrigine: { fontSize: 12, fontWeight: '600', color: c.testo },
+  voceQuando: { fontSize: 12, color: c.testoTenue },
+  voceTesto: { fontSize: 14, color: c.testoTenue, lineHeight: 19 },
+  vuoto: { fontSize: 13, color: c.testoTenue },
   preventivo: {
     borderWidth: 1,
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
     borderRadius: raggio.m,
     padding: spazi.m,
     gap: 2,
   },
-  preventivoNumero: { fontSize: 14, fontWeight: '700', color: colori.testo },
-  preventivoDati: { fontSize: 13, color: colori.testoTenue },
-});
+  preventivoNumero: { fontSize: 14, fontWeight: '700', color: c.testo },
+  preventivoDati: { fontSize: 13, color: c.testoTenue },
+}));

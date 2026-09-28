@@ -12,7 +12,15 @@ import { Pillola, Scheda } from '@/components/base';
 import { Icona, type NomeIcona } from '@/components/icone';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
-import { colori, coloriModulo, coloriModuloTenue, raggio, spazi, testi } from '@/lib/tema';
+import {
+  colori,
+  coloriModulo,
+  coloriModuloTenue,
+  raggio,
+  spazi,
+  stiliTema,
+  testi,
+} from '@/lib/tema';
 
 interface StatoModulo {
   modulo: Modulo;
@@ -189,11 +197,11 @@ function Numero({ valore, etichetta }: { valore: number; etichetta: string }) {
   );
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
-  centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
+  centrato: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
   contenuto: { padding: spazi.l, gap: spazi.m, paddingBottom: spazi.xxxl },
-  introduzione: { ...testi.piccolo, color: colori.testoTenue, paddingBottom: spazi.xs },
+  introduzione: { ...testi.piccolo, color: c.testoTenue, paddingBottom: spazi.xs },
 
   scheda: { gap: spazi.l },
   schedaInArrivo: { opacity: 0.6 },
@@ -205,26 +213,26 @@ const stili = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quadratoSpento: { backgroundColor: colori.bordoTenue },
+  quadratoSpento: { backgroundColor: c.bordoTenue },
   testi: { flex: 1, gap: 2 },
-  nome: { ...testi.sottotitolo, color: colori.testo },
-  descrizione: { ...testi.piccolo, color: colori.testoTenue },
+  nome: { ...testi.sottotitolo, color: c.testo },
+  descrizione: { ...testi.piccolo, color: c.testoTenue },
 
   numeri: { flexDirection: 'row', alignItems: 'center' },
   numero: { flex: 1, gap: 2 },
-  numeroValore: { fontSize: 24, fontWeight: '700', color: colori.testo },
-  numeroEtichetta: { fontSize: 11, color: colori.testoTenue },
-  divisore: { width: 1, height: 32, backgroundColor: colori.bordo },
+  numeroValore: { fontSize: 24, fontWeight: '700', color: c.testo },
+  numeroEtichetta: { fontSize: 11, color: c.testoTenue },
+  divisore: { width: 1, height: 32, backgroundColor: c.bordo },
 
   utilizzi: { gap: spazi.xs },
   barra: {
     height: 4,
     borderRadius: raggio.tondo,
-    backgroundColor: colori.bordoTenue,
+    backgroundColor: c.bordoTenue,
     overflow: 'hidden',
   },
   barraPiena: { height: 4, borderRadius: raggio.tondo },
-  barraEsaurita: { backgroundColor: colori.azione },
-  residui: { fontSize: 11, color: colori.testoTenue },
-  residuiPochi: { color: colori.accento, fontWeight: '600' },
-});
+  barraEsaurita: { backgroundColor: c.azione },
+  residui: { fontSize: 11, color: c.testoTenue },
+  residuiPochi: { color: c.accento, fontWeight: '600' },
+}));

@@ -14,6 +14,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { BloccoIcona, Pillola, Scheda } from '@/components/base';
+import { Entra } from '@/components/movimento';
 import { Icona, type NomeIcona } from '@/components/icone';
 import { Bottone, Sezione } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
@@ -26,6 +27,7 @@ import {
   gradienti,
   raggio,
   spazi,
+  stiliTema,
   testi,
   vetro,
 } from '@/lib/tema';
@@ -228,6 +230,8 @@ export default function Home() {
           diceva a chi telefonare, che e' l'unica cosa che serve sapere. */}
       {chiamate.length > 0 && (
         <Sezione
+          icona="telefona"
+          tinta={colori.accento}
           titolo={
             numeri && numeri.da_richiamare > chiamate.length
               ? `Da richiamare (${numeri.da_richiamare})`
@@ -241,9 +245,9 @@ export default function Home() {
             ) : undefined
           }
         >
-          {chiamate.map((c) => (
+          {chiamate.map((c, i) => (
+            <Entra key={c.id} indice={i}>
             <Scheda
-              key={c.id}
               style={stili.chiamata}
               onPress={() => router.push({ pathname: '/pratiche/[id]', params: { id: c.id } })}
               accessibilityLabel={`Richiama ${c.cliente_nome}`}
@@ -261,12 +265,14 @@ export default function Home() {
               </View>
               <Text style={stili.quandoChiamata}>{quandoBreve(c.ultimo_contatto)}</Text>
             </Scheda>
+            </Entra>
           ))}
         </Sezione>
       )}
 
       {/* I moduli: quali sono attivi e cosa c'e' dentro a ciascuno. */}
       <Sezione
+        icona="scatola"
         titolo={attivi.length > 0 ? 'I tuoi moduli' : 'Comincia da qui'}
         azione={
           <Pressable onPress={() => router.push('/moduli')}>
@@ -274,13 +280,15 @@ export default function Home() {
           </Pressable>
         }
       >
-        {moduli.map((m) => (
+        {moduli.map((m, i) => (
+          <Entra key={m.modulo} indice={i}>
           <SchedaModulo
             key={m.modulo}
             stato={m}
             onApri={() => router.push('/offerte')}
             onNuova={() => router.push(DOVE_NUOVA[m.modulo])}
           />
+          </Entra>
         ))}
       </Sezione>
 
@@ -303,7 +311,7 @@ export default function Home() {
         </Scheda>
       )}
 
-      <Sezione titolo="Cosa fai adesso">
+      <Sezione icona="fulmine" titolo="Cosa fai adesso">
         <Bottone testo="Carica un’offerta" icona="piu" onPress={() => router.push('/moduli')} />
         <Bottone tenue testo="Le tue offerte" icona="auto" onPress={() => router.push('/offerte')} />
         <Bottone
@@ -437,8 +445,8 @@ function quandoScadenza(iso: string): string {
   return `Fra ${giorni} giorni`;
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
   contenuto: { padding: spazi.l, gap: spazi.m, paddingBottom: spazi.xxxl },
 
   intestazione: { gap: spazi.m },
@@ -447,8 +455,8 @@ const stili = StyleSheet.create({
     padding: spazi.l,
     gap: spazi.l,
     borderWidth: 1,
-    borderColor: colori.bordo,
-    ...vetro,
+    borderColor: c.bordo,
+    ...vetro(c),
   },
   rigaNome: { flexDirection: 'row', alignItems: 'center', gap: spazi.m },
 
@@ -463,10 +471,10 @@ const stili = StyleSheet.create({
   cifrettaValore: {
     fontSize: 26,
     fontWeight: '800',
-    color: colori.testo,
+    color: c.testo,
     letterSpacing: -0.8,
   },
-  cifrettaEtichetta: { fontSize: 11, lineHeight: 14, color: colori.testoTenue },
+  cifrettaEtichetta: { fontSize: 11, lineHeight: 14, color: c.testoTenue },
   divisoreSottile: {
     width: 1,
     alignSelf: 'stretch',
@@ -474,58 +482,65 @@ const stili = StyleSheet.create({
     marginHorizontal: spazi.m,
   },
   testiNome: { flex: 1, gap: 2 },
-  nome: { ...testi.sottotitolo, color: colori.testo },
-  slug: { ...testi.piccolo, color: colori.testoTenue },
-  corpo: { ...testi.corpo, color: colori.testoTenue },
+  nome: { ...testi.sottotitolo, color: c.testo },
+  slug: { ...testi.piccolo, color: c.testoTenue },
+  corpo: { ...testi.corpo, color: c.testoTenue },
   tondo: {
     width: 40,
     height: 40,
     borderRadius: raggio.tondo,
     borderWidth: 1,
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
     alignItems: 'center',
     justifyContent: 'center',
   },
   premuto: { opacity: 0.7 },
-  tutte: { fontSize: 13, fontWeight: '600', color: colori.primarioChiaro },
+  tutte: { fontSize: 13, fontWeight: '600', color: c.primarioChiaro },
 
   promemoria: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spazi.m,
     borderLeftWidth: 3,
-    borderLeftColor: colori.accento,
+    borderLeftColor: c.accento,
     ...elevazione.bassa,
   },
   testiPromemoria: { flex: 1, gap: 2 },
-  promemoriaMotivo: { ...testi.corpo, fontWeight: '600', color: colori.testo },
-  promemoriaQuando: { ...testi.piccolo, color: colori.accento, fontWeight: '600' },
+  promemoriaMotivo: { ...testi.corpo, fontWeight: '600', color: c.testo },
+  promemoriaQuando: { ...testi.piccolo, color: c.accento, fontWeight: '600' },
 
   chiamata: { flexDirection: 'row', alignItems: 'center', gap: spazi.m, padding: spazi.m },
   pastigliaChiamata: {
     width: 34,
     height: 34,
     borderRadius: raggio.tondo,
-    backgroundColor: colori.accentoTenue,
+    backgroundColor: c.accentoTenue,
     alignItems: 'center',
     justifyContent: 'center',
   },
   testiChiamata: { flex: 1, gap: 1 },
-  nomeChiamata: { fontSize: 15, fontWeight: '700', color: colori.testo },
-  perChiamata: { fontSize: 12, color: colori.testoTenue },
-  quandoChiamata: { fontSize: 11, color: colori.testoDebole },
+  nomeChiamata: { fontSize: 15, fontWeight: '700', color: c.testo },
+  perChiamata: { fontSize: 12, color: c.testoTenue },
+  quandoChiamata: { fontSize: 11, color: c.testoDebole },
 
   modulo: { flexDirection: 'row', alignItems: 'center', gap: spazi.m, padding: spazi.m },
-  moduloVuoto: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colori.bordo },
+  moduloVuoto: {
+    // Non trasparente: sul fondo scuro la scheda spariva e restava una riga di
+    // testo sospesa nel vuoto. Un tono appena sotto la superficie normale dice
+    // "qui non c'e' ancora niente" senza far sparire il riquadro.
+    backgroundColor: c.bordoTenue,
+    borderWidth: 1,
+    borderColor: c.bordo,
+  },
   testiModulo: { flex: 1, gap: 1 },
-  nomeModulo: { fontSize: 15, fontWeight: '700', color: colori.testo },
-  dettaglioModulo: { fontSize: 12, color: colori.testoTenue },
+  nomeModulo: { fontSize: 15, fontWeight: '700', color: c.testo },
+  dettaglioModulo: { fontSize: 12, color: c.testoTenue },
 
   migliore: { flexDirection: 'row', alignItems: 'center', gap: spazi.m, padding: spazi.m },
   testiMigliore: { flex: 1, gap: 1 },
-  etichettaMigliore: { ...testi.etichetta, fontSize: 10, color: colori.testoDebole },
-  titoloMigliore: { fontSize: 15, fontWeight: '700', color: colori.testo },
-  dettaglioMigliore: { fontSize: 12, color: colori.testoTenue },
+  etichettaMigliore: { ...testi.etichetta, fontSize: 10, color: c.testoDebole },
+  titoloMigliore: { fontSize: 15, fontWeight: '700', color: c.testo },
+  dettaglioMigliore: { fontSize: 12, color: c.testoTenue },
 
   esci: { paddingTop: spazi.xl },
-});
+}));

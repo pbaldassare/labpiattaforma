@@ -24,7 +24,7 @@ import { Scheda } from '@/components/base';
 import { Bottone, Campo, Input, Scelta, Sezione } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
-import { colori, spazi, testi } from '@/lib/tema';
+import { colori, spazi, stiliTema, testi } from '@/lib/tema';
 
 /**
  * Per quanto tempo il mezzo resta a noleggio.
@@ -395,20 +395,20 @@ function Riga({
   );
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
-  attesa: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
+  attesa: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
   scorrimento: { padding: spazi.l, paddingBottom: spazi.xxxl * 2, gap: spazi.m },
   soglie: { flexDirection: 'row', gap: spazi.s },
   meta: { flex: 1 },
   centrato: { textAlign: 'center', paddingHorizontal: spazi.xs },
-  nota: { ...testi.piccolo, fontSize: 12, color: colori.testoTenue },
-  esempio: { gap: spazi.xs, backgroundColor: colori.bordoTenue },
-  esempioTitolo: { ...testi.etichetta, color: colori.testoTenue, marginBottom: spazi.xs },
+  nota: { ...testi.piccolo, fontSize: 12, color: c.testoTenue },
+  esempio: { gap: spazi.xs, backgroundColor: c.bordoTenue },
+  esempioTitolo: { ...testi.etichetta, color: c.testoTenue, marginBottom: spazi.xs },
   rigaEsempio: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  rigaEtichetta: { ...testi.piccolo, color: colori.testoTenue },
-  rigaValore: { fontSize: 14, fontWeight: '700', color: colori.testo },
-  rigaTariffa: { fontSize: 12, fontWeight: '400', color: colori.testoTenue },
-  errore: { fontSize: 14, color: colori.errore },
+  rigaEtichetta: { ...testi.piccolo, color: c.testoTenue },
+  rigaValore: { fontSize: 14, fontWeight: '700', color: c.testo },
+  rigaTariffa: { fontSize: 12, fontWeight: '400', color: c.testoTenue },
+  errore: { fontSize: 14, color: c.errore },
   azioni: { gap: spazi.s, paddingTop: spazi.l },
-});
+}));

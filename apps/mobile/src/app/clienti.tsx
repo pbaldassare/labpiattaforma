@@ -19,11 +19,12 @@ import {
 } from '@lab/shared';
 
 import { Filtri, Iniziali, Pillola, Scheda, Vuoto } from '@/components/base';
+import { Entra } from '@/components/movimento';
 import { Icona } from '@/components/icone';
 import { Input } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
-import { TOCCO_MINIMO, colori, raggio, spazi, testi } from '@/lib/tema';
+import { colori, raggio, spazi, stiliTema, testi, TOCCO_MINIMO } from '@/lib/tema';
 
 interface OffertaMandata {
   pratica_id: string;
@@ -143,13 +144,15 @@ export default function Clienti() {
             }
           />
         }
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
+          <Entra indice={index}>
           <SchedaCliente
             cliente={item}
             aperto={aperto === item.id}
             onApri={() => setAperto(aperto === item.id ? null : item.id)}
             onPratica={(id) => router.push({ pathname: '/pratiche/[id]', params: { id } })}
           />
+          </Entra>
         )}
       />
     </View>
@@ -283,9 +286,9 @@ function Tasto({
   );
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
-  centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
+  centrato: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
   lista: { padding: spazi.l, paddingTop: spazi.s, gap: spazi.s, paddingBottom: spazi.xxxl },
 
   ricerca: {
@@ -301,9 +304,9 @@ const stili = StyleSheet.create({
   testa: { flexDirection: 'row', alignItems: 'center', gap: spazi.m },
   testi: { flex: 1, gap: 2 },
   rigaNome: { flexDirection: 'row', alignItems: 'center', gap: spazi.s },
-  nome: { ...testi.corpo, fontWeight: '700', color: colori.testo, flexShrink: 1 },
-  sottotitolo: { fontSize: 12, color: colori.testoTenue },
-  quando: { fontSize: 11, color: colori.testoDebole },
+  nome: { ...testi.corpo, fontWeight: '700', color: c.testo, flexShrink: 1 },
+  sottotitolo: { fontSize: 12, color: c.testoTenue },
+  quando: { fontSize: 11, color: c.testoDebole },
 
   azioni: { flexDirection: 'row', gap: spazi.s },
   tasto: {
@@ -315,19 +318,19 @@ const stili = StyleSheet.create({
     gap: spazi.xs,
     borderRadius: raggio.s,
     borderWidth: 1,
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
   },
-  tastoTesto: { fontSize: 13, fontWeight: '600', color: colori.primarioChiaro },
+  tastoTesto: { fontSize: 13, fontWeight: '600', color: c.primarioChiaro },
   premuta: { opacity: 0.7 },
 
   storico: {
     gap: spazi.xs,
     borderTopWidth: 1,
-    borderTopColor: colori.bordoTenue,
+    borderTopColor: c.bordoTenue,
     paddingTop: spazi.s,
   },
-  note: { fontSize: 13, color: colori.testoTenue, lineHeight: 18, fontStyle: 'italic' },
-  nulla: { fontSize: 13, color: colori.testoDebole },
+  note: { fontSize: 13, color: c.testoTenue, lineHeight: 18, fontStyle: 'italic' },
+  nulla: { fontSize: 13, color: c.testoDebole },
   voce: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -336,7 +339,7 @@ const stili = StyleSheet.create({
     paddingVertical: spazi.xs,
   },
   voceTesti: { flex: 1, gap: 1 },
-  voceTitolo: { fontSize: 14, fontWeight: '600', color: colori.testo },
-  voceDettaglio: { fontSize: 12, color: colori.testoTenue },
-  voceQuando: { fontSize: 11, color: colori.testoDebole },
-});
+  voceTitolo: { fontSize: 14, fontWeight: '600', color: c.testo },
+  voceDettaglio: { fontSize: 12, color: c.testoTenue },
+  voceQuando: { fontSize: 11, color: c.testoDebole },
+}));

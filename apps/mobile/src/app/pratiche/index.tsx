@@ -12,11 +12,20 @@ import {
 } from '@lab/shared';
 
 import { Filtri, Iniziali, Pillola, Scheda, Vuoto } from '@/components/base';
+import { Entra } from '@/components/movimento';
 import { Icona, type NomeIcona } from '@/components/icone';
 import { Testo as Text } from '@/components/testo';
 import { urlFoto } from '@/lib/foto';
 import { supabase } from '@/lib/supabase';
-import { colori, coloriModulo, coloriModuloTenue, raggio, spazi, testi } from '@/lib/tema';
+import {
+  colori,
+  coloriModulo,
+  coloriModuloTenue,
+  raggio,
+  spazi,
+  stiliTema,
+  testi,
+} from '@/lib/tema';
 
 interface RigaPratica {
   id: string;
@@ -122,8 +131,10 @@ export default function Pratiche() {
             testo="Quando un cliente compila il form su una tua pagina, lo trovi qui già pronto da richiamare."
           />
         }
-        renderItem={({ item }) => (
-          <SchedaPratica item={item} onPress={() => router.push(`/pratiche/${item.id}`)} />
+        renderItem={({ item, index }) => (
+          <Entra indice={index}>
+            <SchedaPratica item={item} onPress={() => router.push(`/pratiche/${item.id}`)} />
+          </Entra>
         )}
       />
     </View>
@@ -197,9 +208,9 @@ function SchedaPratica({ item, onPress }: { item: RigaPratica; onPress: () => vo
   );
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
-  centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
+  centrato: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
   lista: { paddingHorizontal: spazi.l, paddingBottom: spazi.xxl, gap: spazi.s },
   scheda: { gap: spazi.s, padding: spazi.m, alignItems: 'flex-start' },
   testa: { flexDirection: 'row', alignItems: 'center', gap: spazi.m, alignSelf: 'stretch' },
@@ -207,14 +218,14 @@ const stili = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: raggio.s,
-    backgroundColor: colori.bordoTenue,
+    backgroundColor: c.bordoTenue,
   },
   senzaFoto: { alignItems: 'center', justifyContent: 'center' },
   testi: { flex: 1, gap: 2 },
   rigaNome: { flexDirection: 'row', alignItems: 'center', gap: spazi.s },
-  nome: { ...testi.corpo, fontWeight: '700', color: colori.testo, flexShrink: 1 },
-  offerta: { fontSize: 12, color: colori.testoTenue },
-  quando: { fontSize: 11, color: colori.testoDebole },
-  messaggio: { fontSize: 13, color: colori.testoTenue, lineHeight: 18 },
-  errore: { color: colori.errore, fontSize: 13, paddingBottom: spazi.s },
-});
+  nome: { ...testi.corpo, fontWeight: '700', color: c.testo, flexShrink: 1 },
+  offerta: { fontSize: 12, color: c.testoTenue },
+  quando: { fontSize: 11, color: c.testoDebole },
+  messaggio: { fontSize: 13, color: c.testoTenue, lineHeight: 18 },
+  errore: { color: c.errore, fontSize: 13, paddingBottom: spazi.s },
+}));

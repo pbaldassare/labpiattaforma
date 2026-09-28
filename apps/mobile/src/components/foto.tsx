@@ -10,7 +10,7 @@ import { Bottone } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { urlFoto } from '@/lib/foto';
 import { supabase } from '@/lib/supabase';
-import { colori, raggio, spazi, testi } from '@/lib/tema';
+import { colori, raggio, spazi, stiliTema, testi } from '@/lib/tema';
 
 /** Fuori da qualunque ordine reale: serve solo mentre si riordina. */
 const PARCHEGGIO = 1000;
@@ -210,7 +210,7 @@ export function Fotografie({
   );
 }
 
-const stili = StyleSheet.create({
+const stili = stiliTema((c) => StyleSheet.create({
   contenitore: { gap: spazi.s },
   striscia: { gap: spazi.s, paddingRight: spazi.s },
 
@@ -219,14 +219,14 @@ const stili = StyleSheet.create({
     borderRadius: raggio.l,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colori.bordo,
-    backgroundColor: colori.superficie,
+    borderColor: c.bordo,
+    backgroundColor: c.superficie,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spazi.s,
     paddingHorizontal: spazi.xl,
   },
-  vuotoTesto: { ...testi.piccolo, color: colori.testoTenue, textAlign: 'center' },
+  vuotoTesto: { ...testi.piccolo, color: c.testoTenue, textAlign: 'center' },
   premuto: { opacity: 0.75 },
 
   riquadro: {
@@ -234,7 +234,7 @@ const stili = StyleSheet.create({
     height: 140,
     borderRadius: raggio.m,
     overflow: 'hidden',
-    backgroundColor: colori.bordoTenue,
+    backgroundColor: c.bordoTenue,
   },
   immagine: { width: '100%', height: '100%' },
   etichettaCopertina: { position: 'absolute', top: spazi.xs, left: spazi.xs },
@@ -247,7 +247,7 @@ const stili = StyleSheet.create({
     paddingVertical: 6,
     alignItems: 'center',
   },
-  azioneCopertinaTesto: { color: colori.suPrimario, fontSize: 11, fontWeight: '600' },
+  azioneCopertinaTesto: { color: c.suPrimario, fontSize: 11, fontWeight: '600' },
   elimina: {
     position: 'absolute',
     top: spazi.xs,
@@ -266,13 +266,13 @@ const stili = StyleSheet.create({
     borderRadius: raggio.m,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colori.superficie,
+    backgroundColor: c.superficie,
   },
 
   caricamento: { flexDirection: 'row', alignItems: 'center', gap: spazi.s },
-  caricamentoTesto: { ...testi.piccolo, color: colori.testoTenue },
-  errore: { fontSize: 13, color: colori.errore },
-});
+  caricamentoTesto: { ...testi.piccolo, color: c.testoTenue },
+  errore: { fontSize: 13, color: c.errore },
+}));

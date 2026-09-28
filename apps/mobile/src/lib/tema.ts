@@ -1,129 +1,262 @@
-import { Platform, type ViewStyle } from 'react-native';
+import { Platform, StyleSheet, type ViewStyle } from 'react-native';
 
 /**
- * Palette dell'app: cruscotto notturno.
+ * Le due palette dell'app.
  *
- * Il grafite su fondo chiaro era corretto ma anonimo: sembrava un gestionale.
- * Qui si va sullo scuro, con la stessa logica di un quadro strumenti — fondo
- * profondo, superfici che salgono di tono, e pochi colori molto saturi che
- * vogliono dire qualcosa.
+ * Via il blu: e' il colore di ogni gestionale mai fatto, e su un'app per chi
+ * vende auto non dice niente. Qui l'azione e' un verde acido — quello dei
+ * caschi e delle livree — su un nero caldo, non bluastro.
+ *
+ * Il verde acido regge il testo scuro sopra in tutti e due i temi (oltre 13:1),
+ * quindi il pulsante principale e' identico di giorno e di notte: cambia il
+ * fondo intorno, non il gesto.
  *
  * I colori non sono decorazione: ogni modulo ha il suo, e su una schermata che
- * ne mostra quattro insieme si capisce a colpo d'occhio di cosa si sta
- * parlando senza leggere. Il rosso resta fuori da questo gioco: significa solo
- * "stai per rompere qualcosa".
- *
- * Nota per il futuro: lo scuro e' bello ma sotto il sole in piazzale legge
- * peggio del chiaro. Se il venditore si lamenta, la strada e' un tema chiaro
- * gemello, non l'abbandono di questi colori.
+ * ne mostra quattro insieme si capisce di cosa si parla prima di leggere. Non
+ * portano mai da soli un'informazione — accanto c'e' sempre l'icona e il nome.
  */
-export const colori = {
-  /** Blu elettrico: l'azione principale. Bianco sopra sta a 4,6:1. */
-  primario: '#2563EB',
-  /** La versione accesa, per icone e bordi su fondo scuro. */
-  primarioChiaro: '#60A5FA',
-  suPrimario: '#FFFFFF',
+export interface Palette {
+  primario: string;
+  suPrimario: string;
+  primarioChiaro: string;
+  primarioTenue: string;
 
-  /**
-   * Ambra per cio' che chiede attenzione senza essere un errore: una pratica
-   * da richiamare, un cliente rivenditore. Distinta dal rosso, che qui
-   * significa solo "qualcosa e' andato storto".
-   */
-  accento: '#FBBF24',
-  accentoTenue: '#3B2F0B',
+  accento: string;
+  accentoTenue: string;
 
-  /** Rosso d'azione: un solo pulsante per schermata, e solo se e' grave. */
-  azione: '#EF4444',
+  azione: string;
+  suAzione: string;
+  azioneTenue: string;
+
+  sfondo: string;
+  superficie: string;
+  superficieAlta: string;
+
+  testo: string;
+  testoTenue: string;
+  testoDebole: string;
+
+  bordo: string;
+  bordoTenue: string;
+
+  errore: string;
+  successo: string;
+  successoTenue: string;
+
+  /** La linea di luce in cima alle schede. */
+  lucidatura: string;
+  /** Il colore dell'ombra: nera di notte, grigio caldo di giorno. */
+  coloreOmbra: string;
+  /** Quanto pesa l'ombra: tanto sul chiaro, poco sullo scuro. */
+  pesoOmbra: number;
+}
+
+export const SCURO: Palette = {
+  primario: '#C6F432',
+  suPrimario: '#14161C',
+  primarioChiaro: '#D7F95E',
+  primarioTenue: '#28320D',
+
+  accento: '#FFB020',
+  accentoTenue: '#352706',
+
+  azione: '#FF5A5A',
   suAzione: '#FFFFFF',
+  azioneTenue: '#3A1417',
 
-  /** Il fondo, e le due superfici che ci salgono sopra. */
-  sfondo: '#0A0E17',
-  superficie: '#141A26',
-  superficieAlta: '#1D2534',
+  // Grafite, non nero: il quasi-nero faceva sembrare l'app spenta e schiacciava
+  // le schede, che sparivano nel fondo invece di staccarsene.
+  sfondo: '#16181E',
+  superficie: '#212530',
+  superficieAlta: '#2C313E',
 
-  testo: '#F1F5F9',
-  testoTenue: '#A3B1C6',
-  testoDebole: '#6B7B93',
+  testo: '#F5F6F7',
+  testoTenue: '#AEB4C0',
+  testoDebole: '#7B8290',
 
-  bordo: '#27324A',
-  bordoTenue: '#1B2333',
+  bordo: '#39404F',
+  bordoTenue: '#272C37',
 
-  errore: '#F87171',
+  errore: '#FF7A7A',
   successo: '#34D399',
   successoTenue: '#0C2E24',
-  azioneTenue: '#3B1418',
-} as const;
+
+  lucidatura: 'rgba(255,255,255,0.07)',
+  coloreOmbra: '#000000',
+  pesoOmbra: 1,
+};
+
+export const CHIARO: Palette = {
+  primario: '#C6F432',
+  suPrimario: '#14161A',
+  primarioChiaro: '#4D6B00',
+  primarioTenue: '#F0FBD0',
+
+  accento: '#B45309',
+  accentoTenue: '#FEF3C7',
+
+  azione: '#DC2626',
+  suAzione: '#FFFFFF',
+  azioneTenue: '#FEE2E2',
+
+  // Bianco caldo, non azzurrino: fa coppia col nero caldo dell'altro tema.
+  sfondo: '#F7F7F4',
+  superficie: '#FFFFFF',
+  superficieAlta: '#F1F1ED',
+
+  testo: '#14161A',
+  testoTenue: '#55606F',
+  testoDebole: '#8A94A3',
+
+  bordo: '#E4E4DF',
+  bordoTenue: '#EFEFEA',
+
+  errore: '#DC2626',
+  successo: '#059669',
+  successoTenue: '#D1FAE5',
+
+  lucidatura: 'rgba(255,255,255,0.9)',
+  coloreOmbra: '#1B1D22',
+  pesoOmbra: 0.28,
+};
+
+export type NomeModulo = 'vendita' | 'noleggio_breve' | 'noleggio_lungo' | 'assicurazioni';
 
 /**
- * Un colore per modulo.
+ * Un colore per modulo, in due versioni.
  *
- * Servono a riconoscere il modulo prima di leggerne il nome, quindi devono
- * essere distinguibili anche da chi confonde rosso e verde: qui sono distanti
- * per tinta e per luminosita', e non portano mai da soli un'informazione —
- * accanto c'e' sempre l'icona e il nome scritto.
+ * Sul chiaro servono toni piu' profondi: gli stessi dello scuro, su fondo
+ * bianco, sarebbero illeggibili come testo.
  */
-export const coloriModulo = {
-  vendita: '#60A5FA',
-  noleggio_breve: '#FB923C',
-  noleggio_lungo: '#C084FC',
-  assicurazioni: '#34D399',
-} as const;
+const MODULI_SCURO: Record<NomeModulo, string> = {
+  vendita: '#C6F432',
+  noleggio_breve: '#FF8A3D',
+  noleggio_lungo: '#A78BFA',
+  assicurazioni: '#38BDF8',
+};
+
+const MODULI_CHIARO: Record<NomeModulo, string> = {
+  vendita: '#4D6B00',
+  noleggio_breve: '#C2410C',
+  noleggio_lungo: '#6D28D9',
+  assicurazioni: '#0369A1',
+};
+
+const MODULI_TENUE_SCURO: Record<NomeModulo, string> = {
+  vendita: '#28320D',
+  noleggio_breve: '#3A2011',
+  noleggio_lungo: '#2A1F45',
+  assicurazioni: '#0C2B40',
+};
+
+const MODULI_TENUE_CHIARO: Record<NomeModulo, string> = {
+  vendita: '#F0FBD0',
+  noleggio_breve: '#FFEDD5',
+  noleggio_lungo: '#EDE9FE',
+  assicurazioni: '#E0F2FE',
+};
 
 /**
- * Le sfumature.
+ * Le sfumature dei blocchi icona.
  *
- * Una superficie piatta e' una superficie finta: due toni dello stesso colore,
- * anche vicinissimi, bastano a far sembrare che la luce arrivi da qualche
- * parte. Su fondo scuro e' la differenza fra una scheda e un rettangolo.
+ * Restano sature in tutti e due i temi: sono superfici piene con l'icona
+ * sopra, non testo su fondo, quindi non cambiano col tema.
  */
-export const gradienti = {
-  vendita: ['#2563EB', '#1E40AF'],
-  noleggio_breve: ['#EA580C', '#9A3412'],
-  noleggio_lungo: ['#9333EA', '#6B21A8'],
-  assicurazioni: ['#059669', '#065F46'],
-  /** L'intestazione: il fondo che si schiarisce appena verso l'alto. */
-  testa: ['#182133', '#0C1220'],
-  azione: ['#3B82F6', '#2563EB'],
-} as const;
+export const gradienti: Record<NomeModulo | 'azione' | 'testa', readonly [string, string]> = {
+  vendita: ['#C6F432', '#84CC16'],
+  noleggio_breve: ['#FF8A3D', '#EA580C'],
+  noleggio_lungo: ['#A78BFA', '#7C3AED'],
+  assicurazioni: ['#38BDF8', '#0284C7'],
+  azione: ['#D4FF3F', '#A3E635'],
+  testa: ['#2C313E', '#191C23'],
+};
+
+/** Su un blocco cosi' acceso l'icona va scura o chiara secondo il colore. */
+export const suGradiente: Record<NomeModulo | 'azione', string> = {
+  vendita: '#14161A',
+  noleggio_breve: '#FFFFFF',
+  noleggio_lungo: '#FFFFFF',
+  assicurazioni: '#FFFFFF',
+  azione: '#14161A',
+};
+
+// ── La palette di adesso ────────────────────────────────────────────────────
 
 /**
- * Il bagliore colorato sotto una tessera.
- *
- * Non e' un'ombra: e' la luce che il colore della tessera getta intorno a se'.
- * Su Android sotto la 28 l'ombra resta nera, e va bene lo stesso.
+ * Sta in una variabile di modulo e non in un contesto React per una ragione
+ * pratica: gli stili si scrivono al caricamento del file, quando nessun
+ * contesto esiste ancora. Il fornitore del tema la cambia qui e rimonta
+ * l'albero; tutto il resto la legge da qui.
  */
-export function bagliore(colore: string, forza = 0.35): ViewStyle {
-  return Platform.select<ViewStyle>({
-    ios: {
-      shadowColor: colore,
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: forza,
-      shadowRadius: 14,
-    },
-    android: { shadowColor: colore, elevation: 8 },
-    default: { boxShadow: `0 6px 18px ${colore}${Math.round(forza * 255).toString(16)}` } as ViewStyle,
-  })!;
+let schemaAttuale: 'chiaro' | 'scuro' = 'scuro';
+let corrente: Palette = SCURO;
+let moduli = MODULI_SCURO;
+let moduliTenui = MODULI_TENUE_SCURO;
+
+export function impostaPalette(schema: 'chiaro' | 'scuro'): void {
+  if (schema === schemaAttuale) return;
+  const chiaro = schema === 'chiaro';
+  schemaAttuale = schema;
+  corrente = chiaro ? CHIARO : SCURO;
+  moduli = chiaro ? MODULI_CHIARO : MODULI_SCURO;
+  moduliTenui = chiaro ? MODULI_TENUE_CHIARO : MODULI_TENUE_SCURO;
+}
+
+export function schemaCorrente(): 'chiaro' | 'scuro' {
+  return schemaAttuale;
+}
+
+export function paletteCorrente(): Palette {
+  return corrente;
 }
 
 /**
- * La linea di luce in cima a una scheda.
+ * Un oggetto che si risolve quando lo si legge, non quando lo si scrive.
  *
- * Un bordo chiaro di un pixel solo sul lato alto: e' il dettaglio che fa
- * sembrare la scheda illuminata invece che dipinta. Costa niente e si nota
- * solo quando manca.
+ * Serve ai colori usati direttamente nel disegno — `colore={colori.testoTenue}`
+ * — che vengono letti a ogni render e quindi seguono il tema da soli.
+ *
+ * NON basta dentro `StyleSheet.create`: li' il valore finisce in un oggetto
+ * costruito al caricamento del file, e resta quello per sempre. Per gli stili
+ * c'e' `stiliTema` qui sotto.
  */
-export const vetro: ViewStyle = {
-  borderTopWidth: 1,
-  borderTopColor: 'rgba(255,255,255,0.07)',
-};
+function specchio<T extends object>(sorgente: () => T): T {
+  return new Proxy({} as T, {
+    get: (_b, chiave) => sorgente()[chiave as keyof T],
+    ownKeys: () => Reflect.ownKeys(sorgente()),
+    has: (_b, chiave) => chiave in sorgente(),
+    getOwnPropertyDescriptor: (_b, chiave) => {
+      const d = Object.getOwnPropertyDescriptor(sorgente(), chiave);
+      return d && { ...d, configurable: true };
+    },
+  });
+}
 
-/** Lo stesso colore appena accennato, per i fondi delle pastiglie. */
-export const coloriModuloTenue = {
-  vendita: '#152744',
-  noleggio_breve: '#3A2011',
-  noleggio_lungo: '#2E1A44',
-  assicurazioni: '#0C2E24',
-} as const;
+export const colori = specchio<Palette>(() => corrente);
+export const coloriModulo = specchio<Record<NomeModulo, string>>(() => moduli);
+export const coloriModuloTenue = specchio<Record<NomeModulo, string>>(() => moduliTenui);
+
+/**
+ * Gli stili di una schermata, uno per tema.
+ *
+ * La fabbrica riceve la palette e viene chiamata una volta sola per tema: il
+ * risultato resta in memoria. Quello che torna e' un oggetto che alla lettura
+ * di `stili.qualcosa` sceglie la versione giusta — e la lettura avviene mentre
+ * si disegna, quando il tema e' gia' deciso.
+ */
+export function stiliTema<T extends Record<string, unknown>>(fabbrica: (c: Palette) => T): T {
+  const memoria = new Map<Palette, T>();
+  return specchio<T>(() => {
+    let fatti = memoria.get(corrente);
+    if (!fatti) {
+      fatti = fabbrica(corrente);
+      memoria.set(corrente, fatti);
+    }
+    return fatti;
+  });
+}
+
+// ── Misure ──────────────────────────────────────────────────────────────────
 
 /**
  * Ritmo a 4: tutte le distanze sono multipli, cosi' gli elementi si allineano
@@ -139,63 +272,90 @@ export const spazi = {
   xxxl: 48,
 } as const;
 
-export const raggio = { s: 10, m: 14, l: 18, xl: 24, tondo: 999 } as const;
+export const raggio = { s: 10, m: 14, l: 18, xl: 26, tondo: 999 } as const;
 
 /** Area minima toccabile: sotto i 44 punti il dito sbaglia. */
 export const TOCCO_MINIMO = 44;
 
-/**
- * Elevazione.
- *
- * Su fondo scuro l'ombra quasi non si vede: la gerarchia la fa il tono della
- * superficie, e l'ombra serve solo a staccare cio' che galleggia davvero. Per
- * questo qui e' piu' profonda e piu' nera di quanto sarebbe su fondo chiaro.
- */
-function ombra(
-  altezza: number,
-  raggioOmbra: number,
-  opacita: number,
-  elevazioneAndroid: number
-): ViewStyle {
+function ombra(altezza: number, raggioOmbra: number, opacita: number, android: number): ViewStyle {
+  const forza = opacita * corrente.pesoOmbra;
   return Platform.select<ViewStyle>({
     ios: {
-      shadowColor: '#000000',
+      shadowColor: corrente.coloreOmbra,
       shadowOffset: { width: 0, height: altezza },
-      shadowOpacity: opacita,
+      shadowOpacity: forza,
       shadowRadius: raggioOmbra,
     },
-    android: { elevation: elevazioneAndroid },
+    android: { elevation: android },
     default: {
-      boxShadow: `0 ${altezza}px ${raggioOmbra}px rgba(0,0,0,${opacita})`,
+      boxShadow: `0 ${altezza}px ${raggioOmbra}px ${corrente.coloreOmbra}${Math.round(forza * 255)
+        .toString(16)
+        .padStart(2, '0')}`,
     } as ViewStyle,
   })!;
 }
 
-export const elevazione = {
-  /** Schede in elenco: si staccano appena dallo sfondo. */
+/**
+ * Elevazione.
+ *
+ * Sullo scuro l'ombra quasi non si vede e la gerarchia la fa il tono della
+ * superficie; sul chiaro e' il contrario. Per questo il peso dipende dalla
+ * palette invece di essere una costante buona per nessuno dei due.
+ */
+export const elevazione = specchio<{ bassa: ViewStyle; media: ViewStyle; alta: ViewStyle }>(() => ({
   bassa: ombra(1, 4, 0.3, 1),
-  /** Schede principali e riquadri di riepilogo. */
   media: ombra(6, 16, 0.4, 4),
-  /** Barre fisse e fogli che stanno sopra il contenuto. */
   alta: ombra(-2, 24, 0.5, 10),
-} as const;
+}));
+
+/** Il bagliore colorato sotto una tessera: la luce che il colore getta intorno. */
+export function bagliore(colore: string, forza = 0.35): ViewStyle {
+  return Platform.select<ViewStyle>({
+    ios: {
+      shadowColor: colore,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: forza,
+      shadowRadius: 14,
+    },
+    android: { shadowColor: colore, elevation: 8 },
+    default: {
+      boxShadow: `0 6px 18px ${colore}${Math.round(forza * 255)
+        .toString(16)
+        .padStart(2, '0')}`,
+    } as ViewStyle,
+  })!;
+}
+
+/** La linea di luce in cima a una scheda: illuminata invece che dipinta. */
+export function vetro(c: Palette): ViewStyle {
+  return { borderTopWidth: StyleSheet.hairlineWidth * 2, borderTopColor: c.lucidatura };
+}
 
 /** Durate del movimento: abbastanza corte da non far aspettare. */
 export const durate = { istante: 120, breve: 200, media: 320 } as const;
 
+// ── Caratteri ───────────────────────────────────────────────────────────────
+
 /**
- * Plus Jakarta Sans, la famiglia indicata dalla direzione grafica per gli
- * strumenti di lavoro: leggibile in piccolo, numeri chiari, niente carattere.
+ * Due famiglie, due mestieri.
  *
- * Con i font caricati come file distinti, "fontWeight" non basta: ogni peso e'
- * una famiglia a se'. Per questo il peso richiesto viene tradotto nel nome
- * giusto dal componente Testo, invece di sparpagliare nomi di file negli stili.
+ * Space Grotesk per titoli e numeri: lettere costruite col righello, cifre che
+ * sembrano uscite da un quadro strumenti. E' la voce dell'app. Plus Jakarta
+ * Sans per il testo lungo, dove serve solo leggere senza accorgersi del
+ * carattere.
+ *
+ * Con i font caricati come file distinti "fontWeight" non basta: ogni peso e'
+ * una famiglia a se', e il componente Testo traduce il peso nel nome giusto.
  */
 export const caratteri = {
   normale: 'PlusJakartaSans_400Regular',
   medio: 'PlusJakartaSans_500Medium',
   forte: 'PlusJakartaSans_600SemiBold',
   grassetto: 'PlusJakartaSans_700Bold',
+
+  mostraMedio: 'SpaceGrotesk_500Medium',
+  mostraForte: 'SpaceGrotesk_600SemiBold',
+  mostraGrassetto: 'SpaceGrotesk_700Bold',
 } as const;
 
 export function famigliaPerPeso(peso: string | number | undefined): string {
@@ -218,20 +378,33 @@ export function famigliaPerPeso(peso: string | number | undefined): string {
  * Scala tipografica.
  *
  * Sei livelli con salti netti: se due livelli differiscono di due punti, non
- * sono due livelli, sono lo stesso livello scritto male. I numeri in evidenza
- * hanno una voce propria perche' su questa app sono il contenuto, non una
- * decorazione: sullo scuro stanno stretti e pesanti, come su un contachilometri.
+ * sono due livelli, sono lo stesso livello scritto male.
+ *
+ * Titoli e cifre chiedono a mano il carattere da esposizione: sono le uniche
+ * cose che devono avere una voce, il resto deve solo leggersi.
  */
 export const testi = {
-  cifra: { fontSize: 36, fontWeight: '700' as const, letterSpacing: -1 },
-  titolo: { fontSize: 23, fontWeight: '700' as const, letterSpacing: -0.4 },
-  sottotitolo: { fontSize: 17, fontWeight: '600' as const, letterSpacing: -0.2 },
+  cifra: {
+    fontFamily: caratteri.mostraGrassetto,
+    fontSize: 38,
+    letterSpacing: -1.4,
+  },
+  titolo: {
+    fontFamily: caratteri.mostraGrassetto,
+    fontSize: 24,
+    letterSpacing: -0.6,
+  },
+  sottotitolo: {
+    fontFamily: caratteri.mostraForte,
+    fontSize: 17,
+    letterSpacing: -0.3,
+  },
   corpo: { fontSize: 15, fontWeight: '400' as const, lineHeight: 21 },
   piccolo: { fontSize: 13, fontWeight: '400' as const, lineHeight: 18 },
   etichetta: {
+    fontFamily: caratteri.mostraForte,
     fontSize: 11,
-    fontWeight: '700' as const,
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     textTransform: 'uppercase' as const,
   },
 } as const;

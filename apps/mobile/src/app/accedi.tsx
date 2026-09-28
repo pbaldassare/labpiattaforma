@@ -13,7 +13,7 @@ import { Testo as Text } from '@/components/testo';
 
 import { Icona } from '@/components/icone';
 import { supabase } from '@/lib/supabase';
-import { TOCCO_MINIMO, caratteri, colori, raggio, spazi } from '@/lib/tema';
+import { caratteri, colori, raggio, spazi, stiliTema, TOCCO_MINIMO } from '@/lib/tema';
 
 type Modo = 'accesso' | 'registrazione' | 'recupero';
 
@@ -235,25 +235,25 @@ export default function Accedi() {
   );
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
   scorrimento: { padding: spazi.xl, paddingTop: spazi.xxl * 2, gap: spazi.l },
-  titolo: { fontSize: 28, fontWeight: '700', color: colori.testo },
-  sottotitolo: { fontSize: 15, color: colori.testoTenue, marginBottom: spazi.l },
+  titolo: { fontSize: 28, fontWeight: '700', color: c.testo },
+  sottotitolo: { fontSize: 15, color: c.testoTenue, marginBottom: spazi.l },
   campo: { gap: spazi.xs },
   rigaEtichetta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  etichetta: { fontSize: 13, fontWeight: '600', color: colori.testo },
-  dimenticata: { fontSize: 13, fontWeight: '600', color: colori.primarioChiaro },
+  etichetta: { fontSize: 13, fontWeight: '600', color: c.testo },
+  dimenticata: { fontSize: 13, fontWeight: '600', color: c.primarioChiaro },
   input: {
     fontFamily: caratteri.normale,
     minHeight: TOCCO_MINIMO,
-    backgroundColor: colori.superficie,
+    backgroundColor: c.superficie,
     borderWidth: 1,
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
     borderRadius: raggio.m,
     paddingHorizontal: spazi.m,
     fontSize: 16,
-    color: colori.testo,
+    color: c.testo,
   },
   conTasto: { justifyContent: 'center' },
   // Spazio a destra per non scrivere sotto l'occhio.
@@ -266,18 +266,18 @@ const stili = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  errore: { color: colori.errore, fontSize: 14 },
-  avviso: { color: colori.primarioChiaro, fontSize: 14, lineHeight: 20 },
+  errore: { color: c.errore, fontSize: 14 },
+  avviso: { color: c.primarioChiaro, fontSize: 14, lineHeight: 20 },
   bottone: {
     minHeight: TOCCO_MINIMO,
-    backgroundColor: colori.primario,
+    backgroundColor: c.primario,
     borderRadius: raggio.m,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: spazi.s,
   },
   bottonePremuto: { opacity: 0.85 },
-  bottoneTesto: { color: colori.suPrimario, fontSize: 16, fontWeight: '600' },
+  bottoneTesto: { color: c.suPrimario, fontSize: 16, fontWeight: '600' },
   cambioModo: { minHeight: TOCCO_MINIMO, alignItems: 'center', justifyContent: 'center' },
-  cambioModoTesto: { color: colori.primarioChiaro, fontSize: 14, fontWeight: '600' },
-});
+  cambioModoTesto: { color: c.primarioChiaro, fontSize: 14, fontWeight: '600' },
+}));

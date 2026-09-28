@@ -18,6 +18,17 @@ type NomeFeather = ComponentProps<typeof Feather>['name'];
 
 const MAPPA = {
   casa: 'home',
+  sole: 'sun',
+  luna: 'moon',
+  fulmine: 'zap',
+  grafico: 'trending-up',
+  stella: 'star',
+  scatola: 'package',
+  euro: 'dollar-sign',
+  orologio: 'clock',
+  luogo: 'map-pin',
+  scudo: 'shield',
+  chiave: 'key',
   negozio: 'shopping-bag',
   apri: 'external-link',
   auto: 'truck',

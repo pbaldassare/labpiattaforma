@@ -20,8 +20,18 @@ import {
 } from '@lab/shared';
 
 import { fn, tab } from '@lab/shared';
+import { useTema, type Preferenza } from '@/lib/contesto-tema';
+import { Icona, type NomeIcona } from '@/components/icone';
 import { supabase } from '@/lib/supabase';
-import { TOCCO_MINIMO, caratteri, colori, raggio, spazi } from '@/lib/tema';
+import {
+  caratteri,
+  colori,
+  raggio,
+  spazi,
+  stiliTema,
+  testi,
+  TOCCO_MINIMO,
+} from '@/lib/tema';
 
 const DOMINIO = process.env.EXPO_PUBLIC_DOMINIO_LANDING ?? 'https://dominio-da-decidere.it';
 
@@ -32,6 +42,7 @@ type StatoSlug =
   | { tipo: 'occupato'; motivo: string };
 
 export default function Profilo() {
+  const { preferenza, scegli } = useTema();
   const [caricamento, setCaricamento] = useState(true);
   const [salvataggio, setSalvataggio] = useState(false);
   const [esisteGia, setEsisteGia] = useState(false);
@@ -248,6 +259,40 @@ export default function Profilo() {
             <Text style={stili.bottoneTesto}>Salva</Text>
           )}
         </Pressable>
+
+        {/* Il tema sta nel profilo perche' e' una preferenza di chi usa l'app,
+            non un'impostazione di un'offerta. "Come il telefono" e' la scelta
+            predefinita: chi lo tiene scuro di sera se lo aspetta anche qui. */}
+        <View style={stili.tema}>
+          <Text style={stili.etichettaTema}>Aspetto</Text>
+          <View style={stili.scelteTema}>
+            {SCELTE_TEMA.map((t) => {
+              const attiva = preferenza === t.valore;
+              return (
+                <Pressable
+                  key={t.valore}
+                  onPress={() => scegli(t.valore)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: attiva }}
+                  style={({ pressed }) => [
+                    stili.sceltaTema,
+                    attiva && stili.sceltaTemaAttiva,
+                    pressed && stili.bottonePremuto,
+                  ]}
+                >
+                  <Icona
+                    nome={t.icona}
+                    dimensione={18}
+                    colore={attiva ? colori.suPrimario : colori.testoTenue}
+                  />
+                  <Text style={[stili.sceltaTemaTesto, attiva && stili.sceltaTemaTestoAttivo]}>
+                    {t.etichetta}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -264,37 +309,62 @@ function EsitoSlug({ stato }: { stato: StatoSlug }) {
   return <Text style={stili.errore}>{stato.motivo}</Text>;
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
-  centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
+/** Le tre scelte dell'aspetto, con l'icona che le fa riconoscere da sole. */
+const SCELTE_TEMA: { valore: Preferenza; etichetta: string; icona: NomeIcona }[] = [
+  { valore: 'sistema', etichetta: 'Come il telefono', icona: 'impostazioni' },
+  { valore: 'chiaro', etichetta: 'Chiaro', icona: 'sole' },
+  { valore: 'scuro', etichetta: 'Scuro', icona: 'luna' },
+];
+
+const stili = stiliTema((c) => StyleSheet.create({
+  tema: { gap: spazi.s, paddingTop: spazi.xxl },
+  etichettaTema: { ...testi.etichetta, color: c.testoDebole },
+  scelteTema: { flexDirection: 'row', gap: spazi.s },
+  sceltaTema: {
+    flex: 1,
+    minHeight: TOCCO_MINIMO,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: spazi.s,
+    borderRadius: raggio.m,
+    borderWidth: 1,
+    borderColor: c.bordo,
+    backgroundColor: c.superficie,
+  },
+  sceltaTemaAttiva: { backgroundColor: c.primario, borderColor: c.primario },
+  sceltaTemaTesto: { fontSize: 12, fontWeight: '600', color: c.testoTenue, textAlign: 'center' },
+  sceltaTemaTestoAttivo: { color: c.suPrimario },
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
+  centrato: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
   scorrimento: { padding: spazi.xl, gap: spazi.l, paddingBottom: spazi.xxl * 2 },
   campo: { gap: spazi.xs },
-  etichetta: { fontSize: 13, fontWeight: '600', color: colori.testo },
+  etichetta: { fontSize: 13, fontWeight: '600', color: c.testo },
   input: {
     fontFamily: caratteri.normale,
     minHeight: TOCCO_MINIMO,
-    backgroundColor: colori.superficie,
+    backgroundColor: c.superficie,
     borderWidth: 1,
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
     borderRadius: raggio.m,
     paddingHorizontal: spazi.m,
     paddingVertical: spazi.s,
     fontSize: 16,
-    color: colori.testo,
+    color: c.testo,
   },
   inputAlto: { minHeight: TOCCO_MINIMO * 2, textAlignVertical: 'top' },
-  anteprimaUrl: { fontSize: 13, color: colori.primarioChiaro, fontWeight: '600' },
-  aiuto: { fontSize: 12, color: colori.testoTenue, lineHeight: 17 },
-  errore: { color: colori.errore, fontSize: 13 },
-  avviso: { color: colori.primarioChiaro, fontSize: 13, fontWeight: '600' },
+  anteprimaUrl: { fontSize: 13, color: c.primarioChiaro, fontWeight: '600' },
+  aiuto: { fontSize: 12, color: c.testoTenue, lineHeight: 17 },
+  errore: { color: c.errore, fontSize: 13 },
+  avviso: { color: c.primarioChiaro, fontSize: 13, fontWeight: '600' },
   bottone: {
     minHeight: TOCCO_MINIMO,
-    backgroundColor: colori.primario,
+    backgroundColor: c.primario,
     borderRadius: raggio.m,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: spazi.s,
   },
   bottonePremuto: { opacity: 0.85 },
-  bottoneTesto: { color: colori.suPrimario, fontSize: 16, fontWeight: '600' },
-});
+  bottoneTesto: { color: c.suPrimario, fontSize: 16, fontWeight: '600' },
+}));

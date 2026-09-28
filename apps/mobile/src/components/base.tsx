@@ -13,13 +13,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Icona as IconaBase, type NomeIcona } from '@/components/icone';
 import { Testo as Text } from '@/components/testo';
 import {
-  TOCCO_MINIMO,
   bagliore,
   colori,
   elevazione,
   raggio,
   spazi,
+  stiliTema,
   testi,
+  TOCCO_MINIMO,
   vetro,
 } from '@/lib/tema';
 
@@ -258,14 +259,14 @@ export function Vuoto({
   );
 }
 
-const stili = StyleSheet.create({
+const stili = stiliTema((c) => StyleSheet.create({
   scheda: {
-    backgroundColor: colori.superficie,
+    backgroundColor: c.superficie,
     borderRadius: raggio.l,
     padding: spazi.l,
     // La linea di luce in cima: fa sembrare la scheda illuminata invece che
     // dipinta. Si nota solo quando manca.
-    ...vetro,
+    ...vetro(c),
   },
   premuta: { opacity: 0.7 },
 
@@ -279,7 +280,7 @@ const stili = StyleSheet.create({
 
   riquadroCifra: { flex: 1, gap: spazi.xs, paddingVertical: spazi.l },
   cifra: { ...testi.cifra },
-  cifraEtichetta: { ...testi.piccolo, color: colori.testoTenue },
+  cifraEtichetta: { ...testi.piccolo, color: c.testoTenue },
 
   iniziali: {
     width: 40,
@@ -300,7 +301,7 @@ const stili = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: raggio.tondo,
-    backgroundColor: colori.bordoTenue,
+    backgroundColor: c.bordoTenue,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spazi.xs,
@@ -320,24 +321,23 @@ const stili = StyleSheet.create({
     paddingHorizontal: spazi.m,
     borderRadius: raggio.s,
     borderWidth: 1,
-    borderColor: colori.bordo,
-    backgroundColor: colori.superficie,
+    borderColor: c.bordo,
+    backgroundColor: c.superficie,
   },
-  filtroAttivo: { backgroundColor: colori.primario, borderColor: colori.primario },
-  filtroTesto: { fontSize: 13, color: colori.testo },
-  filtroTestoAttivo: { color: colori.suPrimario, fontWeight: '600' },
+  filtroAttivo: { backgroundColor: c.primario, borderColor: c.primario },
+  filtroTesto: { fontSize: 13, color: c.testo },
+  filtroTestoAttivo: { color: c.suPrimario, fontWeight: '600' },
 
   blocco: { alignItems: 'center', justifyContent: 'center' },
   bloccoSpento: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colori.bordoTenue,
+    backgroundColor: c.bordoTenue,
     borderWidth: 1,
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
   },
 
-  vuotoTitolo: { ...testi.sottotitolo, color: colori.testo },
-  vuotoTesto: { ...testi.piccolo, color: colori.testoTenue, textAlign: 'center', maxWidth: 260 },
-});
-
+  vuotoTitolo: { ...testi.sottotitolo, color: c.testo },
+  vuotoTesto: { ...testi.piccolo, color: c.testoTenue, textAlign: 'center', maxWidth: 260 },
+}));
 export { TOCCO_MINIMO };

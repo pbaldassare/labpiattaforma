@@ -6,7 +6,7 @@ import { firmaValida, type PuntoFirma } from '@lab/shared';
 
 import { Bottone } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
-import { colori, raggio, spazi } from '@/lib/tema';
+import { colori, raggio, spazi, stiliTema } from '@/lib/tema';
 
 /**
  * Riquadro per la firma.
@@ -167,13 +167,13 @@ function arrotonda(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
-const stili = StyleSheet.create({
+const stili = stiliTema((c) => StyleSheet.create({
   contenitore: { gap: spazi.s },
   foglio: {
     height: 160,
-    backgroundColor: colori.superficie,
+    backgroundColor: c.superficie,
     borderWidth: 1,
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
     borderRadius: raggio.m,
     overflow: 'hidden',
   },
@@ -186,5 +186,5 @@ const stili = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  suggerimentoTesto: { color: colori.testoTenue, fontSize: 14 },
-});
+  suggerimentoTesto: { color: c.testoTenue, fontSize: 14 },
+}));

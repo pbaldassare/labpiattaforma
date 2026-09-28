@@ -30,7 +30,7 @@ import { Fotografie, type Foto } from '@/components/foto';
 import { Icona } from '@/components/icone';
 import { Bottone, Scelta, Sezione } from '@/components/modulo';
 import { supabase } from '@/lib/supabase';
-import { TOCCO_MINIMO, colori, raggio, spazi } from '@/lib/tema';
+import { colori, raggio, spazi, stiliTema, TOCCO_MINIMO } from '@/lib/tema';
 
 const DOMINIO = process.env.EXPO_PUBLIC_DOMINIO_LANDING ?? 'https://dominio-da-decidere.it';
 
@@ -366,7 +366,7 @@ function Contatore({ numero, etichetta }: { numero: number; etichetta: string })
   );
 }
 
-const stili = StyleSheet.create({
+const stili = stiliTema((c) => StyleSheet.create({
   rigaTitolo: { flexDirection: 'row', alignItems: 'center', gap: spazi.s, flexWrap: 'wrap' },
   fondo: { paddingTop: spazi.xxl, gap: spazi.s },
   conferma: {
@@ -374,38 +374,38 @@ const stili = StyleSheet.create({
     padding: spazi.l,
     borderRadius: raggio.m,
     borderWidth: 1,
-    borderColor: colori.azione,
-    backgroundColor: colori.superficie,
+    borderColor: c.azione,
+    backgroundColor: c.superficie,
   },
   rigaConferma: { flexDirection: 'row', gap: spazi.s, alignItems: 'flex-start' },
-  testoConferma: { flex: 1, fontSize: 13, lineHeight: 18, color: colori.testo },
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
-  centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
+  testoConferma: { flex: 1, fontSize: 13, lineHeight: 18, color: c.testo },
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
+  centrato: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
   scorrimento: { padding: spazi.l, gap: spazi.m, paddingBottom: spazi.xxl },
-  vuoto: { textAlign: 'center', color: colori.testoTenue },
+  vuoto: { textAlign: 'center', color: c.testoTenue },
   intestazione: { gap: spazi.s },
-  titolo: { fontSize: 20, fontWeight: '700', color: colori.testo },
+  titolo: { fontSize: 20, fontWeight: '700', color: c.testo },
   prezzi: { flexDirection: 'row', gap: spazi.xl },
-  prezzoEtichetta: { fontSize: 12, color: colori.testoTenue },
-  prezzoValore: { fontSize: 18, fontWeight: '700', color: colori.testo },
-  errore: { color: colori.errore, fontSize: 13 },
+  prezzoEtichetta: { fontSize: 12, color: c.testoTenue },
+  prezzoValore: { fontSize: 18, fontWeight: '700', color: c.testo },
+  errore: { color: c.errore, fontSize: 13 },
   scheda: {
-    backgroundColor: colori.superficie,
+    backgroundColor: c.superficie,
     borderWidth: 1,
-    borderColor: colori.bordoTenue,
+    borderColor: c.bordoTenue,
     borderRadius: raggio.l,
     padding: spazi.l,
     gap: spazi.m,
   },
-  schedaRiservata: { borderColor: colori.primarioChiaro },
+  schedaRiservata: { borderColor: c.primarioChiaro },
   schedaTesta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  schedaTitolo: { fontSize: 15, fontWeight: '700', color: colori.testo },
-  indirizzo: { fontSize: 13, color: colori.primarioChiaro },
+  schedaTitolo: { fontSize: 15, fontWeight: '700', color: c.testo },
+  indirizzo: { fontSize: 13, color: c.primarioChiaro },
   qrRiga: { flexDirection: 'row', alignItems: 'center', gap: spazi.xl },
-  qr: { padding: spazi.s, backgroundColor: colori.superficie },
+  qr: { padding: spazi.s, backgroundColor: c.superficie },
   contatori: { gap: spazi.m },
-  contatoreNumero: { fontSize: 22, fontWeight: '700', color: colori.testo },
-  contatoreEtichetta: { fontSize: 12, color: colori.testoTenue },
+  contatoreNumero: { fontSize: 22, fontWeight: '700', color: c.testo },
+  contatoreEtichetta: { fontSize: 12, color: c.testoTenue },
   azioni: { flexDirection: 'row', gap: spazi.s },
   azione: {
     flex: 1,
@@ -414,9 +414,9 @@ const stili = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: raggio.m,
     borderWidth: 1,
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
   },
-  azioneTesto: { fontSize: 15, fontWeight: '600', color: colori.primarioChiaro },
-  sospesa: { fontSize: 12, color: colori.accento, lineHeight: 17 },
-  nota: { fontSize: 12, color: colori.testoTenue, lineHeight: 17 },
-});
+  azioneTesto: { fontSize: 15, fontWeight: '600', color: c.primarioChiaro },
+  sospesa: { fontSize: 12, color: c.accento, lineHeight: 17 },
+  nota: { fontSize: 12, color: c.testoTenue, lineHeight: 17 },
+}));

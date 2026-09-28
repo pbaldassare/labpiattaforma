@@ -5,12 +5,26 @@ import {
   PlusJakartaSans_700Bold,
   useFonts,
 } from '@expo-google-fonts/plus-jakarta-sans';
-import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect, useState } from 'react';
+import {
+  SpaceGrotesk_500Medium,
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+} from '@expo-google-fonts/space-grotesk';
+import {
+  DarkTheme,
+  DefaultTheme,
+  Stack,
+  ThemeProvider,
+  useRouter,
+  useSegments,
+} from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
 
 import { Icona } from '@/components/icone';
+import { FornitoreTema, useTema } from '@/lib/contesto-tema';
 import { supabase } from '@/lib/supabase';
 import { colori, raggio } from '@/lib/tema';
 
@@ -46,11 +60,38 @@ function TastoCasa() {
   );
 }
 
-export default function Layout() {
+function Pile() {
   const [sessione, setSessione] = useState<Session | null>(null);
   const [caricato, setCaricato] = useState(false);
   const segmenti = useSegments();
   const router = useRouter();
+  const { colori, schema, chiave } = useTema();
+
+  /*
+   * Il tema della navigazione.
+   *
+   * La barra in alto e il fondo sotto le schermate li disegna il navigatore
+   * con i propri colori, non con i nostri: senza questo, col tema scuro
+   * restava una striscia chiara in cima e un lampo bianco fra una schermata e
+   * l'altra. Expo Router porta con se' i due temi di partenza, e qui si
+   * sovrascrivono i colori che si vedono davvero.
+   */
+  const temaNavigazione = useMemo(() => {
+    const base = schema === 'scuro' ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      dark: schema === 'scuro',
+      colors: {
+        ...base.colors,
+        primary: colori.primario,
+        background: colori.sfondo,
+        card: colori.sfondo,
+        text: colori.testo,
+        border: colori.bordo,
+        notification: colori.azione,
+      },
+    };
+  }, [schema, colori]);
 
   // Plus Jakarta Sans: finche' non e' pronto si mostra il caricamento, invece
   // di far comparire tutto col carattere di sistema e poi saltare.
@@ -59,6 +100,10 @@ export default function Layout() {
     PlusJakartaSans_500Medium,
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
+    // Space Grotesk: la voce dell'app, su titoli e numeri.
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
   });
 
   useEffect(() => {
@@ -95,7 +140,13 @@ export default function Layout() {
   }
 
   return (
-    <Stack
+    <ThemeProvider value={temaNavigazione}>
+      <StatusBar style={schema === 'chiaro' ? 'dark' : 'light'} />
+      <Stack
+      /* La chiave cambia col tema e rimonta l'albero: gli stili di ogni
+         schermata si ricostruiscono sulla palette nuova, che altrimenti
+         resterebbe quella letta al primo disegno. */
+      key={chiave}
       // Il tasto casa sta nell'intestazione, su ogni schermata tranne la home
       // stessa: e' l'unico posto sempre visibile che non copre niente e non
       // litiga con le barre in fondo (i form, l'elenco offerte) ne' con la
@@ -127,6 +178,15 @@ export default function Layout() {
       <Stack.Screen name="pratiche/index" options={{ title: 'Le tue pratiche' }} />
       <Stack.Screen name="pratiche/[id]" options={{ title: 'Pratica' }} />
       <Stack.Screen name="preventivo/[pratica]" options={{ title: 'Preventivo' }} />
-    </Stack>
+      </Stack>
+    </ThemeProvider>
+  );
+}
+
+export default function Layout() {
+  return (
+    <FornitoreTema>
+      <Pile />
+    </FornitoreTema>
   );
 }

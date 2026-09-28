@@ -15,7 +15,7 @@ import { Firma, type EsitoFirma } from '@/components/firma';
 import { Bottone, Scelta, Sezione } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
-import { TOCCO_MINIMO, colori, raggio, spazi } from '@/lib/tema';
+import { colori, raggio, spazi, stiliTema, TOCCO_MINIMO } from '@/lib/tema';
 
 interface DatiPreventivo {
   offerta_id: string | null;
@@ -218,48 +218,48 @@ function traduci(messaggio: string): string {
   return messaggio;
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
-  centrato: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
+  centrato: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
   scorrimento: { padding: spazi.l, paddingBottom: spazi.xxl * 2, gap: spazi.s },
   riepilogo: {
-    backgroundColor: colori.superficie,
+    backgroundColor: c.superficie,
     borderWidth: 1,
-    borderColor: colori.bordoTenue,
+    borderColor: c.bordoTenue,
     borderRadius: raggio.l,
     padding: spazi.l,
     gap: spazi.xs,
   },
-  cliente: { fontSize: 18, fontWeight: '700', color: colori.testo },
-  rivenditore: { fontSize: 12, fontWeight: '600', color: colori.accento },
-  veicolo: { fontSize: 15, color: colori.testoTenue },
-  prezzo: { fontSize: 28, fontWeight: '700', color: colori.testo, marginTop: spazi.xs },
+  cliente: { fontSize: 18, fontWeight: '700', color: c.testo },
+  rivenditore: { fontSize: 12, fontWeight: '600', color: c.accento },
+  veicolo: { fontSize: 15, color: c.testoTenue },
+  prezzo: { fontSize: 28, fontWeight: '700', color: c.testo, marginTop: spazi.xs },
   bloccante: {
     fontSize: 13,
-    color: colori.errore,
+    color: c.errore,
     lineHeight: 19,
-    backgroundColor: colori.superficie,
+    backgroundColor: c.superficie,
     borderWidth: 1,
-    borderColor: colori.errore,
+    borderColor: c.errore,
     borderRadius: raggio.m,
     padding: spazi.m,
   },
-  descrizione: { fontSize: 13, color: colori.testoTenue },
-  avviso: { fontSize: 13, color: colori.accento },
+  descrizione: { fontSize: 13, color: c.testoTenue },
+  avviso: { fontSize: 13, color: c.accento },
   spunta: { flexDirection: 'row', alignItems: 'center', gap: spazi.m, minHeight: TOCCO_MINIMO },
   casella: {
     width: 24,
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  casellaPiena: { backgroundColor: colori.primario, borderColor: colori.primario },
-  segno: { color: colori.suPrimario, fontSize: 14, fontWeight: '700' },
-  spuntaTesto: { fontSize: 15, color: colori.testo, flexShrink: 1 },
-  nota: { fontSize: 12, color: colori.testoTenue, lineHeight: 17 },
-  errore: { fontSize: 14, color: colori.errore },
-  vuoto: { fontSize: 14, color: colori.testoTenue, textAlign: 'center' },
-});
+  casellaPiena: { backgroundColor: c.primario, borderColor: c.primario },
+  segno: { color: c.suPrimario, fontSize: 14, fontWeight: '700' },
+  spuntaTesto: { fontSize: 15, color: c.testo, flexShrink: 1 },
+  nota: { fontSize: 12, color: c.testoTenue, lineHeight: 17 },
+  errore: { fontSize: 14, color: c.errore },
+  vuoto: { fontSize: 14, color: c.testoTenue, textAlign: 'center' },
+}));

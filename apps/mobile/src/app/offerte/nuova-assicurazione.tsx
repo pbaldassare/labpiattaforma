@@ -28,7 +28,7 @@ import { Icona } from '@/components/icone';
 import { Bottone, Campo, Input, Scelta, Sezione } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
-import { TOCCO_MINIMO, colori, raggio, spazi, testi } from '@/lib/tema';
+import { colori, raggio, spazi, stiliTema, testi, TOCCO_MINIMO } from '@/lib/tema';
 
 export default function NuovaAssicurazione() {
   const router = useRouter();
@@ -347,9 +347,9 @@ export default function NuovaAssicurazione() {
   );
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
-  attesa: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
+  attesa: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
   scorrimento: { padding: spazi.l, paddingBottom: spazi.xxxl * 2, gap: spazi.m },
 
   avviso: {
@@ -357,20 +357,20 @@ const stili = StyleSheet.create({
     gap: spazi.m,
     alignItems: 'flex-start',
     borderLeftWidth: 3,
-    borderLeftColor: colori.accento,
+    borderLeftColor: c.accento,
   },
-  avvisoTesto: { ...testi.piccolo, color: colori.testo, flex: 1 },
+  avvisoTesto: { ...testi.piccolo, color: c.testo, flex: 1 },
 
   affiancati: { flexDirection: 'row', gap: spazi.m },
   meta: { flex: 1 },
-  nota: { ...testi.piccolo, fontSize: 12, color: colori.testoTenue },
+  nota: { ...testi.piccolo, fontSize: 12, color: c.testoTenue },
 
   garanzia: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colori.superficie,
+    backgroundColor: c.superficie,
     borderWidth: 1,
-    borderColor: colori.bordo,
+    borderColor: c.bordo,
     borderRadius: raggio.m,
     paddingRight: spazi.s,
   },
@@ -389,19 +389,19 @@ const stili = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  segnoSi: { backgroundColor: colori.successoTenue },
-  segnoNo: { backgroundColor: colori.bordoTenue },
-  garanziaNome: { ...testi.corpo, color: colori.testo, flex: 1 },
-  garanziaEsclusa: { color: colori.testoTenue, textDecorationLine: 'line-through' },
+  segnoSi: { backgroundColor: c.successoTenue },
+  segnoNo: { backgroundColor: c.bordoTenue },
+  garanziaNome: { ...testi.corpo, color: c.testo, flex: 1 },
+  garanziaEsclusa: { color: c.testoTenue, textDecorationLine: 'line-through' },
   togli: {
     width: TOCCO_MINIMO,
     height: TOCCO_MINIMO,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  togliTesto: { fontSize: 22, color: colori.testoDebole },
+  togliTesto: { fontSize: 22, color: c.testoDebole },
 
   aggiungi: { flexDirection: 'row', gap: spazi.s, alignItems: 'center' },
-  errore: { fontSize: 14, color: colori.errore },
+  errore: { fontSize: 14, color: c.errore },
   azioni: { gap: spazi.s, paddingTop: spazi.l },
-});
+}));

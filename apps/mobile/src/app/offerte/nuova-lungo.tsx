@@ -26,7 +26,7 @@ import {
 import { Bottone, Campo, Input, Sezione } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
-import { TOCCO_MINIMO, colori, raggio, spazi } from '@/lib/tema';
+import { colori, raggio, spazi, stiliTema, TOCCO_MINIMO } from '@/lib/tema';
 
 /** Le combinazioni che si usano davvero: l'esempio del documento è 24/36/48. */
 const DURATE_POSSIBILI = [12, 24, 36, 48, 60];
@@ -404,9 +404,9 @@ function Pasticca({
   );
 }
 
-const stili = StyleSheet.create({
-  contenitore: { flex: 1, backgroundColor: colori.sfondo },
-  attesa: { flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo },
+const stili = stiliTema((c) => StyleSheet.create({
+  contenitore: { flex: 1, backgroundColor: c.sfondo },
+  attesa: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
   scorrimento: { padding: spazi.xl, paddingBottom: spazi.xxl * 2, gap: spazi.m },
   pasticche: { flexDirection: 'row', flexWrap: 'wrap', gap: spazi.s },
   pasticca: {
@@ -415,20 +415,20 @@ const stili = StyleSheet.create({
     paddingHorizontal: spazi.m,
     borderRadius: raggio.m,
     borderWidth: 1,
-    borderColor: colori.bordo,
-    backgroundColor: colori.superficie,
+    borderColor: c.bordo,
+    backgroundColor: c.superficie,
   },
-  pasticcaAttiva: { backgroundColor: colori.primario, borderColor: colori.primario },
-  pasticcaTesto: { fontSize: 14, color: colori.testo },
-  pasticcaTestoAttivo: { color: colori.suPrimario, fontWeight: '600' },
+  pasticcaAttiva: { backgroundColor: c.primario, borderColor: c.primario },
+  pasticcaTesto: { fontSize: 14, color: c.testo },
+  pasticcaTestoAttivo: { color: c.suPrimario, fontWeight: '600' },
   rigaGriglia: { gap: spazi.xs },
-  durata: { fontSize: 14, fontWeight: '700', color: colori.testo },
+  durata: { fontSize: 14, fontWeight: '700', color: c.testo },
   caselle: { flexDirection: 'row', gap: spazi.s },
   casella: { flex: 1, gap: 2 },
-  kmEtichetta: { fontSize: 11, color: colori.testoTenue, textAlign: 'center' },
+  kmEtichetta: { fontSize: 11, color: c.testoTenue, textAlign: 'center' },
   casellaInput: { textAlign: 'center', paddingHorizontal: spazi.xs },
-  nota: { fontSize: 12, color: colori.testoTenue, lineHeight: 17 },
-  riepilogo: { fontSize: 13, color: colori.primarioChiaro, fontWeight: '600', lineHeight: 18 },
-  errore: { fontSize: 14, color: colori.errore },
+  nota: { fontSize: 12, color: c.testoTenue, lineHeight: 17 },
+  riepilogo: { fontSize: 13, color: c.primarioChiaro, fontWeight: '600', lineHeight: 18 },
+  errore: { fontSize: 14, color: c.errore },
   azioni: { gap: spazi.s, paddingTop: spazi.l },
-});
+}));
