@@ -338,7 +338,6 @@ export default function Home() {
                 : undefined
             }
             unita={(numeri?.da_richiamare ?? 0) > 0 ? 'da richiamare' : 'in corso'}
-            urgente={(numeri?.da_richiamare ?? 0) > 0}
             onPress={() => router.push('/pratiche')}
           />
           <Scorciatoia
@@ -397,7 +396,6 @@ function Scorciatoia({
   etichetta,
   valore,
   unita,
-  urgente,
   onPress,
 }: {
   icona: NomeIcona;
@@ -405,11 +403,17 @@ function Scorciatoia({
   valore?: number;
   /** La parola che dice cosa conta la cifra: "attive", "da richiamare". */
   unita: string;
-  urgente?: boolean;
   onPress: () => void;
 }) {
-  const tinta = urgente ? colori.accento : colori.primarioChiaro;
-
+  /*
+   * Quattro riquadri identici, e le cifre tutte dello stesso colore.
+   *
+   * Prima quella delle pratiche era ambra, perche' nel resto dell'app l'ambra
+   * vuol dire "questo chiede qualcosa a te". Ma qui non si capiva: in mezzo a
+   * tre riquadri uguali sembrava un numero verniciato a caso, e infatti la
+   * domanda e' arrivata subito. La parola accanto — "da richiamare" — lo dice
+   * gia', e lo dice meglio di un colore che va spiegato.
+   */
   return (
     <Scheda
       onPress={onPress}
@@ -417,8 +421,8 @@ function Scorciatoia({
       accessibilityLabel={`${etichetta}: ${valore ?? 0} ${unita}`}
     >
       <View style={stili.testaScorciatoia}>
-        <View style={[stili.pastigliaScorciatoia, { backgroundColor: tinta + '1F' }]}>
-          <Icona nome={icona} dimensione={15} colore={tinta} />
+        <View style={stili.pastigliaScorciatoia}>
+          <Icona nome={icona} dimensione={15} colore={colori.primarioChiaro} />
         </View>
         {/* Prima il nome, poi la cifra: un numero da solo, prima di sapere
             cosa conta, si legge due volte. */}
@@ -429,9 +433,7 @@ function Scorciatoia({
           Due testi affiancati e non annidati, se no lo spazio fra i due si
           perde e si legge "5attive". */}
       <View style={stili.rigaValore}>
-        <Text style={[stili.valoreScorciatoia, urgente && { color: colori.accento }]}>
-          {valore ?? '—'}
-        </Text>
+        <Text style={stili.valoreScorciatoia}>{valore ?? '—'}</Text>
         <Text style={stili.unitaScorciatoia} numberOfLines={1}>
           {unita}
         </Text>
@@ -650,6 +652,7 @@ const stili = stiliTema((c) => StyleSheet.create({
     borderRadius: raggio.s,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: c.superficieAlta,
   },
   etichettaScorciatoia: { fontSize: 14, fontWeight: '700', color: c.testo, flexShrink: 1 },
   rigaValore: { flexDirection: 'row', alignItems: 'baseline', gap: 5 },
