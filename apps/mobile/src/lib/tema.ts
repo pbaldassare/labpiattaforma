@@ -168,13 +168,12 @@ const MODULI_TENUE_CHIARO: Record<NomeModulo, string> = {
  * Restano sature in tutti e due i temi: sono superfici piene con l'icona
  * sopra, non testo su fondo, quindi non cambiano col tema.
  */
-export const gradienti: Record<NomeModulo | 'azione' | 'testa', readonly [string, string]> = {
+export const gradienti: Record<NomeModulo | 'azione', readonly [string, string]> = {
   vendita: ['#C6F432', '#84CC16'],
   noleggio_breve: ['#FF8A3D', '#EA580C'],
   noleggio_lungo: ['#A78BFA', '#7C3AED'],
   assicurazioni: ['#38BDF8', '#0284C7'],
   azione: ['#D4FF3F', '#A3E635'],
-  testa: ['#4F535B', '#34373C'],
 };
 
 /** Su un blocco cosi' acceso l'icona va scura o chiara secondo il colore. */
@@ -241,6 +240,17 @@ function specchio<T extends object>(sorgente: () => T): T {
 export const colori = specchio<Palette>(() => corrente);
 export const coloriModulo = specchio<Record<NomeModulo, string>>(() => moduli);
 export const coloriModuloTenue = specchio<Record<NomeModulo, string>>(() => moduliTenui);
+
+/**
+ * La sfumatura dell'intestazione.
+ *
+ * Questa il tema lo deve seguire, al contrario di quelle dei blocchi icona:
+ * e' una superficie con sopra del testo, non un blocco pieno. Tenendola fissa
+ * scura, sul tema chiaro il nome dell'attivita' diventava grigio su grigio.
+ */
+export function gradienteTesta(): readonly [string, string] {
+  return corrente === CHIARO ? ['#FFFFFF', '#F2F2EE'] : ['#4A4E57', '#33363B'];
+}
 
 /**
  * Gli stili di una schermata, uno per tema.

@@ -31,6 +31,7 @@ import {
   testi,
   vetro,
   suGradiente,
+  gradienteTesta,
 } from '@/lib/tema';
 
 const DOMINIO = process.env.EXPO_PUBLIC_DOMINIO_LANDING ?? 'https://dominio-da-decidere.it';
@@ -140,7 +141,7 @@ export default function Home() {
         /* L'intestazione e' un cruscotto, non una riga di testo: identita' a
            sinistra e le tre cifre che contano sotto, sempre le stesse tre. */
         <LinearGradient
-          colors={gradienti.testa as unknown as [string, string]}
+          colors={gradienteTesta() as unknown as [string, string]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[stili.cruscotto, elevazione.media]}

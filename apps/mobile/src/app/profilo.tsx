@@ -244,25 +244,9 @@ export default function Profilo() {
           />
         </View>
 
-        {errore ? <Text style={stili.errore}>{errore}</Text> : null}
-        {salvato ? <Text style={stili.avviso}>Profilo salvato.</Text> : null}
-
-        <Pressable
-          style={({ pressed }) => [stili.bottone, pressed && stili.bottonePremuto]}
-          onPress={salva}
-          disabled={salvataggio || statoSlug.tipo === 'controllo'}
-          accessibilityRole="button"
-        >
-          {salvataggio ? (
-            <ActivityIndicator color={colori.suPrimario} />
-          ) : (
-            <Text style={stili.bottoneTesto}>Salva</Text>
-          )}
-        </Pressable>
-
-        {/* Il tema sta nel profilo perche' e' una preferenza di chi usa l'app,
-            non un'impostazione di un'offerta. "Come il telefono" e' la scelta
-            predefinita: chi lo tiene scuro di sera se lo aspetta anche qui. */}
+        {/* In cima e non in fondo: sotto il tasto "Salva" ci si passava sopra
+            senza vederlo. E non e' un dato dell'attivita' da salvare, e' una
+            preferenza di chi usa l'app — si applica appena la si tocca. */}
         <View style={stili.tema}>
           <Text style={stili.etichettaTema}>Aspetto</Text>
           <View style={stili.scelteTema}>
@@ -293,6 +277,23 @@ export default function Profilo() {
             })}
           </View>
         </View>
+
+        {errore ? <Text style={stili.errore}>{errore}</Text> : null}
+        {salvato ? <Text style={stili.avviso}>Profilo salvato.</Text> : null}
+
+        <Pressable
+          style={({ pressed }) => [stili.bottone, pressed && stili.bottonePremuto]}
+          onPress={salva}
+          disabled={salvataggio || statoSlug.tipo === 'controllo'}
+          accessibilityRole="button"
+        >
+          {salvataggio ? (
+            <ActivityIndicator color={colori.suPrimario} />
+          ) : (
+            <Text style={stili.bottoneTesto}>Salva</Text>
+          )}
+        </Pressable>
+
       </ScrollView>
     </KeyboardAvoidingView>
   );

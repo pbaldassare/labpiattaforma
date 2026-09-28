@@ -28,6 +28,53 @@ import { FornitoreTema, useTema } from '@/lib/contesto-tema';
 import { supabase } from '@/lib/supabase';
 import { colori, raggio } from '@/lib/tema';
 
+/** Il vestito comune dei due tasti dell'intestazione. */
+function tondo(premuto: boolean) {
+  return [
+    {
+      width: 36,
+      height: 36,
+      borderRadius: raggio.tondo,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      backgroundColor: colori.bordoTenue,
+    },
+    premuto ? { opacity: 0.6 } : null,
+  ];
+}
+
+/**
+ * Chiaro o scuro, con un tocco.
+ *
+ * Sta nell'intestazione e non solo nel profilo perche' non e' un'impostazione
+ * che si tocca una volta e si dimentica: lo stesso venditore lavora al chiuso
+ * e in piazzale al sole nella stessa mattina, e sotto il sole lo scuro legge
+ * peggio. Sepolto in fondo a un modulo non lo trovava nessuno.
+ *
+ * L'icona mostra dove si va, non dove si e': il sole vuol dire "passa al
+ * chiaro". La scelta a tre voci, con "come il telefono", resta nel profilo.
+ */
+function TastoTema() {
+  const { schema, scegli } = useTema();
+  const versoChiaro = schema === 'scuro';
+
+  return (
+    <Pressable
+      onPress={() => scegli(versoChiaro ? 'chiaro' : 'scuro')}
+      accessibilityRole="button"
+      accessibilityLabel={versoChiaro ? 'Passa al tema chiaro' : 'Passa al tema scuro'}
+      hitSlop={8}
+      style={({ pressed }) => tondo(pressed)}
+    >
+      <Icona
+        nome={versoChiaro ? 'sole' : 'luna'}
+        dimensione={18}
+        colore={colori.primarioChiaro}
+      />
+    </Pressable>
+  );
+}
+
 /**
  * Il tasto per tornare alla home da qualunque punto.
  *
@@ -43,17 +90,7 @@ function TastoCasa() {
       accessibilityRole="button"
       accessibilityLabel="Torna alla home"
       hitSlop={8}
-      style={({ pressed }) => [
-        {
-          width: 36,
-          height: 36,
-          borderRadius: raggio.tondo,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: colori.bordoTenue,
-        },
-        pressed && { opacity: 0.6 },
-      ]}
+      style={({ pressed }) => tondo(pressed)}
     >
       <Icona nome="casa" dimensione={18} colore={colori.primarioChiaro} />
     </Pressable>
@@ -155,8 +192,13 @@ function Pile() {
         headerStyle: { backgroundColor: colori.sfondo },
         headerTintColor: colori.testo,
         contentStyle: { backgroundColor: colori.sfondo },
-        headerRight:
-          route.name === 'index' || route.name === 'accedi' ? undefined : () => <TastoCasa />,
+        /* Il tema sempre, la casa dappertutto tranne che a casa. */
+        headerRight: () => (
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TastoTema />
+            {route.name !== 'index' && route.name !== 'accedi' && <TastoCasa />}
+          </View>
+        ),
       })}
     >
       <Stack.Screen name="accedi" options={{ title: 'Accedi', headerShown: false }} />
