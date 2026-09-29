@@ -119,7 +119,7 @@ export default async function Privacy({ params }: Props) {
 
       <Sezione titolo="Dove finiscono">
         <p>
-          Su server nell’Unione Europea (Francoforte, Germania), gestiti per nostro conto da
+          Su server nell’Unione Europea (Dublino, Irlanda), gestiti per nostro conto da
           Supabase come responsabile del trattamento. Non escono dall’Unione Europea.
         </p>
         <p>
