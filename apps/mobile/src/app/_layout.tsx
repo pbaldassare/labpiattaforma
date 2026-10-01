@@ -25,6 +25,7 @@ import type { Session } from '@supabase/supabase-js';
 
 import { Icona } from '@/components/icone';
 import { FornitoreTema, useTema } from '@/lib/contesto-tema';
+import { sonoAdmin } from '@/lib/admin';
 import { supabase } from '@/lib/supabase';
 import { colori, raggio } from '@/lib/tema';
 
@@ -82,11 +83,11 @@ function TastoTema() {
  * invece di impilarne una seconda, altrimenti dopo dieci tocchi il tasto
  * indietro dovrebbe attraversare dieci home.
  */
-function TastoCasa() {
+function TastoCasa({ verso }: { verso: '/' | '/admin' }) {
   const router = useRouter();
   return (
     <Pressable
-      onPress={() => router.navigate('/')}
+      onPress={() => router.navigate(verso)}
       accessibilityRole="button"
       accessibilityLabel="Torna alla home"
       hitSlop={8}
@@ -100,6 +101,12 @@ function TastoCasa() {
 function Pile() {
   const [sessione, setSessione] = useState<Session | null>(null);
   const [caricato, setCaricato] = useState(false);
+  /*
+   * Admin o venditore: decide quale delle due app si vede. null finche' non
+   * si sa, e in quel momento si mostra il caricamento invece di far
+   * lampeggiare la home sbagliata.
+   */
+  const [ruolo, setRuolo] = useState<{ utente: string; admin: boolean } | null>(null);
   const segmenti = useSegments();
   const router = useRouter();
   const { colori, schema, chiave } = useTema();
@@ -156,19 +163,46 @@ function Pile() {
     return () => iscrizione.subscription.unsubscribe();
   }, []);
 
+  // Si richiede a ogni cambio di utente, non una volta sola: uscire da admin
+  // ed entrare come venditore sullo stesso telefono deve cambiare app. Il
+  // ruolo vale solo per l'utente per cui e' stato chiesto.
+  const utente = sessione?.user.id ?? null;
+  const admin = ruolo && ruolo.utente === utente ? ruolo.admin : null;
+  useEffect(() => {
+    if (!utente) return;
+    let annullato = false;
+    void sonoAdmin().then((si) => {
+      if (!annullato) setRuolo({ utente, admin: si });
+    });
+    return () => {
+      annullato = true;
+    };
+  }, [utente]);
+
   useEffect(() => {
     if (!caricato) return;
 
     const suSchermataDiAccesso = segmenti[0] === 'accedi';
 
-    if (!sessione && !suSchermataDiAccesso) {
-      router.replace('/accedi');
-    } else if (sessione && suSchermataDiAccesso) {
+    const nelBackOffice = segmenti[0] === 'admin';
+
+    if (!sessione) {
+      if (!suSchermataDiAccesso) router.replace('/accedi');
+      return;
+    }
+    if (admin === null) return;
+
+    // Ognuno nella propria app: l'admin non vede le schermate dei venditori,
+    // il venditore non arriva al back office nemmeno scrivendone l'indirizzo
+    // (e se ci arrivasse, il database gli risponderebbe solo_admin).
+    if (admin && !nelBackOffice) {
+      router.replace('/admin');
+    } else if (!admin && (nelBackOffice || suSchermataDiAccesso)) {
       router.replace('/');
     }
-  }, [caricato, sessione, segmenti, router]);
+  }, [caricato, sessione, admin, segmenti, router]);
 
-  if (!caricato || !fontPronti) {
+  if (!caricato || !fontPronti || (sessione && admin === null)) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', backgroundColor: colori.sfondo }}>
         <ActivityIndicator color={colori.primario} />
@@ -196,7 +230,9 @@ function Pile() {
         headerRight: () => (
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <TastoTema />
-            {route.name !== 'index' && route.name !== 'accedi' && <TastoCasa />}
+            {route.name !== 'index' && route.name !== 'accedi' && route.name !== 'admin/index' && (
+              <TastoCasa verso={admin ? '/admin' : '/'} />
+            )}
           </View>
         ),
       })}
@@ -220,6 +256,9 @@ function Pile() {
       <Stack.Screen name="pratiche/index" options={{ title: 'Le tue pratiche' }} />
       <Stack.Screen name="pratiche/[id]" options={{ title: 'Pratica' }} />
       <Stack.Screen name="preventivo/[pratica]" options={{ title: 'Preventivo' }} />
+      <Stack.Screen name="admin/index" options={{ title: 'Back office' }} />
+      <Stack.Screen name="admin/nuovo" options={{ title: 'Nuovo utente' }} />
+      <Stack.Screen name="admin/[id]" options={{ title: 'Utente' }} />
       </Stack>
     </ThemeProvider>
   );
