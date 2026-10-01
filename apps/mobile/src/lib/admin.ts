@@ -90,3 +90,63 @@ export function dataBreve(iso: string): string {
     year: 'numeric',
   });
 }
+
+/** Una riga dello storico: chi ha attivato o tolto un modulo, e quando. */
+export interface Attivazione {
+  modulo: Modulo;
+  /** null: in quel momento il modulo e' stato disattivato. */
+  fino_a: string | null;
+  fonte: 'admin' | 'pagamento';
+  creato_il: string;
+  /** L'email dell'admin; null per i pagamenti. */
+  creato_da: string | null;
+}
+
+export async function caricaStorico(utente: string): Promise<Attivazione[]> {
+  const { data, error } = await supabase.rpc(fn('admin_storico'), { p_user: utente });
+  if (error) throw new Error(error.message);
+  return (data as Attivazione[] | null) ?? [];
+}
+
+/** Giorni interi da oggi a una data futura; 0 se e' oggi o gia' passata. */
+export function giorniA(iso: string): number {
+  const ms = new Date(iso).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / 86_400_000));
+}
+
+export function dataLunga(data: Date): string {
+  return data.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+/** Una riga dell'elenco generale: chi, quale card, fino a quando, da chi. */
+export interface AttivazioneUtente extends Attivazione {
+  id_utente: string;
+  email: string;
+  nome: string | null;
+  /** L'identificativo del pagamento, quando ci sara'. */
+  riferimento: string | null;
+}
+
+export async function caricaAttivazioni(
+  fonte: 'pagamento' | 'admin' | null
+): Promise<AttivazioneUtente[]> {
+  const { data, error } = await supabase.rpc(fn('admin_attivazioni'), { p_fonte: fonte });
+  if (error) throw new Error(error.message);
+  return (data as AttivazioneUtente[] | null) ?? [];
+}
+
+/**
+ * Legge una data scritta a mano, gg/mm/aaaa (anche con - o .), e la porta a
+ * fine giornata: "fino al 31/12" deve valere per tutto il 31. null se non e'
+ * una data vera o se e' gia' passata.
+ */
+export function leggiData(testo: string): Date | null {
+  const m = testo.trim().match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
+  if (!m) return null;
+  const [giorno, mese, anno] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const data = new Date(anno, mese - 1, giorno, 23, 59, 59);
+  // new Date corregge in silenzio il 31/02 in 3 marzo: qui va rifiutato.
+  if (data.getDate() !== giorno || data.getMonth() !== mese - 1) return null;
+  if (data <= new Date()) return null;
+  return data;
+}

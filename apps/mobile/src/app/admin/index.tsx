@@ -66,6 +66,12 @@ export default function AdminUtenti() {
       </View>
 
       <Bottone testo="Nuovo utente" icona="piu" onPress={() => router.push('/admin/nuovo')} />
+      <Bottone
+        testo="Chi ha pagato cosa"
+        icona="euro"
+        tipo="tenue"
+        onPress={() => router.push('/admin/attivazioni')}
+      />
 
       {errore && <Text style={stili.errore}>{errore}</Text>}
 
@@ -104,7 +110,11 @@ function SchedaUtente({ utente, onPress }: { utente: UtenteAdmin; onPress: () =>
           <Pillola testo="solo operazioni gratuite" />
         ) : (
           attivi.map((m) => (
-            <Pillola key={m.modulo} testo={ETICHETTA_MODULO[m.modulo]} tono="successo" />
+            <Pillola
+              key={m.modulo}
+              testo={`${ETICHETTA_MODULO[m.modulo]} · ${m.origine_acquisto === 'pagamento' ? 'pagata' : 'admin'}`}
+              tono="successo"
+            />
           ))
         )}
       </View>

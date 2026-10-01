@@ -258,6 +258,7 @@ function Pile() {
       <Stack.Screen name="preventivo/[pratica]" options={{ title: 'Preventivo' }} />
       <Stack.Screen name="admin/index" options={{ title: 'Back office' }} />
       <Stack.Screen name="admin/nuovo" options={{ title: 'Nuovo utente' }} />
+      <Stack.Screen name="admin/attivazioni" options={{ title: 'Chi ha pagato cosa' }} />
       <Stack.Screen name="admin/[id]" options={{ title: 'Utente' }} />
       </Stack>
     </ThemeProvider>
