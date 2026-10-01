@@ -13,10 +13,41 @@ che si apre dal telefono e si può aggiungere alla schermata iniziale.
 
 ---
 
+## 0. Il passaggio che non posso fare io
+
+Mettere qualcosa online vuol dire metterlo su un account, e un account è tuo.
+Serve **un comando solo**, dato da te, una volta:
+
+```bash
+npx vercel login
+```
+
+Si apre il browser, scegli GitHub o la mail, e finisce lì. Da quel momento tutto
+il resto — creare i due progetti, impostare le variabili, costruire, pubblicare —
+si fa da riga di comando senza più toccare niente a mano.
+
+> **Senza account non si può, e non per pigrizia: l'ho provato.** Vercel permette
+> un deploy anonimo (`vercel deploy --temporary`), ma ha due difetti che lo
+> rendono inutile qui: **scade in 60 minuti** se non lo si rivendica con un
+> account, e **non riesce a caricare le landing**, perché Next.js 16 produce una
+> funzione annidata per ogni rotta (`functions/a/[codice].func`) e il caricamento
+> anonimo quelle cartelle le salta. L'app venditore, che è tutta statica, invece
+> passerebbe. Non vale la pena: un indirizzo che muore in un'ora non si manda a
+> un cliente.
+
+Il deposito è su GitHub (`pbaldassare/labpiattaforma`), **pubblico**, e il ramo
+`fase-0-fondamenta` va spinto prima di importare:
+
+```bash
+git push -u origin fase-0-fondamenta
+```
+
+---
+
 ## 1. I due progetti su Vercel
 
-Dallo stesso deposito GitHub (`pbaldassare/labpiattaforma`) si creano **due**
-progetti. La cosa che cambia è la cartella di partenza.
+Dallo stesso deposito si creano **due** progetti. La cosa che cambia è la
+cartella di partenza.
 
 ### Progetto A — le landing
 
@@ -35,6 +66,12 @@ progetti. La cosa che cambia è la cartella di partenza.
 > Perché `installCommand` punta a `../..`: è un monorepo, e le dipendenze
 > stanno nella radice. Senza, Vercel installerebbe solo quelle della singola
 > applicazione e la costruzione fallirebbe.
+
+> Se la costruzione si ferma su `ERESOLVE` lamentando `@types/react`, è perché
+> `apps/web` fissa `@types/react` a `19.2.18` mentre `@types/react-dom` è a
+> `^19.2.7`, e da sé risale a una versione che ne pretende una più nuova. Il
+> `package-lock.json` della radice tiene insieme le due cose; se mai dovesse
+> succedere, basta fissare anche `@types/react-dom` a `19.2.7`.
 
 ---
 
@@ -64,6 +101,10 @@ EXPO_PUBLIC_DOMINIO_LANDING=https://<indirizzo del progetto A>
 `DOMINIO_LANDING` è l'indirizzo che finisce nei QR, nei link che il venditore
 manda su WhatsApp e nella mail di recupero password. Se resta `localhost` i
 clienti ricevono link che non si aprono.
+
+L'uovo e la gallina: `DOMINIO_LANDING` è l'indirizzo del progetto A, che si
+conosce solo dopo averlo creato. Quindi **prima il progetto A**, poi si prende
+il suo indirizzo, lo si mette nelle variabili dei due progetti e si ricostruisce.
 
 **Mai** mettere qui la chiave di servizio di Supabase: scavalca ogni regola di
 accesso, e non serve — le landing leggono con la chiave pubblicabile e tutto
