@@ -85,3 +85,15 @@ export const ERRORI_SLUG: Record<string, string> = {
   slug_occupato: 'Questo indirizzo e’ gia’ di un altro venditore.',
   venditore_slug_formato: 'Indirizzo non valido: usa lettere, numeri e trattini.',
 };
+
+/**
+ * Ogni offerta appartiene a un profilo venditore (vincolo offerta_user_id_fkey):
+ * chi non l'ha ancora compilato si sente rispondere con il nome del vincolo.
+ */
+export function eProfiloMancante(messaggio: string | null | undefined): boolean {
+  return (messaggio ?? '').includes('offerta_user_id_fkey');
+}
+
+export const MESSAGGIO_PROFILO_MANCANTE =
+  'Prima di pubblicare compila il tuo profilo: nome e indirizzo della vetrina. ' +
+  'Quello che hai scritto qui resta, ti basta tornare indietro.';

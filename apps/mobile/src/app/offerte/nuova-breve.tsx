@@ -13,6 +13,8 @@ import {
   aggiungiGiorni,
   analizzaEuro,
   eModuloEsaurito,
+  eProfiloMancante,
+  MESSAGGIO_PROFILO_MANCANTE,
   fn,
   formattaEuro,
   giorniFra,
@@ -149,6 +151,13 @@ export default function NuovaBreve() {
       // messaggio rosso sotto un campo (§8.5).
       if (eModuloEsaurito(error.message)) {
         router.push({ pathname: '/blocco', params: { modulo: 'noleggio_breve' } });
+        return;
+      }
+      // Senza profilo l'offerta non ha un venditore a cui appartenere: si
+      // compila quello e si torna qui, con il form ancora pieno.
+      if (eProfiloMancante(error.message)) {
+        setErrore(MESSAGGIO_PROFILO_MANCANTE);
+        router.push('/profilo');
         return;
       }
       setErrore(

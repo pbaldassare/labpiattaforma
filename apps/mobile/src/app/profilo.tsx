@@ -55,6 +55,7 @@ export default function Profilo() {
   const [telefono, setTelefono] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [presentazione, setPresentazione] = useState('');
+  const [rui, setRui] = useState('');
   const [statoSlug, setStatoSlug] = useState<StatoSlug>({ tipo: 'vuoto' });
 
   const attesa = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -107,6 +108,7 @@ export default function Profilo() {
         setTelefono(data.telefono ?? '');
         setWhatsapp(data.whatsapp ?? '');
         setPresentazione(data.presentazione ?? '');
+        setRui(data.rui_numero ?? '');
       }
       setCaricamento(false);
     })();
@@ -145,6 +147,7 @@ export default function Profilo() {
       telefono: telefono.trim() || null,
       whatsapp: whatsapp.trim() || null,
       presentazione: presentazione.trim() || null,
+      rui_numero: rui.trim() || null,
     };
 
     // user_id lo mette il database con auth.uid(): il client non lo manda mai,
@@ -242,6 +245,25 @@ export default function Profilo() {
             placeholder="Auto usate garantite, dal 1998 a Verona."
             placeholderTextColor={colori.testoTenue}
           />
+        </View>
+
+        {/* Serve solo a chi propone polizze: senza, il modulo Assicurazioni
+            prepara i prodotti ma non li pubblica. */}
+        <View style={stili.campo}>
+          <Text style={stili.etichetta}>Numero RUI</Text>
+          <TextInput
+            style={stili.input}
+            value={rui}
+            onChangeText={setRui}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            placeholder="E000123456"
+            placeholderTextColor={colori.testoTenue}
+          />
+          <Text style={stili.aiuto}>
+            L’iscrizione al registro degli intermediari assicurativi. Serve solo per pubblicare
+            polizze nel modulo Assicurazioni.
+          </Text>
         </View>
 
         {/* In cima e non in fondo: sotto il tasto "Salva" ci si passava sopra
