@@ -13,74 +13,89 @@ che si apre dal telefono e si può aggiungere alla schermata iniziale.
 
 ---
 
-## 0. Il passaggio che non posso fare io
+## 0. Dove va cosa
 
-Mettere qualcosa online vuol dire metterlo su un account, e un account è tuo.
-Serve **un comando solo**, dato da te, una volta:
+Tutto sta su **Cloudflare**, collegato al deposito GitHub
+(`pbaldassare/labpiattaforma`, ramo `main`): ogni spinta su `main` ricostruisce
+e ripubblica da sola.
 
-```bash
-npx vercel login
-```
+| Cosa | Su Cloudflare è | Perché |
+| --- | --- | --- |
+| Landing (`apps/web`) | un **Worker** | le pagine leggono Supabase a ogni richiesta: serve codice che gira sul server, e Next.js su Cloudflare passa da [OpenNext](https://opennext.js.org/cloudflare) |
+| App venditore (`apps/mobile`) | un progetto **Pages** | è tutta statica: file HTML, niente server |
 
-Si apre il browser, scegli GitHub o la mail, e finisce lì. Da quel momento tutto
-il resto — creare i due progetti, impostare le variabili, costruire, pubblicare —
-si fa da riga di comando senza più toccare niente a mano.
+È un monorepo con i workspace di npm: le dipendenze si installano **dalla
+radice**, quindi in entrambi i progetti la cartella di partenza resta la radice
+del deposito e il comando di costruzione sceglie il workspace.
 
-> **Senza account non si può, e non per pigrizia: l'ho provato.** Vercel permette
-> un deploy anonimo (`vercel deploy --temporary`), ma ha due difetti che lo
-> rendono inutile qui: **scade in 60 minuti** se non lo si rivendica con un
-> account, e **non riesce a caricare le landing**, perché Next.js 16 produce una
-> funzione annidata per ogni rotta (`functions/a/[codice].func`) e il caricamento
-> anonimo quelle cartelle le salta. L'app venditore, che è tutta statica, invece
-> passerebbe. Non vale la pena: un indirizzo che muore in un'ora non si manda a
-> un cliente.
-
-Il deposito è su GitHub (`pbaldassare/labpiattaforma`), **pubblico**, e il ramo
-`fase-0-fondamenta` va spinto prima di importare:
-
-```bash
-git push -u origin fase-0-fondamenta
-```
+La versione di Node la fissa `.node-version` (22).
 
 ---
 
-## 1. I due progetti su Vercel
+## 1. I due progetti su Cloudflare
 
-Dallo stesso deposito si creano **due** progetti. La cosa che cambia è la
-cartella di partenza.
+Dal pannello: **Workers & Pages → Create**.
 
-### Progetto A — le landing
+### Progetto A — le landing (Worker)
 
-- **Root Directory**: `apps/web`
-- Framework: Next.js (lo riconosce da solo)
-- Il resto lo dice `apps/web/vercel.json`
+**Import a repository** → `labpiattaforma`, poi:
 
-### Progetto B — l'app venditore
+- **Project name**: `labpiattaforma-landing` — deve coincidere con `name` in
+  `apps/web/wrangler.jsonc`, altrimenti la pubblicazione si rifiuta.
+- **Root directory**: `/` (vuoto)
+- **Build command**: `npm run build:cf --workspace @lab/web`
+- **Deploy command**: `npm run deploy:cf --workspace @lab/web`
+- **Production branch**: `main`
 
-- **Root Directory**: `apps/mobile`
-- Framework: **Other**
-- Il resto lo dice `apps/mobile/vercel.json`: comando di costruzione, cartella
-  di uscita e le tre regole per gli indirizzi che contengono un identificativo
-  (`/offerte/<id>` e compagnia), che altrimenti darebbero 404.
+Il resto lo dice `apps/web/wrangler.jsonc`. Le foto di `next/image` le
+ridimensiona Cloudflare Images (il collegamento `IMAGES`): nel piano gratuito
+sono 5.000 trasformazioni diverse al mese, poi le foto restano non ottimizzate.
 
-> Perché `installCommand` punta a `../..`: è un monorepo, e le dipendenze
-> stanno nella radice. Senza, Vercel installerebbe solo quelle della singola
-> applicazione e la costruzione fallirebbe.
+Per provarlo in locale come girerà su Cloudflare:
 
-> Se la costruzione si ferma su `ERESOLVE` lamentando `@types/react`, è perché
-> `apps/web` fissa `@types/react` a `19.2.18` mentre `@types/react-dom` è a
-> `^19.2.7`, e da sé risale a una versione che ne pretende una più nuova. Il
-> `package-lock.json` della radice tiene insieme le due cose; se mai dovesse
-> succedere, basta fissare anche `@types/react-dom` a `19.2.7`.
+```bash
+npm run preview --workspace @lab/web
+```
+
+### Progetto B — l'app venditore (Pages)
+
+**Pages → Connect to Git** → `labpiattaforma`, poi:
+
+- **Framework preset**: None
+- **Root directory**: `/` (vuoto)
+- **Build command**: `npm run build:web --workspace @lab/mobile`
+- **Build output directory**: `apps/mobile/dist`
+- **Production branch**: `main`
+
+Le regole per gli indirizzi stanno in `apps/mobile/public/` e finiscono nella
+cartella pubblicata:
+
+- `_redirects` — gli indirizzi con un identificativo (`/offerte/<id>` e
+  compagnia) puntano al file `offerte/[id].html`, che altrimenti darebbe 404;
+- `_headers` — le intestazioni di sicurezza.
+
+`build:web` copia anche `+not-found.html` in `404.html`: è il nome che Pages
+cerca per le pagine che non esistono.
+
+> Se la costruzione si ferma su `Cannot find module '../lightningcss.linux-x64-gnu.node'`
+> (o su `@next/swc`), il `package-lock.json` è stato rigenerato su un Mac con un
+> npm che salta i binari delle altre piattaforme. Si rigenera da zero —
+> `rm -rf node_modules package-lock.json && npm install` — e si controlla che
+> nel file compaiano sia `lightningcss-linux-x64-gnu` sia `lightningcss-darwin-arm64`.
 
 ---
 
 ## 2. Le variabili d'ambiente
 
-Si impostano su Vercel, **per ogni progetto**, prima della prima costruzione.
-Quelle dell'app finiscono dentro il pacchetto: vanno messe prima, non dopo.
+Si impostano su Cloudflare, **per ogni progetto**, prima della prima
+costruzione. Quelle con prefisso `NEXT_PUBLIC_` ed `EXPO_PUBLIC_` finiscono
+dentro il pacchetto: vanno messe prima, non dopo.
 
 ### Progetto A — landing
+
+Il Worker ha due elenchi: **Settings → Build → Variables** (servono mentre
+si costruisce) e **Settings → Variables and Secrets** (servono mentre gira).
+Queste vanno in **tutti e due**:
 
 ```
 SUPABASE_URL=https://gdeyyyirgriwknkcqcwl.supabase.co
@@ -92,6 +107,8 @@ DOMINIO_LANDING=https://<indirizzo del progetto A>
 
 ### Progetto B — app venditore
 
+**Settings → Variables and Secrets**, ambiente Production:
+
 ```
 EXPO_PUBLIC_SUPABASE_URL=https://gdeyyyirgriwknkcqcwl.supabase.co
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<la chiave pubblicabile>
@@ -102,9 +119,10 @@ EXPO_PUBLIC_DOMINIO_LANDING=https://<indirizzo del progetto A>
 manda su WhatsApp e nella mail di recupero password. Se resta `localhost` i
 clienti ricevono link che non si aprono.
 
-L'uovo e la gallina: `DOMINIO_LANDING` è l'indirizzo del progetto A, che si
-conosce solo dopo averlo creato. Quindi **prima il progetto A**, poi si prende
-il suo indirizzo, lo si mette nelle variabili dei due progetti e si ricostruisce.
+L'uovo e la gallina: `DOMINIO_LANDING` è l'indirizzo del progetto A
+(`labpiattaforma-landing.<account>.workers.dev`), che si conosce solo dopo
+averlo creato. Quindi **prima il progetto A**, poi si prende il suo indirizzo,
+lo si mette nelle variabili dei due progetti e si ricostruisce.
 
 **Mai** mettere qui la chiave di servizio di Supabase: scavalca ogni regola di
 accesso, e non serve — le landing leggono con la chiave pubblicabile e tutto
@@ -135,7 +153,7 @@ Senza la seconda, il link della mail "password dimenticata" viene rifiutato.
 
 ## Quando ci sarà un dominio vero
 
-Si aggiunge su Vercel al progetto A, si cambia `DOMINIO_LANDING` nei due
+Si aggiunge su Cloudflare al progetto A (**Settings → Domains & Routes**), si cambia `DOMINIO_LANDING` nei due
 progetti e si rigenerano le pagine. I codici delle pagine già create non
 cambiano, quindi **i QR già stampati continuano a funzionare** solo se il
 dominio vecchio resta attivo o reindirizza: vale la pena deciderlo prima di

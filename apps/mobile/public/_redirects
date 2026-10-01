@@ -1,0 +1,11 @@
+# Le pagine con un parametro esistono come file con le parentesi quadre
+# (offerte/[id].html): qui ogni indirizzo reale viene servito da quel file.
+# Le pagine fisse con lo stesso prefisso (offerte/nuova...) stanno prima,
+# perche' vince la prima regola che corrisponde.
+/offerte/nuova                    /offerte/nuova                    200
+/offerte/nuova-breve              /offerte/nuova-breve              200
+/offerte/nuova-lungo              /offerte/nuova-lungo              200
+/offerte/nuova-assicurazione      /offerte/nuova-assicurazione      200
+/offerte/:id                      /offerte/[id]                     200
+/pratiche/:id                     /pratiche/[id]                    200
+/preventivo/:pratica              /preventivo/[pratica]             200

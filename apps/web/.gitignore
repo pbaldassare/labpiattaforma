@@ -42,3 +42,8 @@ next-env.d.ts
 
 # il modello senza valori deve invece stare nel repo
 !.env.example
+
+# Cloudflare
+.open-next
+.wrangler
+.dev.vars*

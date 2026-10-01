@@ -8,6 +8,17 @@ const nextConfig: NextConfig = {
   // Il pacchetto condiviso viene distribuito come sorgente TypeScript,
   // quindi deve passare dal compilatore di Next.
   transpilePackages: ["@lab/shared"],
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: supabase
       ? [

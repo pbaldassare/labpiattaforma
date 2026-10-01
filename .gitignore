@@ -20,3 +20,6 @@ npm-debug.log*
 
 # Cartella di lavoro della CLI di Supabase.
 supabase/.temp/
+
+# Cloudflare (cache locale di wrangler)
+.wrangler
