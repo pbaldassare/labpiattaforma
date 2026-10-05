@@ -3,13 +3,13 @@
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
 import { inviaContatto, type EsitoContatto } from '@/lib/azioni-contatto';
+import { BOTTONE_MODULO } from '@/lib/stile';
 
 const INIZIALE: EsitoContatto = { stato: 'fermo' };
 
@@ -30,9 +30,9 @@ export function FormContatto({
 
   if (esito.stato === 'inviato') {
     return (
-      <div className="border-bordo bg-superficie rounded-xl border p-6 text-center">
-        <p className="text-lg font-semibold">Richiesta inviata</p>
-        <p className="text-testo-tenue mt-2 text-sm">
+      <div className="sfumatura-modulo text-m-su entra rounded-3xl p-6 text-center shadow-lg">
+        <p className="text-2xl font-bold">Richiesta inviata!</p>
+        <p className="mt-2 text-sm opacity-90">
           Ti richiamiamo al più presto. Se hai lasciato il numero, probabilmente su WhatsApp.
         </p>
       </div>
@@ -142,8 +142,8 @@ export function FormContatto({
 function BottoneInvio() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" size="lg" disabled={pending} className="w-full">
+    <button type="submit" disabled={pending} className={BOTTONE_MODULO}>
       {pending ? 'Invio…' : 'Invia la richiesta'}
-    </Button>
+    </button>
   );
 }

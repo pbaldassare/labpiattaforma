@@ -11,6 +11,8 @@ import {
   type CellaCanone,
 } from '@lab/shared';
 
+import { MessageCircle, SlidersHorizontal } from 'lucide-react';
+
 import { FormContatto } from '@/components/form-contatto';
 
 /**
@@ -55,18 +57,29 @@ export function BloccoCanone({
 
   if (durate.length === 0) {
     return (
-      <section id="contatto" className="border-bordo flex flex-col gap-4 border-t py-6">
-        <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
-          Chiedi informazioni
+      <section id="contatto" className="rivela flex flex-col gap-4 pt-10">
+        <h2 className="flex items-center gap-3">
+          <span className="sfumatura-modulo text-m-su flex size-10 items-center justify-center rounded-2xl shadow-md shadow-m2/25">
+            <MessageCircle className="size-5" strokeWidth={2.2} />
+          </span>
+          <span className="text-xl font-extrabold tracking-tight">Chiedi informazioni</span>
         </h2>
-        <FormContatto codice={codice} riservata={riservata} slugVenditore={slugVenditore} />
+        <div className="bg-superficie rounded-3xl p-5 shadow-md ring-1 shadow-m2/10 ring-slate-900/5">
+          <FormContatto codice={codice} riservata={riservata} slugVenditore={slugVenditore} />
+        </div>
       </section>
     );
   }
 
   return (
     <>
-      <section className="border-bordo flex flex-col gap-6 border-t py-6">
+      <section className="rivela bg-superficie mt-10 flex flex-col gap-6 rounded-3xl p-5 shadow-md ring-1 shadow-m2/10 ring-slate-900/5">
+        <h2 className="flex items-center gap-3">
+          <span className="sfumatura-modulo text-m-su flex size-10 items-center justify-center rounded-2xl shadow-md shadow-m2/25">
+            <SlidersHorizontal className="size-5" strokeWidth={2.2} />
+          </span>
+          <span className="text-xl font-extrabold tracking-tight">Componi il tuo canone</span>
+        </h2>
         <Gruppo titolo="Per quanto tempo">
           {durate.map((d) => (
             <Opzione
@@ -90,32 +103,40 @@ export function BloccoCanone({
         </Gruppo>
 
         <div
-          className="border-bordo bg-superficie rounded-xl border p-6 text-center"
+          className="sfumatura-modulo text-m-su relative overflow-hidden rounded-2xl p-6 text-center shadow-lg shadow-m2/25"
           aria-live="polite"
         >
           {canone != null ? (
             <>
-              <p className="text-4xl font-bold sm:text-5xl">{formattaEuro(canone)}</p>
-              <p className="text-testo-tenue mt-1 text-sm">al mese</p>
+              {/* key: a ogni combinazione il numero rientra, e l'occhio vede che e' cambiato. */}
+              <p key={canone} className="entra text-5xl font-extrabold tracking-tight sm:text-6xl">
+                {formattaEuro(canone)}
+              </p>
+              <p className="mt-1 text-sm font-semibold opacity-90">al mese</p>
             </>
           ) : (
-            <p className="text-testo-tenue text-sm">
+            <p className="text-sm font-semibold">
               Per questa combinazione non c’è ancora un canone: scrivici e te lo calcoliamo.
             </p>
           )}
         </div>
       </section>
 
-      <section id="contatto" className="border-bordo flex flex-col gap-4 border-t py-6">
-        <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
-          Richiedi il preventivo
+      <section id="contatto" className="rivela flex flex-col gap-4 pt-10">
+        <h2 className="flex items-center gap-3">
+          <span className="sfumatura-modulo text-m-su flex size-10 items-center justify-center rounded-2xl shadow-md shadow-m2/25">
+            <MessageCircle className="size-5" strokeWidth={2.2} />
+          </span>
+          <span className="text-xl font-extrabold tracking-tight">Richiedi il preventivo</span>
         </h2>
-        <FormContatto
-          codice={codice}
-          riservata={riservata}
-          messaggioIniziale={messaggio}
-          slugVenditore={slugVenditore}
-        />
+        <div className="bg-superficie rounded-3xl p-5 shadow-md ring-1 shadow-m2/10 ring-slate-900/5">
+          <FormContatto
+            codice={codice}
+            riservata={riservata}
+            messaggioIniziale={messaggio}
+            slugVenditore={slugVenditore}
+          />
+        </div>
       </section>
     </>
   );
@@ -124,7 +145,7 @@ export function BloccoCanone({
 function Gruppo({ titolo, children }: { titolo: string; children: React.ReactNode }) {
   return (
     <fieldset className="flex flex-col gap-3">
-      <legend className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
+      <legend className="text-m-testo mb-3 text-xs font-bold tracking-[0.2em] uppercase">
         {titolo}
       </legend>
       <div className="flex flex-wrap gap-2">{children}</div>
@@ -147,10 +168,10 @@ function Opzione({
       onClick={onClick}
       aria-pressed={attiva}
       className={[
-        'min-h-11 cursor-pointer rounded-xl border px-4 text-sm font-medium transition-colors',
+        'min-h-11 cursor-pointer rounded-xl border px-4 text-sm font-semibold transition-all',
         attiva
-          ? 'bg-primario text-su-primario border-primario'
-          : 'bg-superficie border-bordo hover:border-testo-tenue',
+          ? 'sfumatura-modulo text-m-su scale-105 border-transparent shadow-md shadow-m2/30'
+          : 'bg-superficie border-bordo hover:border-m2 hover:text-m-testo',
       ].join(' ')}
     >
       {etichetta}

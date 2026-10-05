@@ -18,7 +18,7 @@ import {
   type PeriodoOccupato,
 } from '@lab/shared';
 
-import { Button } from '@/components/ui/button';
+import { BOTTONE_MODULO } from '@/lib/stile';
 
 import { inviaPrenotazione, type EsitoPrenotazione } from './azioni';
 
@@ -106,30 +106,30 @@ export function Calendario({
 
   if (esito.stato === 'bloccata') {
     return (
-      <div className="border-bordo bg-superficie rounded-xl border p-6 text-center">
-        <p className="text-lg font-semibold">Date tenute per te</p>
-        <p className="text-testo-tenue mt-2 text-sm">{esito.messaggio}</p>
+      <div className="sfumatura-modulo text-m-su entra rounded-3xl p-6 text-center shadow-lg">
+        <p className="text-2xl font-bold">Date tenute per te!</p>
+        <p className="mt-2 text-sm opacity-90">{esito.messaggio}</p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="border-bordo bg-superficie rounded-xl border p-4">
+      <div className="bg-superficie rounded-3xl p-4 shadow-sm ring-1 ring-slate-900/5">
         <div className="mb-4 flex items-center justify-between">
           <button
             type="button"
             onClick={() => setMese(new Date(mese.getFullYear(), mese.getMonth() - 1, 1))}
-            className="hover:bg-tenue flex size-10 cursor-pointer items-center justify-center rounded-lg"
+            className="bg-m-tenue text-m-testo flex size-10 cursor-pointer items-center justify-center rounded-xl text-xl font-bold transition-transform hover:scale-105"
             aria-label="Mese precedente"
           >
             ‹
           </button>
-          <p className="font-semibold capitalize">{nomeMese(mese.getFullYear(), mese.getMonth())}</p>
+          <p className="text-lg font-bold capitalize">{nomeMese(mese.getFullYear(), mese.getMonth())}</p>
           <button
             type="button"
             onClick={() => setMese(new Date(mese.getFullYear(), mese.getMonth() + 1, 1))}
-            className="hover:bg-tenue flex size-10 cursor-pointer items-center justify-center rounded-lg"
+            className="bg-m-tenue text-m-testo flex size-10 cursor-pointer items-center justify-center rounded-xl text-xl font-bold transition-transform hover:scale-105"
             aria-label="Mese successivo"
           >
             ›
@@ -152,13 +152,13 @@ export function Calendario({
       </div>
 
       {dal && !al && (
-        <p className="text-testo-tenue text-center text-sm">
+        <p className="bg-m-tenue text-m-testo entra rounded-2xl px-4 py-3 text-center text-sm font-semibold">
           Ritiro il {formattaGiorno(dal)}. Ora scegli quando riconsegni.
         </p>
       )}
 
       {dal && al && (
-        <div className="border-bordo bg-superficie flex flex-col gap-3 rounded-xl border p-6">
+        <div className="entra bg-superficie flex flex-col gap-3 rounded-3xl p-6 shadow-xl ring-1 ring-slate-900/5">
           <div className="flex items-baseline justify-between">
             <span className="text-testo-tenue text-sm">
               {formattaGiorno(dal)} → {formattaGiorno(al)}
@@ -172,7 +172,11 @@ export function Calendario({
             <div className="text-testo-tenue flex items-baseline justify-between text-sm">
               <span>
                 {formattaEuro(tariffa)} al giorno
-                {scontata && <span className="text-emerald-700"> · tariffa ridotta</span>}
+                {scontata && (
+                  <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                    tariffa ridotta
+                  </span>
+                )}
               </span>
             </div>
           )}
@@ -180,7 +184,7 @@ export function Calendario({
           {totale != null && (
             <div className="border-bordo flex items-baseline justify-between border-t pt-3">
               <span className="font-semibold">Totale</span>
-              <span className="text-3xl font-bold">{formattaEuro(totale)}</span>
+              <span className="testo-sfumato text-4xl font-extrabold">{formattaEuro(totale)}</span>
             </div>
           )}
 
@@ -196,7 +200,7 @@ export function Calendario({
               required
               placeholder="Nome e cognome"
               autoComplete="name"
-              className="border-bordo bg-sfondo min-h-11 rounded-lg border px-4"
+              className="border-bordo bg-sfondo focus:border-m2 focus:ring-m1/30 min-h-12 rounded-xl border px-4 outline-none focus:ring-4"
             />
             <div className="grid gap-3 sm:grid-cols-2">
               <input
@@ -204,14 +208,14 @@ export function Calendario({
                 type="tel"
                 placeholder="Telefono"
                 autoComplete="tel"
-                className="border-bordo bg-sfondo min-h-11 rounded-lg border px-4"
+                className="border-bordo bg-sfondo focus:border-m2 focus:ring-m1/30 min-h-12 rounded-xl border px-4 outline-none focus:ring-4"
               />
               <input
                 name="email"
                 type="email"
                 placeholder="Email"
                 autoComplete="email"
-                className="border-bordo bg-sfondo min-h-11 rounded-lg border px-4"
+                className="border-bordo bg-sfondo focus:border-m2 focus:ring-m1/30 min-h-12 rounded-xl border px-4 outline-none focus:ring-4"
               />
             </div>
             <label className="text-testo-tenue flex items-start gap-3 text-sm">
@@ -237,9 +241,9 @@ export function Calendario({
               </p>
             )}
 
-            <Button type="submit" size="lg" disabled={inCorso} className="w-full">
+            <button type="submit" disabled={inCorso} className={BOTTONE_MODULO}>
               {inCorso ? 'Un momento…' : 'Tieni queste date'}
-            </Button>
+            </button>
           </form>
         </div>
       )}
@@ -291,11 +295,11 @@ function Griglia({
             aria-label={formattaGiorno(giorno)}
             aria-pressed={eInizio || eFine || dentro}
             className={[
-              'flex aspect-square cursor-pointer items-center justify-center rounded-lg text-sm transition-colors',
-              !libero && 'text-testo-tenue cursor-not-allowed line-through opacity-40',
-              libero && !eInizio && !eFine && !dentro && 'hover:bg-tenue',
-              dentro && 'bg-tenue',
-              (eInizio || eFine) && 'bg-primario text-su-primario font-semibold',
+              'flex aspect-square cursor-pointer items-center justify-center rounded-xl text-sm font-medium transition-all',
+              !libero && 'text-testo-tenue cursor-not-allowed line-through opacity-35',
+              libero && !eInizio && !eFine && !dentro && 'hover:bg-m-tenue hover:text-m-testo hover:scale-110',
+              dentro && 'bg-m-tenue text-m-testo rounded-none',
+              (eInizio || eFine) && 'sfumatura-modulo text-m-su scale-110 font-bold shadow-md shadow-m2/30',
             ]
               .filter(Boolean)
               .join(' ')}

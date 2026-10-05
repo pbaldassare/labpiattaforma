@@ -9,9 +9,31 @@ import {
 
 import { FormContatto } from '@/components/form-contatto';
 import {
+  Check,
+  Coins,
+  FileText,
+  MessageCircle,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  X,
+} from 'lucide-react';
+
+import {
+  BarraWhatsApp,
+  FasciaColore,
+  Intestazione,
+  NonDisponibile as PaginaNonDisponibile,
+  Pagina,
+  Piede,
+  Riquadri,
+  Riquadro,
+  SchedaVenditore,
+  Sezione,
+} from '@/components/landing';
+import {
   DOMINIO,
   caricaPagina,
-  linkWhatsApp,
   offertaDisponibile,
   registraApertura,
   urlFoto,
@@ -60,72 +82,64 @@ export default async function PaginaAssicurazione({ params }: Props) {
   const messaggio = `Ciao, vorrei un preventivo per ${a.nome_prodotto} di ${a.compagnia}.\n${indirizzo}`;
 
   return (
-    <div className="pb-28">
-      <main className="mx-auto max-w-2xl px-4">
-        <header className="border-bordo flex flex-col gap-2 border-b py-10">
-          <p className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
-            {a.compagnia} · {ETICHETTA_RISCHIO[a.tipo_rischio]}
-          </p>
-          <h1 className="font-display text-2xl leading-tight text-balance sm:text-3xl">
-            {a.nome_prodotto}
-          </h1>
+    <Pagina modulo="assicurazioni">
+      <FasciaColore modulo="assicurazioni" icona={ShieldCheck} />
 
-          {/* "Il numero mostrato e' quello di partenza, il preventivo esatto lo
-              fa il venditore" (§7.2): dirlo evita la telefonata arrabbiata. */}
-          <p className="mt-2">
-            <span className="text-testo-tenue text-sm">a partire da </span>
-            <span className="text-4xl font-bold sm:text-5xl">
-              {formattaEuro(a.premio_partenza_cent)}
-            </span>
-            {durata && <span className="text-testo-tenue text-sm"> · {durata.toLowerCase()}</span>}
-          </p>
-          <p className="text-testo-tenue text-sm">
+      <main className="mx-auto max-w-2xl px-4">
+        {/* "Il numero mostrato e' quello di partenza, il preventivo esatto lo
+            fa il venditore" (§7.2): dirlo evita la telefonata arrabbiata. */}
+        <Intestazione
+          sopra={`${a.compagnia} · ${ETICHETTA_RISCHIO[a.tipo_rischio]}`}
+          titolo={a.nome_prodotto}
+          primaDelPrezzo="a partire da"
+          prezzo={formattaEuro(a.premio_partenza_cent)}
+          dopoIlPrezzo={durata ? durata.toLowerCase() : undefined}
+        >
+          <p className="bg-m-tenue text-m-testo mt-2 rounded-xl px-3 py-2 text-sm font-medium">
             Il premio esatto dipende dai tuoi dati: scrivici e te lo calcoliamo.
           </p>
-        </header>
+        </Intestazione>
 
         {(a.massimale_cent != null || a.franchigia_cent != null) && (
-          <section className="grid grid-cols-2 gap-2 py-6">
+          <Riquadri>
             {a.massimale_cent != null && (
-              <Riquadro etichetta="Massimale" valore={formattaEuro(a.massimale_cent)} />
+              <Riquadro icona={Shield} etichetta="Massimale" valore={formattaEuro(a.massimale_cent)} />
             )}
             {a.franchigia_cent != null && (
-              <Riquadro etichetta="Franchigia" valore={formattaEuro(a.franchigia_cent)} />
+              <Riquadro icona={Coins} etichetta="Franchigia" valore={formattaEuro(a.franchigia_cent)} />
             )}
-          </section>
+          </Riquadri>
         )}
 
         {comprese.length > 0 && (
-          <section className="border-bordo flex flex-col gap-3 border-t py-6">
-            <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
-              Cosa copre
-            </h2>
+          <Sezione titolo="Cosa copre" icona={ShieldCheck}>
             <ul className="flex flex-col gap-2">
               {comprese.map((g) => (
                 <li
                   key={g.nome}
-                  className="bg-superficie border-bordo flex items-start gap-3 rounded-xl border px-4 py-3"
+                  className="bg-superficie flex items-start gap-3 rounded-2xl p-4 shadow-md ring-1 shadow-m2/10 ring-slate-900/5"
                 >
-                  <SegnoSi />
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                    <Check className="size-4" strokeWidth={3} />
+                  </span>
                   <div>
-                    <p className="font-semibold">{g.nome}</p>
+                    <p className="font-bold">{g.nome}</p>
                     {g.dettaglio && <p className="text-testo-tenue text-sm">{g.dettaglio}</p>}
                   </div>
                 </li>
               ))}
             </ul>
-          </section>
+          </Sezione>
         )}
 
         {escluse.length > 0 && (
-          <section className="border-bordo flex flex-col gap-3 border-t py-6">
-            <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
-              Cosa non copre
-            </h2>
+          <Sezione titolo="Cosa non copre" icona={ShieldAlert}>
             <ul className="flex flex-col gap-2">
               {escluse.map((g) => (
-                <li key={g.nome} className="flex items-start gap-3 px-4 py-2">
-                  <SegnoNo />
+                <li key={g.nome} className="flex items-start gap-3 rounded-2xl px-4 py-2">
+                  <span className="bg-tenue text-testo-tenue flex size-7 shrink-0 items-center justify-center rounded-full">
+                    <X className="size-4" strokeWidth={3} />
+                  </span>
                   <div>
                     <p className="text-testo-tenue">{g.nome}</p>
                     {g.dettaglio && <p className="text-testo-tenue text-sm">{g.dettaglio}</p>}
@@ -133,132 +147,61 @@ export default async function PaginaAssicurazione({ params }: Props) {
                 </li>
               ))}
             </ul>
-          </section>
+          </Sezione>
         )}
 
         {a.documenti_informativi.length > 0 && (
-          <section className="border-bordo flex flex-col gap-3 border-t py-6">
-            <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
-              Documenti informativi
-            </h2>
+          <Sezione titolo="Documenti informativi" icona={FileText}>
             <ul className="flex flex-col gap-2">
               {a.documenti_informativi.map((d, i) => (
                 <li key={d}>
                   <a
                     href={urlFoto(d)}
-                    className="font-semibold underline"
+                    className="bg-superficie text-m-testo flex items-center gap-3 rounded-2xl p-4 font-semibold shadow-sm ring-1 ring-slate-900/5"
                     target="_blank"
                     rel="noreferrer"
                   >
+                    <FileText className="size-5" />
                     Documento {i + 1}
                   </a>
                 </li>
               ))}
             </ul>
-          </section>
+          </Sezione>
         )}
 
-        <section id="contatto" className="border-bordo flex flex-col gap-4 border-t py-6">
-          <h2 className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
-            Chiedi il preventivo
-          </h2>
-          <FormContatto
-            codice={codice}
-            riservata={false}
-            messaggioIniziale={`Vorrei un preventivo per ${a.nome_prodotto} di ${a.compagnia}.`}
-            slugVenditore={venditore.slug}
-          />
-        </section>
-
-        <section className="border-bordo flex items-center gap-4 border-t py-6">
-          <div className="flex flex-col gap-1">
-            <p className="font-semibold">{venditore.nome}</p>
-            {venditore.telefono && (
-              <a href={`tel:${venditore.telefono}`} className="text-sm font-semibold underline">
-                {venditore.telefono}
-              </a>
-            )}
-            {/* Obbligatorio per chi intermedia polizze (§7.4). */}
-            {venditore.rui && (
-              <p className="text-testo-tenue text-xs">
-                Iscrizione RUI n. {venditore.rui}
-              </p>
-            )}
+        <Sezione titolo="Chiedi il preventivo" icona={MessageCircle} id="contatto">
+          <div className="bg-superficie rounded-3xl p-5 shadow-md ring-1 shadow-m2/10 ring-slate-900/5">
+            <FormContatto
+              codice={codice}
+              riservata={false}
+              messaggioIniziale={`Vorrei un preventivo per ${a.nome_prodotto} di ${a.compagnia}.`}
+              slugVenditore={venditore.slug}
+            />
           </div>
-          <div
-            className="ml-auto size-24 shrink-0"
-            aria-label="Codice QR di questa pagina"
-            dangerouslySetInnerHTML={{ __html: qr }}
-          />
-        </section>
+        </Sezione>
 
-        <footer className="border-bordo border-t py-6">
-          <a
-            href={`/${venditore.slug}/privacy`}
-            className="text-testo-tenue text-sm underline"
-          >
-            Come trattiamo i tuoi dati
-          </a>
-        </footer>
+        <SchedaVenditore venditore={venditore} qr={qr}>
+          {/* Obbligatorio per chi intermedia polizze (§7.4). */}
+          {venditore.rui && (
+            <p className="mt-1 text-xs font-semibold opacity-90">Iscrizione RUI n. {venditore.rui}</p>
+          )}
+        </SchedaVenditore>
+        <Piede slug={venditore.slug} />
       </main>
 
-      {venditore.whatsapp && (
-        <div className="border-bordo bg-sfondo/95 fixed inset-x-0 bottom-0 border-t p-4 backdrop-blur">
-          <a
-            href={linkWhatsApp(venditore.whatsapp, messaggio)}
-            className="bg-azione text-su-azione mx-auto flex min-h-12 max-w-2xl items-center justify-center rounded-xl px-6 font-semibold transition-opacity hover:opacity-90"
-          >
-            Scrivi su WhatsApp
-          </a>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Riquadro({ etichetta, valore }: { etichetta: string; valore: string }) {
-  return (
-    <div className="bg-superficie border-bordo rounded-xl border p-4">
-      <p className="text-testo-tenue text-xs tracking-wide uppercase">{etichetta}</p>
-      <p className="mt-1 text-lg font-semibold">{valore}</p>
-    </div>
-  );
-}
-
-function SegnoSi() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      aria-hidden
-      className="mt-0.5 size-5 shrink-0 fill-none stroke-current stroke-2 text-emerald-600"
-    >
-      <path d="M4 10.5l4 4 8-9" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function SegnoNo() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      aria-hidden
-      className="text-testo-tenue mt-0.5 size-5 shrink-0 fill-none stroke-current stroke-2"
-    >
-      <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
-    </svg>
+      <BarraWhatsApp numero={venditore.whatsapp} messaggio={messaggio} />
+    </Pagina>
   );
 }
 
 function NonDisponibile({ dati }: { dati: DatiPagina }) {
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-4 text-center">
-      <h1 className="font-display text-2xl">Polizza non più disponibile</h1>
-      <p className="text-testo-tenue">
-        {dati.offerta.titolo} non è più proposta da {dati.venditore.nome}.
-      </p>
-      <a href={`${DOMINIO}/${dati.venditore.slug}`} className="font-semibold underline">
-        Vedi le altre offerte
-      </a>
-    </main>
+    <PaginaNonDisponibile
+      modulo="assicurazioni"
+      titolo="Polizza non più disponibile"
+      testo={`${dati.offerta.titolo} non è più proposta da ${dati.venditore.nome}.`}
+      vetrina={`${DOMINIO}/${dati.venditore.slug}`}
+    />
   );
 }

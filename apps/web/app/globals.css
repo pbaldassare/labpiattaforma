@@ -27,6 +27,13 @@
   /* Lo stesso ambra dell'app: "guarda qui", distinto dal rosso dell'azione. */
   --accento: #b45309;
   --accento-tenue: #fef3c7;
+  /* Il colore del modulo: lo sovrascrive la classe tema-<modulo> sulla
+     pagina. Qui il ripiego neutro, per le pagine che non ne hanno uno. */
+  --m1: #475569;
+  --m2: #1e293b;
+  --m-testo: #1e293b;
+  --m-tenue: #e9edf1;
+  --m-su: #ffffff;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -94,6 +101,11 @@
   --color-bordo: var(--bordo);
   --color-accento: var(--accento);
   --color-accento-tenue: var(--accento-tenue);
+  --color-m1: var(--m1);
+  --color-m2: var(--m2);
+  --color-m-testo: var(--m-testo);
+  --color-m-tenue: var(--m-tenue);
+  --color-m-su: var(--m-su);
   --font-sans: var(--font-sans);
   --font-display: var(--font-titoli);
   --font-heading: var(--font-sans);
@@ -141,6 +153,132 @@ body {
   background: var(--sfondo);
   color: var(--testo);
   font-family: var(--font-corpo), system-ui, -apple-system, sans-serif;
+}
+
+/*
+  Un colore per modulo, gli stessi dell'app venditore: chi ha usato l'app
+  riconosce il modulo anche dalla pagina che manda al cliente.
+  m1/m2 sono la sfumatura delle superfici piene, m-testo la versione scura
+  che regge come testo su fondo chiaro, m-tenue il fondo leggero.
+*/
+.tema-vendita {
+  --m1: #a3e635;
+  --m2: #65a30d;
+  --m-testo: #3f6212;
+  --m-tenue: #f0fbd0;
+  --m-su: #14161a;
+}
+.tema-noleggio_breve {
+  --m1: #fb923c;
+  --m2: #ea580c;
+  --m-testo: #c2410c;
+  --m-tenue: #ffedd5;
+  --m-su: #ffffff;
+}
+.tema-noleggio_lungo {
+  --m1: #a78bfa;
+  --m2: #7c3aed;
+  --m-testo: #6d28d9;
+  --m-tenue: #ede9fe;
+  --m-su: #ffffff;
+}
+.tema-assicurazioni {
+  --m1: #38bdf8;
+  --m2: #0284c7;
+  --m-testo: #0369a1;
+  --m-tenue: #e0f2fe;
+  --m-su: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  .tema-vendita { --m-testo: #bef264; --m-tenue: #26330f; }
+  .tema-noleggio_breve { --m-testo: #fdba74; --m-tenue: #3b200f; }
+  .tema-noleggio_lungo { --m-testo: #c4b5fd; --m-tenue: #2a1f4a; }
+  .tema-assicurazioni { --m-testo: #7dd3fc; --m-tenue: #0c2a3d; }
+}
+
+.sfumatura-modulo {
+  background-image: linear-gradient(135deg, var(--m1), var(--m2));
+}
+/* Il prezzo sfumato: dalla tinta piena alla sua versione scura, perche' il
+   lime chiaro su bianco come testo non si leggerebbe. */
+.testo-sfumato {
+  background-image: linear-gradient(120deg, var(--m2), var(--m-testo));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── Movimento ─────────────────────────────────────────────────────────── */
+
+@keyframes entra {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+.entra {
+  animation: entra 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: var(--ritardo, 0ms);
+}
+
+/* Le sezioni sotto la piega compaiono mentre si scorre. Dove il browser non
+   sa legare l'animazione allo scorrimento restano semplicemente visibili. */
+@supports (animation-timeline: view()) {
+  .rivela {
+    animation: entra linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
+  }
+}
+
+@keyframes zoom-lento {
+  from { transform: scale(1.12); }
+  to { transform: scale(1); }
+}
+.zoom-lento {
+  animation: zoom-lento 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes galleggia {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(18px, -22px, 0) scale(1.1); }
+}
+.bolla {
+  animation: galleggia 10s ease-in-out infinite;
+  animation-delay: var(--ritardo, 0ms);
+}
+
+@keyframes sale {
+  from { transform: translateY(130%); }
+  to { transform: none; }
+}
+.sale {
+  animation: sale 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.6s both;
+}
+
+/* Il riflesso che attraversa il pulsante: dice "toccami" senza lampeggiare. */
+@keyframes riflesso {
+  0% { transform: translateX(-160%) skewX(-20deg); }
+  55%, 100% { transform: translateX(420%) skewX(-20deg); }
+}
+.riflesso {
+  position: relative;
+  overflow: hidden;
+}
+.riflesso::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.45), transparent);
+  animation: riflesso 3.4s ease-in-out 1.4s infinite;
+  pointer-events: none;
+}
+
+@keyframes alone {
+  0% { box-shadow: 0 0 0 0 rgb(37 211 102 / 0.5); }
+  100% { box-shadow: 0 0 0 16px rgb(37 211 102 / 0); }
+}
+.alone {
+  animation: alone 2.2s ease-out 1.2s infinite;
 }
 
 /* Le pagine prodotto avranno animazioni di comparsa: chi le ha disattivate
