@@ -16,5 +16,16 @@
   // Le foto degli annunci passano da next/image: senza questo collegamento
   // Cloudflare non saprebbe ridimensionarle.
   "images": { "binding": "IMAGES" },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // Solo valori pubblici: la chiave pubblicabile e' la stessa che l'app porta
+  // dentro di se'. La chiave di servizio non va mai qui.
+  // Le NEXT_PUBLIC_ servono anche mentre si costruisce: le stesse stanno nel
+  // workflow .github/workflows/landing.yml.
+  "vars": {
+    "SUPABASE_URL": "https://gdeyyyirgriwknkcqcwl.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_XTHb1Z8mE4q1zvDToFdpXQ_ikA24GZJ",
+    "NEXT_PUBLIC_SUPABASE_URL": "https://gdeyyyirgriwknkcqcwl.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_XTHb1Z8mE4q1zvDToFdpXQ_ikA24GZJ",
+    "DOMINIO_LANDING": "https://labpiattaforma-landing.paolo-baldassare.workers.dev"
+  }
 }

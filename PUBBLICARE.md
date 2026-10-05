@@ -38,24 +38,24 @@ Dal pannello: **Workers & Pages → Create**.
 
 ### Progetto A — le landing (Worker)
 
-**Import a repository** → `labpiattaforma`, poi:
+È online su **https://labpiattaforma-landing.paolo-baldassare.workers.dev**.
 
-- **Project name**: `labpiattaforma-landing` — deve coincidere con `name` in
-  `apps/web/wrangler.jsonc`, altrimenti la pubblicazione si rifiuta.
-- **Root directory**: `/` (vuoto)
-- **Build command**: `npm run build:cf --workspace @lab/web`
-- **Deploy command**: `npm run deploy:cf --workspace @lab/web`
-- **Production branch**: `main`
+Non è collegato a Git dal pannello: lo pubblica il workflow
+`.github/workflows/landing.yml` (quando c'è) a ogni push su `main` che tocca `apps/web`,
+`packages/shared` o il lockfile. Il workflow usa il secret di GitHub
+`CLOUDFLARE_API_TOKEN` (un token Cloudflare col modello "Edit Cloudflare
+Workers"): se il token viene revocato, va creato un nuovo token e aggiornato il
+secret, altrimenti le landing smettono di aggiornarsi.
 
-Il resto lo dice `apps/web/wrangler.jsonc`. Le foto di `next/image` le
-ridimensiona Cloudflare Images (il collegamento `IMAGES`): nel piano gratuito
-sono 5.000 trasformazioni diverse al mese, poi le foto restano non ottimizzate.
+Le variabili stanno in `apps/web/wrangler.jsonc` (`vars`) e, per la
+costruzione, nel workflow: sono tutte pubbliche. Il resto lo dice
+`wrangler.jsonc`. Le foto di `next/image` le ridimensiona Cloudflare Images
+(il collegamento `IMAGES`): nel piano gratuito sono 5.000 trasformazioni
+diverse al mese, poi le foto restano non ottimizzate.
 
-Per provarlo in locale come girerà su Cloudflare:
-
-```bash
-npm run preview --workspace @lab/web
-```
+Per pubblicarle a mano: `npm run deploy --workspace @lab/web`, con
+`CLOUDFLARE_API_TOKEN` nell'ambiente. Per provarle in locale come girano su
+Cloudflare: `npm run preview --workspace @lab/web`.
 
 ### Progetto B — l'app venditore (Pages)
 
