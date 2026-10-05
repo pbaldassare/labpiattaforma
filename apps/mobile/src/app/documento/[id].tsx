@@ -1,54 +1,97 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import {
+  ETICHETTA_ALIMENTAZIONE,
+  ETICHETTA_CAMBIO,
   ETICHETTA_FORMULA,
   ETICHETTA_MODULO,
+  ETICHETTA_RISCHIO,
+  ETICHETTA_SERVIZIO,
+  NON_COMPRESO,
+  fn,
+  formattaDurataPolizza,
   formattaEuro,
-  tab,
+  formattaGiorno,
+  formattaNumero,
+  type Alimentazione,
+  type Cambio,
+  type DatiAssicurazione,
+  type DatiNoleggioBreve,
+  type DatiNoleggioLungo,
   type FormulaAcquisto,
   type Modulo,
   type TipoCliente,
 } from '@lab/shared';
 
+import { BloccoIcona } from '@/components/base';
 import { Bottone } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
+import { urlFoto } from '@/lib/foto';
 import { supabase } from '@/lib/supabase';
-import { colori, raggio, spazi, stiliTema, testi } from '@/lib/tema';
+import { colori, gradienti, raggio, spazi, stiliTema, suGradiente, testi } from '@/lib/tema';
 
-interface RigaPreventivo {
-  numero: number;
-  pratica_id: string;
-  formula: FormulaAcquisto | null;
-  tipo_cliente: TipoCliente;
-  prezzo_cent: number;
-  firma_tracciato: string | null;
-  firmato_il: string | null;
-  created_at: string;
-  doc_identita: boolean;
-  doc_reddito: boolean;
-  doc_passaggio: boolean;
-}
-
-interface RigaPratica {
-  cliente_nome: string;
-  cliente_telefono: string | null;
-  cliente_email: string | null;
-  offerta_titolo: string | null;
+interface DatiPreventivo {
+  preventivo: {
+    numero: number;
+    formula: FormulaAcquisto | null;
+    tipo_cliente: TipoCliente;
+    prezzo_cent: number;
+    firma_tracciato: string | null;
+    firmato_il: string | null;
+    creato_il: string;
+    doc_identita: boolean;
+    doc_reddito: boolean;
+    doc_passaggio: boolean;
+  };
   modulo: Modulo;
+  cliente: { nome: string; telefono: string | null; email: string | null } | null;
+  venditore: {
+    nome: string;
+    ragione_sociale: string | null;
+    piva_cf: string | null;
+    telefono: string | null;
+    email: string | null;
+    rui: string | null;
+  } | null;
+  titolo: string | null;
+  offerta: {
+    vendita: {
+      marca: string;
+      modello: string;
+      chilometri: number | null;
+      anno: number | null;
+      alimentazione: Alimentazione | null;
+      cambio: Cambio | null;
+    } | null;
+    breve: DatiNoleggioBreve | null;
+    lungo: DatiNoleggioLungo | null;
+    assicurazione: DatiAssicurazione | null;
+    foto: string[];
+  } | null;
+  prenotazione: {
+    dal: string;
+    al: string;
+    giorni: number;
+    tariffa_cent: number;
+    totale_cent: number;
+    deposito_cent: number;
+  } | null;
 }
 
-interface RigaVenditore {
-  nome_visualizzato: string;
-  ragione_sociale: string | null;
-  piva_cf: string | null;
-  telefono: string | null;
-  email_pubblica: string | null;
-  rui_numero: string | null;
-}
+/**
+ * I colori del documento, sempre quelli del tema chiaro: e' un foglio da
+ * mostrare e stampare, non una schermata dell'app.
+ */
+const TINTA: Record<Modulo, { forte: string; tenue: string }> = {
+  vendita: { forte: '#4D6B00', tenue: '#F0FBD0' },
+  noleggio_breve: { forte: '#C2410C', tenue: '#FFEDD5' },
+  noleggio_lungo: { forte: '#6D28D9', tenue: '#EDE9FE' },
+  assicurazioni: { forte: '#0369A1', tenue: '#E0F2FE' },
+};
 
-/** Cosa rappresenta l'importo, secondo il modulo. */
 const VOCE_IMPORTO: Record<Modulo, string> = {
   vendita: 'Prezzo',
   noleggio_breve: 'Totale noleggio',
@@ -56,14 +99,13 @@ const VOCE_IMPORTO: Record<Modulo, string> = {
   assicurazioni: 'Premio',
 };
 
-function data(iso: string): string {
+function dataLunga(iso: string): string {
   return new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 /**
  * La firma salvata e' un tracciato in pixel del riquadro in cui e' stata
- * fatta, che cambia da telefono a telefono: per ridisegnarla si calcola
- * l'ingombro dai punti stessi e lo si usa come viewBox.
+ * fatta, che cambia da telefono a telefono: l'ingombro si ricava dai punti.
  */
 function viewBoxFirma(tracciato: string): string {
   const numeri = (tracciato.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
@@ -71,51 +113,90 @@ function viewBoxFirma(tracciato: string): string {
   const ys = numeri.filter((_, i) => i % 2 === 1);
   if (xs.length === 0) return '0 0 100 40';
   const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-  const margine = 8;
-  return `${x0 - margine} ${y0 - margine} ${x1 - x0 + margine * 2} ${y1 - y0 + margine * 2}`;
+  return `${x0 - 8} ${y0 - 8} ${x1 - x0 + 16} ${y1 - y0 + 16}`;
+}
+
+type Dato = { etichetta: string; valore: string };
+
+/** I dati che contano per quel prodotto, nell'ordine in cui il cliente li cerca. */
+function datiDelProdotto(d: DatiPreventivo): Dato[] {
+  const o = d.offerta;
+  const lista: (Dato | null)[] = [];
+  if (d.modulo === 'vendita' && o?.vendita) {
+    const v = o.vendita;
+    lista.push(
+      v.chilometri != null ? { etichetta: 'Chilometri', valore: `${formattaNumero(v.chilometri)} km` } : null,
+      v.anno != null ? { etichetta: 'Anno', valore: String(v.anno) } : null,
+      v.alimentazione ? { etichetta: 'Alimentazione', valore: ETICHETTA_ALIMENTAZIONE[v.alimentazione] } : null,
+      v.cambio ? { etichetta: 'Cambio', valore: ETICHETTA_CAMBIO[v.cambio] } : null
+    );
+  }
+  if (d.modulo === 'noleggio_breve' && o?.breve) {
+    const b = o.breve;
+    const giorni = d.prenotazione?.giorni ?? null;
+    lista.push(
+      b.km_inclusi_giorno != null
+        ? {
+            etichetta: 'Km inclusi',
+            valore: giorni
+              ? `${formattaNumero(b.km_inclusi_giorno * giorni)} km (${formattaNumero(b.km_inclusi_giorno)}/giorno)`
+              : `${formattaNumero(b.km_inclusi_giorno)} al giorno`,
+          }
+        : null,
+      b.costo_km_extra_cent != null
+        ? { etichetta: 'Km in più', valore: `${(b.costo_km_extra_cent / 100).toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })} al km` }
+        : null,
+      (d.prenotazione?.deposito_cent ?? b.deposito_cent ?? 0) > 0
+        ? { etichetta: 'Deposito', valore: formattaEuro(d.prenotazione?.deposito_cent ?? b.deposito_cent!) }
+        : null,
+      b.eta_minima != null ? { etichetta: 'Età minima', valore: `${b.eta_minima} anni` } : null,
+      b.patente_anni != null ? { etichetta: 'Patente da', valore: `${b.patente_anni} anni` } : null
+    );
+  }
+  if (d.modulo === 'noleggio_lungo' && o?.lungo) {
+    const l = o.lungo;
+    lista.push(
+      l.anticipo_cent != null ? { etichetta: 'Anticipo', valore: formattaEuro(l.anticipo_cent) } : null,
+      l.tempi_consegna ? { etichetta: 'Consegna', valore: l.tempi_consegna } : null,
+      l.riscatto_previsto
+        ? {
+            etichetta: 'Riscatto finale',
+            valore: l.riscatto_valore_cent != null ? formattaEuro(l.riscatto_valore_cent) : 'Previsto',
+          }
+        : null
+    );
+  }
+  if (d.modulo === 'assicurazioni' && o?.assicurazione) {
+    const a = o.assicurazione;
+    const durata = formattaDurataPolizza(a.durata_mesi);
+    lista.push(
+      { etichetta: 'Rischio', valore: ETICHETTA_RISCHIO[a.tipo_rischio] },
+      durata ? { etichetta: 'Durata', valore: durata } : null,
+      a.massimale_cent != null ? { etichetta: 'Massimale', valore: formattaEuro(a.massimale_cent) } : null,
+      a.franchigia_cent != null ? { etichetta: 'Franchigia', valore: formattaEuro(a.franchigia_cent) } : null
+    );
+  }
+  return lista.filter(Boolean) as Dato[];
 }
 
 /**
- * Il preventivo come documento: si apre dalla pratica, si manda al cliente su
- * WhatsApp o si stampa (dal browser anche in PDF).
+ * Il preventivo come documento: colori del modulo, foto, i dettagli che
+ * contano per quel prodotto (le date del noleggio, cosa comprende il canone,
+ * cosa copre la polizza) e da qui si manda o si stampa.
  */
 export default function DocumentoPreventivo() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [pv, setPv] = useState<RigaPreventivo | null>(null);
-  const [pratica, setPratica] = useState<RigaPratica | null>(null);
-  const [venditore, setVenditore] = useState<RigaVenditore | null>(null);
+  const [d, setD] = useState<DatiPreventivo | null>(null);
   const [caricato, setCaricato] = useState(false);
+  const [errore, setErrore] = useState<string | null>(null);
 
   useEffect(() => {
     let vivo = true;
     void (async () => {
-      const [p, v] = await Promise.all([
-        supabase
-          .from(tab('preventivo'))
-          .select(
-            'numero, pratica_id, formula, tipo_cliente, prezzo_cent, firma_tracciato, firmato_il, created_at, doc_identita, doc_reddito, doc_passaggio'
-          )
-          .eq('id', id)
-          .maybeSingle(),
-        supabase
-          .from(tab('venditore'))
-          .select('nome_visualizzato, ragione_sociale, piva_cf, telefono, email_pubblica, rui_numero')
-          .maybeSingle(),
-      ]);
-      const riga = (p.data as RigaPreventivo | null) ?? null;
-      let prat: RigaPratica | null = null;
-      if (riga) {
-        const r = await supabase
-          .from(tab('pratica_elenco'))
-          .select('cliente_nome, cliente_telefono, cliente_email, offerta_titolo, modulo')
-          .eq('id', riga.pratica_id)
-          .maybeSingle();
-        prat = (r.data as RigaPratica | null) ?? null;
-      }
+      const { data, error } = await supabase.rpc(fn('dati_preventivo'), { p_preventivo_id: id });
       if (!vivo) return;
-      setPv(riga);
-      setPratica(prat);
-      setVenditore((v.data as RigaVenditore | null) ?? null);
+      if (error) setErrore(error.message);
+      setD((data as DatiPreventivo | null) ?? null);
       setCaricato(true);
     })();
     return () => {
@@ -131,127 +212,260 @@ export default function DocumentoPreventivo() {
     );
   }
 
-  if (!pv || !pratica) {
+  if (!d || !d.cliente) {
     return (
       <View style={stili.centrato}>
-        <Text style={stili.piccolo}>Preventivo non trovato.</Text>
+        <Text style={stili.piccolo}>{errore ?? 'Preventivo non trovato.'}</Text>
       </View>
     );
   }
 
-  const voce = VOCE_IMPORTO[pratica.modulo];
-  const importo = `${formattaEuro(pv.prezzo_cent)}${pratica.modulo === 'noleggio_lungo' ? ' al mese' : ''}`;
-
-  const testoWhatsApp = [
-    `Ciao ${pratica.cliente_nome.split(' ')[0]}, ecco il preventivo n. ${pv.numero} del ${data(pv.created_at)}.`,
-    pratica.offerta_titolo ? `${ETICHETTA_MODULO[pratica.modulo]}: ${pratica.offerta_titolo}` : null,
-    `${voce}: ${importo}`,
-    pv.formula ? `Pagamento: ${ETICHETTA_FORMULA[pv.formula]}` : null,
-    venditore ? `\n${venditore.nome_visualizzato}${venditore.telefono ? ` · ${venditore.telefono}` : ''}` : null,
-  ]
-    .filter(Boolean)
-    .join('\n');
-
-  const numeroCliente = (pratica.cliente_telefono ?? '').replace(/[^\d]/g, '');
-
-  function inviaWhatsApp() {
-    const base = numeroCliente ? `https://wa.me/${numeroCliente}` : 'https://wa.me/';
-    void Linking.openURL(`${base}?text=${encodeURIComponent(testoWhatsApp)}`);
-  }
-
-  function inviaEmail() {
-    const oggetto = `Preventivo n. ${pv!.numero}`;
-    void Linking.openURL(
-      `mailto:${pratica!.cliente_email ?? ''}?subject=${encodeURIComponent(oggetto)}&body=${encodeURIComponent(testoWhatsApp)}`
-    );
-  }
-
+  const pv = d.preventivo;
+  const tinta = TINTA[d.modulo];
+  const foto = d.offerta?.foto?.[0];
+  const importo = `${formattaEuro(pv.prezzo_cent)}${d.modulo === 'noleggio_lungo' ? ' al mese' : ''}`;
+  const dati = datiDelProdotto(d);
+  const sottotitolo =
+    d.modulo === 'noleggio_lungo'
+      ? d.offerta?.lungo?.allestimento
+      : d.modulo === 'assicurazioni'
+        ? d.offerta?.assicurazione?.compagnia
+        : null;
+  const periodo = d.prenotazione;
+  const servizi = d.modulo === 'noleggio_lungo' ? (d.offerta?.lungo?.servizi ?? []) : [];
+  const garanzie = d.modulo === 'assicurazioni' ? (d.offerta?.assicurazione?.garanzie ?? []) : [];
+  const comprese = garanzie.filter((g) => g.inclusa);
+  const escluse = garanzie.filter((g) => !g.inclusa);
   const documenti = [
     pv.doc_identita && 'Carta d’identità e codice fiscale',
     pv.doc_reddito && 'Documento di reddito',
     pv.doc_passaggio && 'Passaggio di proprietà',
   ].filter(Boolean) as string[];
 
+  const testoMessaggio = [
+    `Ciao ${d.cliente.nome.split(' ')[0]}, ecco il preventivo n. ${pv.numero} del ${dataLunga(pv.creato_il)}.`,
+    d.titolo ? `${ETICHETTA_MODULO[d.modulo]}: ${d.titolo}` : null,
+    periodo ? `Dal ${formattaGiorno(periodo.dal)} al ${formattaGiorno(periodo.al)} (${periodo.giorni} ${periodo.giorni === 1 ? 'giorno' : 'giorni'})` : null,
+    servizi.length ? `Compreso: ${servizi.map((s) => ETICHETTA_SERVIZIO[s]).join(', ')}` : null,
+    comprese.length ? `Copre: ${comprese.map((g) => g.nome).join(', ')}` : null,
+    `${VOCE_IMPORTO[d.modulo]}: ${importo}`,
+    pv.formula ? `Pagamento: ${ETICHETTA_FORMULA[pv.formula]}` : null,
+    d.venditore ? `\n${d.venditore.nome}${d.venditore.telefono ? ` · ${d.venditore.telefono}` : ''}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const numeroCliente = (d.cliente.telefono ?? '').replace(/[^\d]/g, '');
+
   return (
     <ScrollView style={stili.contenitore} contentContainerStyle={stili.contenuto}>
       <Stack.Screen options={{ title: `Preventivo n. ${pv.numero}` }} />
 
-      {/* Il foglio: chiaro anche col tema scuro, perche' e' un documento da
-          mostrare e stampare, non una schermata dell'app. */}
       <View style={stili.foglio}>
-        <View style={stili.intestazione}>
-          <View style={stili.flex}>
-            <Text style={stili.venditore}>{venditore?.nome_visualizzato ?? ''}</Text>
-            {venditore?.ragione_sociale ? <Text style={stili.datoVenditore}>{venditore.ragione_sociale}</Text> : null}
-            {venditore?.piva_cf ? <Text style={stili.datoVenditore}>P. IVA / CF {venditore.piva_cf}</Text> : null}
-            {venditore?.telefono ? <Text style={stili.datoVenditore}>{venditore.telefono}</Text> : null}
-            {venditore?.email_pubblica ? <Text style={stili.datoVenditore}>{venditore.email_pubblica}</Text> : null}
-            {pratica.modulo === 'assicurazioni' && venditore?.rui_numero ? (
-              <Text style={stili.datoVenditore}>Iscrizione RUI n. {venditore.rui_numero}</Text>
-            ) : null}
+        {/* La testata nel colore del modulo: si capisce di cosa si parla
+            prima di leggere una parola. */}
+        <LinearGradient
+          colors={gradienti[d.modulo] as unknown as [string, string]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={stili.testata}
+        >
+          <View style={stili.testataRiga}>
+            <View style={stili.flex}>
+              <Text style={[stili.testataModulo, { color: suGradiente[d.modulo] }]}>
+                {ETICHETTA_MODULO[d.modulo].toUpperCase()}
+              </Text>
+              <Text style={[stili.testataTitolo, { color: suGradiente[d.modulo] }]}>Preventivo n. {pv.numero}</Text>
+              <Text style={[stili.testataData, { color: suGradiente[d.modulo] }]}>{dataLunga(pv.creato_il)}</Text>
+            </View>
+            <View style={stili.testataIcona}>
+              <BloccoIcona
+                modulo={d.modulo}
+                gradiente={['#FFFFFF', '#FFFFFF']}
+                suGradiente={tinta.forte}
+                dimensione={52}
+              />
+            </View>
           </View>
-          <View style={stili.numeroBox}>
-            <Text style={stili.etichetta}>PREVENTIVO</Text>
-            <Text style={stili.numero}>n. {pv.numero}</Text>
-            <Text style={stili.datoVenditore}>{data(pv.created_at)}</Text>
-          </View>
-        </View>
+        </LinearGradient>
 
-        <View style={stili.blocco}>
-          <Text style={stili.etichetta}>CLIENTE</Text>
-          <Text style={stili.valore}>{pratica.cliente_nome}</Text>
-          <Text style={stili.datoVenditore}>
-            {pv.tipo_cliente === 'rivenditore' ? 'Rivenditore' : 'Privato'}
-            {pratica.cliente_telefono ? ` · ${pratica.cliente_telefono}` : ''}
-            {pratica.cliente_email ? ` · ${pratica.cliente_email}` : ''}
+        <View style={stili.corpo}>
+          {foto && <Image source={{ uri: urlFoto(foto) }} style={stili.foto} resizeMode="cover" />}
+
+          <View style={stili.blocco}>
+            <Text style={stili.prodotto}>{d.titolo ?? 'Offerta'}</Text>
+            {sottotitolo ? <Text style={stili.dato}>{sottotitolo}</Text> : null}
+          </View>
+
+          {/* Il periodo del noleggio, in grande: e' la prima cosa che il
+              cliente controlla. */}
+          {periodo && (
+            <View style={[stili.periodo, { backgroundColor: tinta.tenue }]}>
+              <View style={stili.flex}>
+                <Text style={[stili.etichetta, { color: tinta.forte }]}>RITIRO</Text>
+                <Text style={stili.periodoGiorno}>{formattaGiorno(periodo.dal)}</Text>
+              </View>
+              <Text style={[stili.freccia, { color: tinta.forte }]}>→</Text>
+              <View style={stili.flex}>
+                <Text style={[stili.etichetta, { color: tinta.forte }]}>RICONSEGNA</Text>
+                <Text style={stili.periodoGiorno}>{formattaGiorno(periodo.al)}</Text>
+              </View>
+              <View style={[stili.giorni, { backgroundColor: tinta.forte }]}>
+                <Text style={stili.giorniNumero}>{periodo.giorni}</Text>
+                <Text style={stili.giorniParola}>{periodo.giorni === 1 ? 'giorno' : 'giorni'}</Text>
+              </View>
+            </View>
+          )}
+
+          {dati.length > 0 && (
+            <View style={stili.griglia}>
+              {dati.map((x) => (
+                <View key={x.etichetta} style={[stili.cella, { backgroundColor: tinta.tenue }]}>
+                  <Text style={[stili.etichetta, { color: tinta.forte }]}>{x.etichetta.toUpperCase()}</Text>
+                  <Text style={stili.cellaValore}>{x.valore}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {servizi.length > 0 && (
+            <View style={stili.blocco}>
+              <Text style={[stili.etichetta, { color: tinta.forte }]}>COMPRESO NEL CANONE</Text>
+              <View style={stili.chips}>
+                {servizi.map((s) => (
+                  <Text key={s} style={[stili.chip, { backgroundColor: tinta.tenue, color: tinta.forte }]}>
+                    ✓ {ETICHETTA_SERVIZIO[s]}
+                  </Text>
+                ))}
+              </View>
+              <Text style={stili.dato}>Non compreso: {NON_COMPRESO.join(', ').toLowerCase()}.</Text>
+            </View>
+          )}
+
+          {comprese.length > 0 && (
+            <View style={stili.blocco}>
+              <Text style={[stili.etichetta, { color: tinta.forte }]}>COSA COPRE</Text>
+              {comprese.map((g) => (
+                <Text key={g.nome} style={stili.voceSi}>
+                  ✓ {g.nome}
+                  {g.dettaglio ? <Text style={stili.dato}> · {g.dettaglio}</Text> : null}
+                </Text>
+              ))}
+            </View>
+          )}
+          {escluse.length > 0 && (
+            <View style={stili.blocco}>
+              <Text style={stili.etichetta}>COSA NON COPRE</Text>
+              {escluse.map((g) => (
+                <Text key={g.nome} style={stili.voceNo}>
+                  ✕ {g.nome}
+                </Text>
+              ))}
+            </View>
+          )}
+
+          <View style={stili.separatore} />
+
+          <View style={stili.dueColonne}>
+            <View style={stili.flex}>
+              <Text style={stili.etichetta}>CLIENTE</Text>
+              <Text style={stili.valore}>{d.cliente.nome}</Text>
+              <Text style={stili.dato}>{pv.tipo_cliente === 'rivenditore' ? 'Rivenditore' : 'Privato'}</Text>
+              {d.cliente.telefono ? <Text style={stili.dato}>{d.cliente.telefono}</Text> : null}
+              {d.cliente.email ? <Text style={stili.dato}>{d.cliente.email}</Text> : null}
+            </View>
+            <View style={stili.flex}>
+              <Text style={stili.etichetta}>PROPOSTO DA</Text>
+              <Text style={stili.valore}>{d.venditore?.nome ?? ''}</Text>
+              {d.venditore?.ragione_sociale ? <Text style={stili.dato}>{d.venditore.ragione_sociale}</Text> : null}
+              {d.venditore?.piva_cf ? <Text style={stili.dato}>P. IVA / CF {d.venditore.piva_cf}</Text> : null}
+              {d.venditore?.telefono ? <Text style={stili.dato}>{d.venditore.telefono}</Text> : null}
+              {d.modulo === 'assicurazioni' && d.venditore?.rui ? (
+                <Text style={stili.dato}>RUI n. {d.venditore.rui}</Text>
+              ) : null}
+            </View>
+          </View>
+
+          {/* Il totale nel colore del modulo: e' il numero del documento. */}
+          <LinearGradient
+            colors={gradienti[d.modulo] as unknown as [string, string]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={stili.totale}
+          >
+            <View style={stili.flex}>
+              <Text style={[stili.totaleVoce, { color: suGradiente[d.modulo] }]}>{VOCE_IMPORTO[d.modulo]}</Text>
+              {periodo && periodo.giorni > 0 && (
+                <Text style={[stili.totaleDettaglio, { color: suGradiente[d.modulo] }]}>
+                  {periodo.giorni} {periodo.giorni === 1 ? 'giorno' : 'giorni'}
+                  {/* Il conto solo se torna: se il venditore ha fatto un prezzo
+                      diverso, "1 giorno × 50 €" accanto a 45 € confonde. */}
+                  {periodo.totale_cent === pv.prezzo_cent ? ` × ${formattaEuro(periodo.tariffa_cent)}` : ''}
+                </Text>
+              )}
+              {pv.formula && (
+                <Text style={[stili.totaleDettaglio, { color: suGradiente[d.modulo] }]}>
+                  {ETICHETTA_FORMULA[pv.formula]}
+                </Text>
+              )}
+            </View>
+            <Text style={[stili.totaleCifra, { color: suGradiente[d.modulo] }]}>{importo}</Text>
+          </LinearGradient>
+
+          {documenti.length > 0 && (
+            <View style={stili.blocco}>
+              <Text style={stili.etichetta}>DOCUMENTI GIÀ RACCOLTI</Text>
+              {documenti.map((x) => (
+                <Text key={x} style={stili.dato}>
+                  ✓ {x}
+                </Text>
+              ))}
+            </View>
+          )}
+
+          <View style={stili.blocco}>
+            <Text style={stili.etichetta}>FIRMA DEL CLIENTE</Text>
+            {pv.firma_tracciato ? (
+              <>
+                <Svg width="100%" height={80} viewBox={viewBoxFirma(pv.firma_tracciato)} preserveAspectRatio="xMinYMid meet">
+                  <Path d={pv.firma_tracciato} stroke="#111827" strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+                {pv.firmato_il && <Text style={stili.dato}>Firmato il {dataLunga(pv.firmato_il)}</Text>}
+              </>
+            ) : (
+              <View style={stili.lineaFirma} />
+            )}
+          </View>
+
+          <Text style={stili.notaPiede}>
+            Il presente preventivo non costituisce contratto. Gli importi possono variare in base alla
+            disponibilità e ai dati definitivi.
           </Text>
         </View>
-
-        <View style={stili.blocco}>
-          <Text style={stili.etichetta}>{ETICHETTA_MODULO[pratica.modulo].toUpperCase()}</Text>
-          <Text style={stili.valore}>{pratica.offerta_titolo ?? 'Offerta rimossa'}</Text>
-          {pv.formula && <Text style={stili.datoVenditore}>Pagamento: {ETICHETTA_FORMULA[pv.formula]}</Text>}
-        </View>
-
-        <View style={stili.totale}>
-          <Text style={stili.totaleVoce}>{voce}</Text>
-          <Text style={stili.totaleCifra}>{importo}</Text>
-        </View>
-
-        {documenti.length > 0 && (
-          <View style={stili.blocco}>
-            <Text style={stili.etichetta}>DOCUMENTI GIÀ RACCOLTI</Text>
-            {documenti.map((d) => (
-              <Text key={d} style={stili.datoVenditore}>
-                ✓ {d}
-              </Text>
-            ))}
-          </View>
-        )}
-
-        <View style={stili.blocco}>
-          <Text style={stili.etichetta}>FIRMA DEL CLIENTE</Text>
-          {pv.firma_tracciato ? (
-            <>
-              <Svg width="100%" height={90} viewBox={viewBoxFirma(pv.firma_tracciato)} preserveAspectRatio="xMinYMid meet">
-                <Path d={pv.firma_tracciato} stroke="#111827" strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
-              {pv.firmato_il && <Text style={stili.datoVenditore}>Firmato il {data(pv.firmato_il)}</Text>}
-            </>
-          ) : (
-            <View style={stili.lineaFirma} />
-          )}
-        </View>
-
-        <Text style={stili.notaPiede}>
-          Il presente preventivo non costituisce contratto. Gli importi possono variare in base alla
-          disponibilità e ai dati definitivi.
-        </Text>
       </View>
 
       <View style={stili.azioni}>
-        <Bottone testo={numeroCliente ? 'Manda su WhatsApp' : 'Condividi su WhatsApp'} icona="messaggio" onPress={inviaWhatsApp} />
-        {pratica.cliente_email && <Bottone testo="Manda per email" icona="documento" tipo="tenue" onPress={inviaEmail} />}
+        <Bottone
+          testo={numeroCliente ? 'Manda su WhatsApp' : 'Condividi su WhatsApp'}
+          icona="messaggio"
+          onPress={() =>
+            void Linking.openURL(
+              `https://wa.me/${numeroCliente}?text=${encodeURIComponent(testoMessaggio)}`
+            )
+          }
+        />
+        {d.cliente.email && (
+          <Bottone
+            testo="Manda per email"
+            icona="documento"
+            tipo="tenue"
+            onPress={() =>
+              void Linking.openURL(
+                `mailto:${d.cliente!.email}?subject=${encodeURIComponent(`Preventivo n. ${pv.numero}`)}&body=${encodeURIComponent(testoMessaggio)}`
+              )
+            }
+          />
+        )}
         {Platform.OS === 'web' && (
           <Bottone
             testo="Stampa o salva PDF"
@@ -275,39 +489,72 @@ const stili = stiliTema((c) =>
 
     foglio: {
       backgroundColor: '#FFFFFF',
-      borderRadius: raggio.l,
-      padding: spazi.xl,
-      gap: spazi.l,
+      borderRadius: raggio.xl,
+      overflow: 'hidden',
       shadowColor: '#000',
-      shadowOpacity: 0.12,
-      shadowRadius: 16,
-      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.14,
+      shadowRadius: 18,
+      shadowOffset: { width: 0, height: 8 },
     },
-    intestazione: {
+    testata: { padding: spazi.xl },
+    testataRiga: { flexDirection: 'row', alignItems: 'center', gap: spazi.m },
+    testataModulo: { fontSize: 11, fontWeight: '800', letterSpacing: 1.6, opacity: 0.85 },
+    testataTitolo: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
+    testataData: { fontSize: 13, fontWeight: '600', opacity: 0.85 },
+    testataIcona: { borderRadius: raggio.l, overflow: 'hidden' },
+
+    corpo: { padding: spazi.xl, gap: spazi.l },
+    foto: { width: '100%', aspectRatio: 16 / 9, borderRadius: raggio.l, backgroundColor: '#F3F4F6' },
+    blocco: { gap: 4 },
+    prodotto: { fontSize: 20, fontWeight: '800', color: '#111827' },
+    etichetta: { fontSize: 10, fontWeight: '800', letterSpacing: 1.4, color: '#6B7280' },
+    valore: { fontSize: 15, fontWeight: '700', color: '#111827' },
+    dato: { fontSize: 12, color: '#4B5563', lineHeight: 17 },
+
+    periodo: {
       flexDirection: 'row',
-      gap: spazi.m,
-      paddingBottom: spazi.l,
-      borderBottomWidth: 2,
-      borderBottomColor: '#111827',
+      alignItems: 'center',
+      gap: spazi.s,
+      borderRadius: raggio.l,
+      padding: spazi.m,
     },
-    venditore: { fontSize: 18, fontWeight: '800', color: '#111827' },
-    datoVenditore: { fontSize: 12, color: '#4B5563', lineHeight: 17 },
-    numeroBox: { alignItems: 'flex-end', gap: 2 },
-    numero: { fontSize: 22, fontWeight: '800', color: '#111827' },
-    etichetta: { fontSize: 10, fontWeight: '700', letterSpacing: 1.4, color: '#6B7280' },
-    blocco: { gap: 3 },
-    valore: { fontSize: 16, fontWeight: '700', color: '#111827' },
+    periodoGiorno: { fontSize: 17, fontWeight: '800', color: '#111827' },
+    freccia: { fontSize: 20, fontWeight: '800' },
+    giorni: { alignItems: 'center', borderRadius: raggio.m, paddingVertical: spazi.s, paddingHorizontal: spazi.m },
+    giorniNumero: { fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
+    giorniParola: { fontSize: 10, fontWeight: '700', color: '#FFFFFF' },
+
+    griglia: { flexDirection: 'row', flexWrap: 'wrap', gap: spazi.s },
+    cella: { flexBasis: '48%', flexGrow: 1, borderRadius: raggio.m, padding: spazi.m, gap: 3 },
+    cellaValore: { fontSize: 15, fontWeight: '700', color: '#111827' },
+
+    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spazi.xs, marginVertical: 2 },
+    chip: {
+      fontSize: 13,
+      fontWeight: '700',
+      borderRadius: raggio.tondo,
+      paddingHorizontal: spazi.m,
+      paddingVertical: 6,
+      overflow: 'hidden',
+    },
+    voceSi: { fontSize: 14, fontWeight: '600', color: '#065F46' },
+    voceNo: { fontSize: 14, color: '#9CA3AF' },
+
+    separatore: { height: 1, backgroundColor: '#E5E7EB' },
+    dueColonne: { flexDirection: 'row', gap: spazi.l },
+
     totale: {
       flexDirection: 'row',
-      alignItems: 'baseline',
-      justifyContent: 'space-between',
-      backgroundColor: '#F3F4F6',
-      borderRadius: raggio.m,
+      alignItems: 'center',
+      gap: spazi.m,
+      borderRadius: raggio.l,
       padding: spazi.l,
     },
-    totaleVoce: { fontSize: 14, fontWeight: '600', color: '#374151' },
-    totaleCifra: { fontSize: 26, fontWeight: '800', color: '#111827' },
-    lineaFirma: { height: 48, borderBottomWidth: 1, borderBottomColor: '#9CA3AF' },
+    totaleVoce: { fontSize: 14, fontWeight: '800' },
+    totaleDettaglio: { fontSize: 12, fontWeight: '600', opacity: 0.9 },
+    totaleCifra: { fontSize: 30, fontWeight: '800', letterSpacing: -0.5 },
+
+    lineaFirma: { height: 44, borderBottomWidth: 1, borderBottomColor: '#9CA3AF' },
     notaPiede: { fontSize: 10, color: '#9CA3AF', lineHeight: 14 },
 
     azioni: { gap: spazi.s },
