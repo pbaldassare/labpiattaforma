@@ -1,4 +1,4 @@
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,6 +13,7 @@ import {
   ETICHETTA_STATO_PRATICA,
   fn,
   quandoBreve,
+  tab,
   type Modulo,
   type StatoPratica,
   type TipoCliente,
@@ -21,7 +22,7 @@ import {
 import { Filtri, Iniziali, Pillola, Scheda, Vuoto } from '@/components/base';
 import { Entra } from '@/components/movimento';
 import { Icona } from '@/components/icone';
-import { Input } from '@/components/modulo';
+import { Bottone, Campo, Input, Scelta } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
 import { colori, raggio, spazi, stiliTema, testi, TOCCO_MINIMO } from '@/lib/tema';
@@ -56,14 +57,35 @@ interface Cliente {
  *
  * Lo storico arriva gia' dentro la riga: aprire un cliente non deve costare un
  * viaggio di rete, altrimenti si smette di aprirli.
+ *
+ * I dati si correggono da qui. Chi scrive dal sito lascia il telefono e basta;
+ * l'email, il tipo e le note arrivano dopo, a voce, e il venditore deve poterli
+ * aggiungere senza rifare il cliente da capo.
  */
 export default function Clienti() {
   const router = useRouter();
+  // Da una pratica si arriva qui con il cliente gia' aperto, e se serve gia'
+  // in modifica: un tocco in meno per correggere un numero sbagliato.
+  const { apri, modifica } = useLocalSearchParams<{ apri?: string; modifica?: string }>();
   const [clienti, setClienti] = useState<Cliente[]>([]);
   const [tipo, setTipo] = useState<TipoCliente | null>(null);
   const [cerca, setCerca] = useState('');
-  const [aperto, setAperto] = useState<string | null>(null);
+  const [aperto, setAperto] = useState<string | null>(apri ?? null);
+  const [inModifica, setInModifica] = useState<string | null>(
+    apri && modifica ? apri : null
+  );
   const [caricato, setCaricato] = useState(false);
+
+  // Se la schermata e' gia' aperta e arriva un altro cliente da aprire, lo
+  // stato si allinea durante il disegno, senza passare da un effetto.
+  const [ultimoApri, setUltimoApri] = useState(apri);
+  if (apri !== ultimoApri) {
+    setUltimoApri(apri);
+    if (apri) {
+      setAperto(apri);
+      if (modifica) setInModifica(apri);
+    }
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -149,7 +171,17 @@ export default function Clienti() {
           <SchedaCliente
             cliente={item}
             aperto={aperto === item.id}
+            inModifica={inModifica === item.id}
             onApri={() => setAperto(aperto === item.id ? null : item.id)}
+            onModifica={() => {
+              setAperto(item.id);
+              setInModifica(item.id);
+            }}
+            onAnnulla={() => setInModifica(null)}
+            onSalvato={(nuovo) => {
+              setClienti((prima) => prima.map((c) => (c.id === nuovo.id ? { ...c, ...nuovo } : c)));
+              setInModifica(null);
+            }}
             onPratica={(id) => router.push({ pathname: '/pratiche/[id]', params: { id } })}
           />
           </Entra>
@@ -159,15 +191,26 @@ export default function Clienti() {
   );
 }
 
+/** I campi che il venditore puo' correggere; il resto lo decide il database. */
+type DatiCliente = Pick<Cliente, 'id' | 'nome' | 'telefono' | 'email' | 'tipo' | 'note'>;
+
 function SchedaCliente({
   cliente,
   aperto,
+  inModifica,
   onApri,
+  onModifica,
+  onAnnulla,
+  onSalvato,
   onPratica,
 }: {
   cliente: Cliente;
   aperto: boolean;
+  inModifica: boolean;
   onApri: () => void;
+  onModifica: () => void;
+  onAnnulla: () => void;
+  onSalvato: (dati: DatiCliente) => void;
   onPratica: (praticaId: string) => void;
 }) {
   const rivenditore = cliente.tipo === 'rivenditore';
@@ -232,9 +275,14 @@ function SchedaCliente({
             onPress={() => void Linking.openURL(`mailto:${cliente.email}`)}
           />
         )}
+        <Tasto icona="matita" testo="Modifica" onPress={onModifica} />
       </View>
 
-      {aperto && (
+      {aperto && inModifica && (
+        <ModificaCliente cliente={cliente} onAnnulla={onAnnulla} onSalvato={onSalvato} />
+      )}
+
+      {aperto && !inModifica && (
         <View style={stili.storico}>
           {cliente.note ? <Text style={stili.note}>{cliente.note}</Text> : null}
 
@@ -265,12 +313,121 @@ function SchedaCliente({
   );
 }
 
+/**
+ * Il modulo di correzione, dentro la scheda.
+ *
+ * Non e' una schermata a parte: si corregge un'email mentre si ha il cliente
+ * sotto gli occhi, e si torna all'elenco senza perdere la ricerca. I vincoli
+ * sono gli stessi del database (nome, e almeno un recapito), detti prima di
+ * mandare, cosi' l'errore arriva accanto al campo e non come messaggio del server.
+ */
+function ModificaCliente({
+  cliente,
+  onAnnulla,
+  onSalvato,
+}: {
+  cliente: Cliente;
+  onAnnulla: () => void;
+  onSalvato: (dati: DatiCliente) => void;
+}) {
+  const [nome, setNome] = useState(cliente.nome);
+  const [telefono, setTelefono] = useState(cliente.telefono ?? '');
+  const [email, setEmail] = useState(cliente.email ?? '');
+  const [tipo, setTipo] = useState<TipoCliente>(cliente.tipo);
+  const [note, setNote] = useState(cliente.note ?? '');
+  const [salvataggio, setSalvataggio] = useState(false);
+  const [errore, setErrore] = useState<string | null>(null);
+
+  const nomeVuoto = !nome.trim();
+  const senzaRecapito = !telefono.trim() && !email.trim();
+
+  async function salva() {
+    if (nomeVuoto || senzaRecapito) return;
+    setSalvataggio(true);
+    setErrore(null);
+
+    const valori = {
+      nome: nome.trim(),
+      telefono: telefono.trim() || null,
+      email: email.trim().toLowerCase() || null,
+      tipo,
+      note: note.trim() || null,
+    };
+
+    const { error } = await supabase.from(tab('cliente')).update(valori).eq('id', cliente.id);
+    setSalvataggio(false);
+
+    if (error) {
+      setErrore('Non sono riuscito a salvare. Riprova fra un momento.');
+      return;
+    }
+    onSalvato({ id: cliente.id, ...valori });
+  }
+
+  return (
+    <View style={stili.modifica}>
+      <Campo etichetta="Nome" obbligatorio errore={nomeVuoto ? 'Serve un nome.' : null}>
+        <Input value={nome} onChangeText={setNome} placeholder="Nome e cognome" autoCapitalize="words" />
+      </Campo>
+      <Campo
+        etichetta="Telefono"
+        errore={senzaRecapito ? 'Serve almeno un telefono o un’email.' : null}
+      >
+        <Input
+          value={telefono}
+          onChangeText={setTelefono}
+          placeholder="+39 333 1234567"
+          keyboardType="phone-pad"
+          autoCorrect={false}
+        />
+      </Campo>
+      <Campo etichetta="Email">
+        <Input
+          value={email}
+          onChangeText={setEmail}
+          placeholder="nome@esempio.it"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+      </Campo>
+      <Campo etichetta="Tipo">
+        <Scelta
+          valore={tipo}
+          consentiVuoto={false}
+          onCambia={(v) => v && setTipo(v)}
+          opzioni={[
+            { valore: 'privato' as TipoCliente, etichetta: 'Privato' },
+            { valore: 'rivenditore' as TipoCliente, etichetta: 'Rivenditore' },
+          ]}
+        />
+      </Campo>
+      <Campo etichetta="Note" aiuto="Quello che serve ricordare: cosa cerca, quando richiamarlo.">
+        <Input value={note} onChangeText={setNote} placeholder="Cerca un SUV, ha permuta" multiline />
+      </Campo>
+
+      {errore ? <Text style={stili.erroreSalvataggio}>{errore}</Text> : null}
+
+      <View style={stili.azioniModifica}>
+        <Bottone tenue testo="Annulla" onPress={onAnnulla} disabilitato={salvataggio} />
+        <Bottone
+          testo="Salva"
+          icona="spunta"
+          onPress={() => void salva()}
+          inCorso={salvataggio}
+          disabilitato={nomeVuoto || senzaRecapito}
+        />
+      </View>
+    </View>
+  );
+}
+
 function Tasto({
   icona,
   testo,
   onPress,
 }: {
-  icona: 'telefona' | 'messaggio' | 'documento';
+  icona: 'telefona' | 'messaggio' | 'documento' | 'matita';
   testo: string;
   onPress: () => void;
 }) {
@@ -342,4 +499,13 @@ const stili = stiliTema((c) => StyleSheet.create({
   voceTitolo: { fontSize: 14, fontWeight: '600', color: c.testo },
   voceDettaglio: { fontSize: 12, color: c.testoTenue },
   voceQuando: { fontSize: 11, color: c.testoDebole },
+
+  modifica: {
+    gap: spazi.m,
+    borderTopWidth: 1,
+    borderTopColor: c.bordoTenue,
+    paddingTop: spazi.m,
+  },
+  azioniModifica: { gap: spazi.s, marginTop: spazi.xs },
+  erroreSalvataggio: { fontSize: 13, color: c.errore },
 }));

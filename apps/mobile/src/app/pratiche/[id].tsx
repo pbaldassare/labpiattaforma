@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   ETICHETTA_FORMULA,
   ETICHETTA_ORIGINE,
@@ -11,11 +11,13 @@ import {
   tab,
   urlPagina,
   type FormulaAcquisto,
+  type Promemoria,
   type StatoPratica,
   type TipoCliente,
   type VoceStorico,
 } from '@lab/shared';
 
+import { Icona } from '@/components/icone';
 import { Bottone, Campo, Input, Scelta, Sezione } from '@/components/modulo';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
@@ -35,6 +37,7 @@ interface DettaglioPratica {
   id: string;
   stato: StatoPratica;
   offerta_id: string | null;
+  cliente_id: string;
   cliente_nome: string;
   cliente_telefono: string | null;
   cliente_email: string | null;
@@ -61,6 +64,17 @@ const QUANDO = [
   { etichetta: 'Fra una settimana', giorni: 7 },
 ];
 
+type RigaPromemoria = Pick<Promemoria, 'id' | 'quando' | 'motivo'>;
+
+/** "giovedì 9 ottobre": il giorno della settimana conta piu' del numero. */
+function giornoLungo(iso: string): string {
+  return new Date(iso).toLocaleDateString('it-IT', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+}
+
 export default function DettaglioPraticaSchermata() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -68,12 +82,14 @@ export default function DettaglioPraticaSchermata() {
   const [pratica, setPratica] = useState<DettaglioPratica | null>(null);
   const [storico, setStorico] = useState<VoceStorico[]>([]);
   const [preventivi, setPreventivi] = useState<RigaPreventivo[]>([]);
+  const [promemoria, setPromemoria] = useState<RigaPromemoria[]>([]);
   const [caricamento, setCaricamento] = useState(true);
   const [nota, setNota] = useState('');
+  const [motivo, setMotivo] = useState('');
   const [errore, setErrore] = useState<string | null>(null);
 
   const carica = useCallback(async () => {
-    const [p, s, pv] = await Promise.all([
+    const [p, s, pv, pr] = await Promise.all([
       supabase.from(tab('pratica_elenco')).select('*').eq('id', id).maybeSingle(),
       supabase
         .from(tab('storico_pratica'))
@@ -85,12 +101,20 @@ export default function DettaglioPraticaSchermata() {
         .select('id, numero, formula, prezzo_cent, firmato_il')
         .eq('pratica_id', id)
         .order('numero', { ascending: false }),
+      // Solo quelli ancora da fare: i fatti e i cancellati non servono qui.
+      supabase
+        .from(tab('promemoria'))
+        .select('id, quando, motivo')
+        .eq('pratica_id', id)
+        .eq('fatto', false)
+        .order('quando', { ascending: true }),
     ]);
 
     if (p.error) setErrore(p.error.message);
     setPratica((p.data as DettaglioPratica | null) ?? null);
     setStorico((s.data ?? []) as VoceStorico[]);
     setPreventivi((pv.data ?? []) as RigaPreventivo[]);
+    setPromemoria((pr.data ?? []) as RigaPromemoria[]);
     setCaricamento(false);
   }, [id]);
 
@@ -121,6 +145,10 @@ export default function DettaglioPraticaSchermata() {
     void carica();
   }
 
+  /**
+   * Il testo lo scrive il venditore, se vuole: "Portargli il preventivo",
+   * "Sentire se ha venduto la sua". Vuoto, resta il richiamo con il nome.
+   */
   async function fissaRichiamo(giorni: number) {
     if (!pratica) return;
     const quando = new Date();
@@ -130,10 +158,37 @@ export default function DettaglioPraticaSchermata() {
     const { error } = await supabase.from(tab('promemoria')).insert({
       pratica_id: id,
       quando: quando.toISOString(),
-      motivo: `Richiamare ${pratica.cliente_nome}`,
+      motivo: motivo.trim() || `Richiamare ${pratica.cliente_nome}`,
     });
     if (error) setErrore(error.message);
+    setMotivo('');
     void carica();
+  }
+
+  /**
+   * Un promemoria si toglie in due modi, e sono due cose diverse: "fatto"
+   * dice che la chiamata c'e' stata, "elimina" che non andava fissato. Il
+   * primo resta nel database come traccia, il secondo sparisce.
+   */
+  async function segnaFatto(promemoriaId: string) {
+    setPromemoria((prima) => prima.filter((p) => p.id !== promemoriaId));
+    const { error } = await supabase
+      .from(tab('promemoria'))
+      .update({ fatto: true })
+      .eq('id', promemoriaId);
+    if (error) {
+      setErrore(error.message);
+      void carica();
+    }
+  }
+
+  async function elimina(promemoriaId: string) {
+    setPromemoria((prima) => prima.filter((p) => p.id !== promemoriaId));
+    const { error } = await supabase.from(tab('promemoria')).delete().eq('id', promemoriaId);
+    if (error) {
+      setErrore(error.message);
+      void carica();
+    }
   }
 
   if (caricamento) {
@@ -183,6 +238,13 @@ export default function DettaglioPraticaSchermata() {
               onPress={() => void Linking.openURL(`tel:${pratica.cliente_telefono}`)}
             />
           )}
+          {pratica.cliente_email && (
+            <Bottone
+              tenue
+              testo={pratica.cliente_email}
+              onPress={() => void Linking.openURL(`mailto:${pratica.cliente_email}`)}
+            />
+          )}
           {pratica.cliente_telefono && pratica.offerta_titolo && (
             <Bottone
               testo="WhatsApp"
@@ -206,6 +268,22 @@ export default function DettaglioPraticaSchermata() {
             />
           )}
         </View>
+
+        {/* I dati del cliente si correggono nell'elenco clienti, che si apre
+            gia' su di lui: un'email presa a voce si aggiunge da qui. */}
+        <Pressable
+          onPress={() =>
+            router.push({
+              pathname: '/clienti',
+              params: { apri: pratica.cliente_id, modifica: '1' },
+            })
+          }
+          accessibilityRole="button"
+          style={({ pressed }) => [stili.modificaCliente, pressed && stili.premuto]}
+        >
+          <Icona nome="matita" dimensione={14} colore={colori.primarioChiaro} />
+          <Text style={stili.modificaClienteTesto}>Modifica i dati del cliente</Text>
+        </Pressable>
       </View>
 
       {errore ? <Text style={stili.errore}>{errore}</Text> : null}
@@ -241,17 +319,46 @@ export default function DettaglioPraticaSchermata() {
         )}
       </Sezione>
 
-      <Sezione titolo="Quando richiamarlo">
-        {pratica.prossimo_promemoria && (
-          <Text style={stili.promemoria}>
-            Promemoria già fissato per il{' '}
-            {new Date(pratica.prossimo_promemoria).toLocaleDateString('it-IT', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-            })}
-          </Text>
+      <Sezione titolo="Promemoria" icona="campanello" tinta={colori.accento}>
+        {promemoria.map((p) => (
+          <View key={p.id} style={stili.promemoria}>
+            <View style={stili.promemoriaTesti}>
+              <Text style={stili.promemoriaMotivo}>{p.motivo}</Text>
+              <Text style={stili.promemoriaQuando}>{giornoLungo(p.quando)}</Text>
+            </View>
+            <Pressable
+              onPress={() => void segnaFatto(p.id)}
+              accessibilityRole="button"
+              accessibilityLabel={`Segna fatto: ${p.motivo}`}
+              hitSlop={6}
+              style={({ pressed }) => [stili.tastoPromemoria, pressed && stili.premuto]}
+            >
+              <Icona nome="spunta" dimensione={16} colore={colori.successo} />
+              <Text style={[stili.tastoPromemoriaTesto, { color: colori.successo }]}>Fatto</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => void elimina(p.id)}
+              accessibilityRole="button"
+              accessibilityLabel={`Elimina promemoria: ${p.motivo}`}
+              hitSlop={6}
+              style={({ pressed }) => [stili.tastoPromemoria, pressed && stili.premuto]}
+            >
+              <Icona nome="cestino" dimensione={16} colore={colori.azione} />
+              <Text style={[stili.tastoPromemoriaTesto, { color: colori.azione }]}>Elimina</Text>
+            </Pressable>
+          </View>
+        ))}
+        {promemoria.length === 0 && (
+          <Text style={stili.vuoto}>Nessun promemoria fissato.</Text>
         )}
+
+        <Campo etichetta="Nuovo promemoria" aiuto="Vuoto, resta il richiamo con il nome.">
+          <Input
+            value={motivo}
+            onChangeText={setMotivo}
+            placeholder={`Richiamare ${pratica.cliente_nome}`}
+          />
+        </Campo>
         <View style={stili.quando}>
           {QUANDO.map((q) => (
             <Bottone
@@ -327,7 +434,37 @@ const stili = stiliTema((c) => StyleSheet.create({
   offerta: { fontSize: 14, color: c.primarioChiaro, fontWeight: '600' },
   recapiti: { gap: spazi.s, marginTop: spazi.xs },
   errore: { color: c.errore, fontSize: 13 },
-  promemoria: { fontSize: 13, color: c.primarioChiaro, fontWeight: '600' },
+  modificaCliente: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spazi.xs,
+    alignSelf: 'flex-start',
+    minHeight: 32,
+    marginTop: spazi.xs,
+  },
+  modificaClienteTesto: { fontSize: 13, fontWeight: '600', color: c.primarioChiaro },
+  premuto: { opacity: 0.7 },
+  promemoria: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spazi.m,
+    borderWidth: 1,
+    borderColor: c.bordo,
+    borderRadius: raggio.m,
+    paddingVertical: spazi.s,
+    paddingHorizontal: spazi.m,
+  },
+  promemoriaTesti: { flex: 1, gap: 2 },
+  promemoriaMotivo: { fontSize: 14, fontWeight: '600', color: c.testo },
+  promemoriaQuando: { fontSize: 12, color: c.accento, fontWeight: '600' },
+  tastoPromemoria: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spazi.xs,
+    minHeight: 36,
+    paddingHorizontal: spazi.xs,
+  },
+  tastoPromemoriaTesto: { fontSize: 12, fontWeight: '600' },
   quando: { gap: spazi.s },
   azioniNota: { gap: spazi.s },
   voce: {

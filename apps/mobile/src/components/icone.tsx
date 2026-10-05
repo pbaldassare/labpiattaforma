@@ -53,6 +53,7 @@ const MAPPA = {
   collegamento: 'link-2',
   attenzione: 'alert-circle',
   matita: 'edit-2',
+  cestino: 'trash-2',
   cerca: 'search',
 } as const;
 
