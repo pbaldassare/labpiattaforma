@@ -285,7 +285,7 @@ export default function Home() {
           <SchedaModulo
             key={m.modulo}
             stato={m}
-            onApri={() => router.push('/offerte')}
+            onApri={() => router.push({ pathname: '/offerte', params: { modulo: m.modulo } })}
             onNuova={() => router.push(DOVE_NUOVA[m.modulo])}
           />
           </Entra>

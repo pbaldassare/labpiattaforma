@@ -1,4 +1,4 @@
-import { useFocusEffect, useRouter } from 'expo-router';
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, StyleSheet, View } from 'react-native';
 import {
@@ -67,10 +67,31 @@ function cifra(r: RigaOfferta): { prima?: string; valore: string; dopo?: string 
   return null;
 }
 
+/** Dove si crea una nuova offerta di ciascun modulo. */
+const DOVE_NUOVA = {
+  vendita: '/offerte/nuova',
+  noleggio_breve: '/offerte/nuova-breve',
+  noleggio_lungo: '/offerte/nuova-lungo',
+  assicurazioni: '/offerte/nuova-assicurazione',
+} as const satisfies Record<Modulo, string>;
+
+const MODULI: Modulo[] = ['vendita', 'noleggio_breve', 'noleggio_lungo', 'assicurazioni'];
+
+/**
+ * Le offerte, in due modi.
+ *
+ * Aperta da un modulo (/offerte?modulo=noleggio_breve) mostra solo quel modulo:
+ * chi tocca "Noleggio breve" vuole i suoi noleggi, non tutto il resto. Aperta
+ * senza modulo, dalla scheda "Offerte" della home, le mostra tutte con i
+ * filtri in cima.
+ */
 export default function Offerte() {
   const router = useRouter();
+  const parametri = useLocalSearchParams<{ modulo?: string }>();
+  const soloModulo = MODULI.find((m) => m === parametri.modulo) ?? null;
   const [righe, setRighe] = useState<RigaOfferta[]>([]);
-  const [modulo, setModulo] = useState<Modulo | null>(null);
+  const [filtro, setFiltro] = useState<Modulo | null>(null);
+  const modulo = soloModulo ?? filtro;
   const [caricamento, setCaricamento] = useState(true);
   const [errore, setErrore] = useState<string | null>(null);
 
@@ -127,8 +148,11 @@ export default function Offerte() {
 
   return (
     <View style={stili.contenitore}>
-      {filtri.length > 2 && (
-        <Filtri valore={modulo} opzioni={filtri} onCambia={setModulo} />
+      <Stack.Screen
+        options={{ title: soloModulo ? ETICHETTA_MODULO[soloModulo] : 'Tutte le offerte' }}
+      />
+      {!soloModulo && filtri.length > 2 && (
+        <Filtri valore={filtro} opzioni={filtri} onCambia={setFiltro} />
       )}
 
       <FlatList
@@ -139,8 +163,8 @@ export default function Offerte() {
         ListEmptyComponent={
           <Vuoto
             icona="auto"
-            titolo="Nessuna offerta"
-            testo="Carica il primo mezzo: dalla scheda esce la pagina da mandare al cliente."
+            titolo={soloModulo ? `Nessuna offerta di ${ETICHETTA_MODULO[soloModulo].toLowerCase()}` : 'Nessuna offerta'}
+            testo="Caricane una col pulsante qui sotto: dalla scheda esce la pagina da mandare al cliente."
           />
         }
         renderItem={({ item, index }) => (
@@ -153,7 +177,23 @@ export default function Offerte() {
       {/* Quattro moduli sono troppi per quattro bottoni in fondo allo schermo:
           da "I tuoi moduli" si sceglie quale, e si vede quanto resta di ognuno. */}
       <View style={stili.barra}>
-        <Bottone testo="Nuova offerta" icona="piu" onPress={() => router.push('/moduli')} />
+        {soloModulo ? (
+          <>
+            <Bottone
+              // Il modulo lo dice gia' il titolo: qui basta il gesto.
+              testo="Nuova offerta"
+              icona="piu"
+              onPress={() => router.push(DOVE_NUOVA[soloModulo])}
+            />
+            <Bottone
+              testo="Vedi tutte le offerte"
+              tipo="nudo"
+              onPress={() => router.push('/offerte')}
+            />
+          </>
+        ) : (
+          <Bottone testo="Nuova offerta" icona="piu" onPress={() => router.push('/moduli')} />
+        )}
       </View>
     </View>
   );
@@ -220,7 +260,7 @@ function SchedaOfferta({ item, onPress }: { item: RigaOfferta; onPress: () => vo
 const stili = stiliTema((c) => StyleSheet.create({
   contenitore: { flex: 1, backgroundColor: c.sfondo },
   centrato: { flex: 1, justifyContent: 'center', backgroundColor: c.sfondo },
-  lista: { padding: spazi.l, gap: spazi.s, paddingBottom: spazi.xxxl * 2 },
+  lista: { padding: spazi.l, gap: spazi.s, paddingBottom: spazi.xxxl * 3.5 },
 
   scheda: { flexDirection: 'row', alignItems: 'center', gap: spazi.m, padding: spazi.s },
   foto: {
@@ -250,5 +290,5 @@ const stili = stiliTema((c) => StyleSheet.create({
 
   coda: { alignItems: 'flex-end', gap: spazi.xs, paddingRight: spazi.xs },
   errore: { color: c.errore, fontSize: 13, paddingBottom: spazi.s },
-  barra: { position: 'absolute', left: spazi.l, right: spazi.l, bottom: spazi.xl },
+  barra: { position: 'absolute', left: spazi.l, right: spazi.l, bottom: spazi.xl, gap: spazi.xs },
 }));
