@@ -18,6 +18,8 @@ import {
   type DatiPagina,
 } from '@/lib/landing';
 import { qrSvg } from '@/lib/qr';
+import { MarchioModulo, classeModulo } from '@/components/modulo';
+import { cn } from '@/lib/utils';
 
 type Props = { params: Promise<{ codice: string }> };
 
@@ -60,9 +62,10 @@ export default async function PaginaAssicurazione({ params }: Props) {
   const messaggio = `Ciao, vorrei un preventivo per ${a.nome_prodotto} di ${a.compagnia}.\n${indirizzo}`;
 
   return (
-    <div className="pb-28">
+    <div className={cn('pb-28', classeModulo('assicurazioni'))}>
       <main className="mx-auto max-w-2xl px-4">
-        <header className="border-bordo flex flex-col gap-2 border-b py-10">
+        <header className="comparsa border-bordo flex flex-col gap-2 border-b py-10">
+          <MarchioModulo modulo="assicurazioni" className="self-start" />
           <p className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
             {a.compagnia} · {ETICHETTA_RISCHIO[a.tipo_rischio]}
           </p>
@@ -74,7 +77,7 @@ export default async function PaginaAssicurazione({ params }: Props) {
               fa il venditore" (§7.2): dirlo evita la telefonata arrabbiata. */}
           <p className="mt-2">
             <span className="text-testo-tenue text-sm">a partire da </span>
-            <span className="text-4xl font-bold sm:text-5xl">
+            <span className="text-modulo text-4xl font-bold sm:text-5xl">
               {formattaEuro(a.premio_partenza_cent)}
             </span>
             {durata && <span className="text-testo-tenue text-sm"> · {durata.toLowerCase()}</span>}

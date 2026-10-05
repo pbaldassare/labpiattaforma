@@ -63,6 +63,16 @@ modello del veicolo — largo, meccanico, automobilistico — ma illeggibile com
 testo corrente. E un monospace nel corpo rende faticosi proprio i numeri che
 devono convincere: prezzo, chilometri, anno. Il corpo usa Inter.
 
+**I quattro colori dei moduli, anche sulle landing.**
+La direzione dava alle pagine pubbliche solo grafite e rosso. Restano, ma il
+prezzo, l'etichetta del modulo e il bordo che si accende al passaggio prendono
+il colore del modulo, lo stesso dell'app: chi passa dall'app alla pagina
+riconosce il verde della vendita e il viola del lungo termine. Sul chiaro i
+toni sono quelli profondi (reggono il 4,5:1 come testo), le sfumature piene
+restano sature in tutti e due i temi perche' sono superfici, non testo. La
+vetrina ha un'intestazione grafite con i quattro colori che filtrano dai
+bordi, in movimento lento; con "riduci movimento" si ferma.
+
 **Il movimento è ridotto rispetto al profilo "Motion-Driven".**
 Queste pagine si aprono quasi sempre da un messaggio WhatsApp, su rete mobile.
 Le animazioni d'ingresso restano, parallasse e transizioni di pagina no: costano

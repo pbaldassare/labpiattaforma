@@ -20,6 +20,8 @@ import {
   type DatiPagina,
 } from '@/lib/landing';
 import { qrSvg } from '@/lib/qr';
+import { MarchioModulo, classeModulo } from '@/components/modulo';
+import { cn } from '@/lib/utils';
 
 import { FormContatto } from '@/components/form-contatto';
 
@@ -100,9 +102,9 @@ export default async function PaginaVendita({ params }: Props) {
       : null;
 
   return (
-    <div className="pb-28">
+    <div className={cn('pb-28', classeModulo('vendita'))}>
       {dati.pagina.tipo === 'riservata' && (
-        <p className="bg-primario text-su-primario px-4 py-2 text-center text-sm font-semibold tracking-wide">
+        <p className="sfumatura-modulo px-4 py-2 text-center text-sm font-semibold tracking-wide">
           Prezzo riservato agli operatori
         </p>
       )}
@@ -119,14 +121,15 @@ export default async function PaginaVendita({ params }: Props) {
             className="object-cover"
           />
         ) : (
-          <div className="text-testo-tenue flex h-full items-center justify-center text-sm">
+          <div className="sfumatura-modulo flex h-full items-center justify-center text-sm font-semibold opacity-90">
             Nessuna foto
           </div>
         )}
       </div>
 
       <main className="mx-auto max-w-2xl px-4">
-        <header className="border-bordo flex flex-col gap-2 border-b py-6">
+        <header className="comparsa border-bordo flex flex-col gap-2 border-b py-6">
+          <MarchioModulo modulo="vendita" className="self-start" />
           <p className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
             {vendita.marca}
           </p>
@@ -134,7 +137,7 @@ export default async function PaginaVendita({ params }: Props) {
             {vendita.modello}
           </h1>
           {prezzo != null && (
-            <p className="mt-2 text-4xl font-bold sm:text-5xl">{formattaEuro(prezzo)}</p>
+            <p className="mt-2 text-modulo text-4xl font-bold sm:text-5xl">{formattaEuro(prezzo)}</p>
           )}
 
           {guadagno != null && (

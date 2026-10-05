@@ -27,6 +27,37 @@
   /* Lo stesso ambra dell'app: "guarda qui", distinto dal rosso dell'azione. */
   --accento: #b45309;
   --accento-tenue: #fef3c7;
+
+  /*
+    Un colore per modulo, gli stessi dell'app: chi passa dall'app alla pagina
+    deve riconoscere il verde della vendita e il viola del lungo termine.
+    Sul chiaro i toni sono profondi, perche' qui fanno da testo e devono
+    reggere il contrasto; le sfumature piene restano sature in tutti e due i
+    temi, perche' sono superfici con sopra del bianco o del nero, non testo.
+  */
+  --modulo-vendita: #4d6b00;
+  --modulo-vendita-tenue: #f0fbd0;
+  --modulo-noleggio-breve: #c2410c;
+  --modulo-noleggio-breve-tenue: #ffedd5;
+  --modulo-noleggio-lungo: #6d28d9;
+  --modulo-noleggio-lungo-tenue: #ede9fe;
+  --modulo-assicurazioni: #0369a1;
+  --modulo-assicurazioni-tenue: #e0f2fe;
+
+  --sfumatura-vendita: linear-gradient(135deg, #c6f432, #84cc16);
+  --su-sfumatura-vendita: #14161a;
+  --sfumatura-noleggio-breve: linear-gradient(135deg, #ff8a3d, #ea580c);
+  --su-sfumatura-noleggio-breve: #ffffff;
+  --sfumatura-noleggio-lungo: linear-gradient(135deg, #a78bfa, #7c3aed);
+  --su-sfumatura-noleggio-lungo: #ffffff;
+  --sfumatura-assicurazioni: linear-gradient(135deg, #38bdf8, #0284c7);
+  --su-sfumatura-assicurazioni: #ffffff;
+
+  /* L'intestazione della vetrina: grafite con i quattro colori che filtrano
+     dai bordi, come le luci di un piazzale la sera. */
+  --testa-sfondo: #141a2b;
+  --testa-testo: #f8fafc;
+  --testa-testo-tenue: #c3cbd8;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -77,6 +108,19 @@
     --accento: #fbbf24;
     --accento-tenue: #422006;
     --bordo: #334155;
+
+    --modulo-vendita: #c6f432;
+    --modulo-vendita-tenue: #334115;
+    --modulo-noleggio-breve: #ff8a3d;
+    --modulo-noleggio-breve-tenue: #4a2a17;
+    --modulo-noleggio-lungo: #a78bfa;
+    --modulo-noleggio-lungo-tenue: #352a5c;
+    --modulo-assicurazioni: #38bdf8;
+    --modulo-assicurazioni-tenue: #173a4f;
+
+    --testa-sfondo: #0b101d;
+    --testa-testo: #f8fafc;
+    --testa-testo-tenue: #c3cbd8;
   }
 }
 
@@ -94,6 +138,12 @@
   --color-bordo: var(--bordo);
   --color-accento: var(--accento);
   --color-accento-tenue: var(--accento-tenue);
+  --color-testa-testo: var(--testa-testo);
+  --color-testa-testo-tenue: var(--testa-testo-tenue);
+  /* Il colore del modulo della pagina, fissato da una classe `modulo-*`. */
+  --color-modulo: var(--colore-modulo);
+  --color-modulo-tenue: var(--colore-modulo-tenue);
+  --color-su-modulo: var(--su-sfumatura-modulo);
   --font-sans: var(--font-sans);
   --font-display: var(--font-titoli);
   --font-heading: var(--font-sans);
@@ -141,6 +191,140 @@ body {
   background: var(--sfondo);
   color: var(--testo);
   font-family: var(--font-corpo), system-ui, -apple-system, sans-serif;
+}
+
+/*
+  Il modulo di una pagina.
+
+  Una classe sulla radice decide il colore di tutto quello che sta sotto:
+  l'etichetta, il prezzo, il bordo che si accende al passaggio. Le pagine non
+  conoscono i quattro colori, conoscono solo "il colore del modulo".
+*/
+.modulo-vendita {
+  --colore-modulo: var(--modulo-vendita);
+  --colore-modulo-tenue: var(--modulo-vendita-tenue);
+  --sfumatura-modulo: var(--sfumatura-vendita);
+  --su-sfumatura-modulo: var(--su-sfumatura-vendita);
+}
+.modulo-noleggio_breve {
+  --colore-modulo: var(--modulo-noleggio-breve);
+  --colore-modulo-tenue: var(--modulo-noleggio-breve-tenue);
+  --sfumatura-modulo: var(--sfumatura-noleggio-breve);
+  --su-sfumatura-modulo: var(--su-sfumatura-noleggio-breve);
+}
+.modulo-noleggio_lungo {
+  --colore-modulo: var(--modulo-noleggio-lungo);
+  --colore-modulo-tenue: var(--modulo-noleggio-lungo-tenue);
+  --sfumatura-modulo: var(--sfumatura-noleggio-lungo);
+  --su-sfumatura-modulo: var(--su-sfumatura-noleggio-lungo);
+}
+.modulo-assicurazioni {
+  --colore-modulo: var(--modulo-assicurazioni);
+  --colore-modulo-tenue: var(--modulo-assicurazioni-tenue);
+  --sfumatura-modulo: var(--sfumatura-assicurazioni);
+  --su-sfumatura-modulo: var(--su-sfumatura-assicurazioni);
+}
+
+/* Una superficie piena col colore del modulo: la striscia "riservato", il
+   filtro scelto, il blocco dell'icona. */
+.sfumatura-modulo {
+  background-image: var(--sfumatura-modulo);
+  color: var(--su-sfumatura-modulo);
+}
+
+/*
+  L'intestazione della vetrina.
+
+  Quattro aloni, uno per modulo, che si spostano piano sul grafite: la pagina
+  sembra accesa anche prima che le foto arrivino. Il movimento e' lento di
+  proposito (venti secondi per un giro) e con "riduci movimento" si ferma.
+*/
+.testa-vetrina {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: var(--testa-sfondo);
+  color: var(--testa-testo);
+}
+.testa-vetrina::before,
+.testa-vetrina::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 40% at 18% 30%, rgba(198, 244, 50, 0.42), transparent 70%),
+    radial-gradient(38% 38% at 82% 25%, rgba(167, 139, 250, 0.45), transparent 70%),
+    radial-gradient(36% 36% at 70% 85%, rgba(255, 138, 61, 0.4), transparent 70%),
+    radial-gradient(42% 42% at 25% 85%, rgba(56, 189, 248, 0.42), transparent 70%);
+  filter: blur(40px);
+  animation: deriva 20s ease-in-out infinite alternate;
+}
+.testa-vetrina::after {
+  opacity: 0.6;
+  animation-duration: 28s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes deriva {
+  from {
+    transform: translate3d(-6%, -4%, 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(6%, 5%, 0) rotate(12deg);
+  }
+}
+
+/*
+  La comparsa.
+
+  Le cose arrivano dal basso di pochi pixel, una dopo l'altra: l'ordine in
+  cui compaiono e' l'ordine in cui vanno lette. `--i` e' la posizione, e il
+  ritardo si ferma all'ottava, se no in fondo a un elenco lungo si aspetta.
+*/
+.comparsa {
+  animation: comparsa 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(min(var(--i, 0), 8) * 70ms);
+}
+
+@keyframes comparsa {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*
+  La scheda di un'offerta.
+
+  Al passaggio sale di due pixel e il bordo prende il colore del modulo. E'
+  una trasformazione, non un cambio di dimensione: le schede accanto non si
+  spostano.
+*/
+.scheda-offerta {
+  transition:
+    transform 240ms ease,
+    box-shadow 240ms ease,
+    border-color 240ms ease;
+}
+.scheda-offerta:hover,
+.scheda-offerta:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--colore-modulo);
+  box-shadow:
+    0 14px 30px -12px color-mix(in srgb, var(--colore-modulo) 45%, transparent),
+    0 2px 6px rgba(15, 23, 42, 0.08);
+}
+.scheda-offerta .foto-offerta {
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.scheda-offerta:hover .foto-offerta {
+  transform: scale(1.04);
 }
 
 /* Le pagine prodotto avranno animazioni di comparsa: chi le ha disattivate

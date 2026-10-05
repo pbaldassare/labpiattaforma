@@ -18,6 +18,8 @@ import {
   type DatiPagina,
 } from '@/lib/landing';
 import { qrSvg } from '@/lib/qr';
+import { MarchioModulo, classeModulo } from '@/components/modulo';
+import { cn } from '@/lib/utils';
 
 import { BloccoCanone } from './blocco-canone';
 
@@ -66,9 +68,9 @@ export default async function PaginaNoleggioLungo({ params }: Props) {
   const messaggio = `Ciao, sono interessato al noleggio della ${dati.offerta.titolo}.\n${indirizzo}`;
 
   return (
-    <div className="pb-28">
+    <div className={cn('pb-28', classeModulo('noleggio_lungo'))}>
       {dati.pagina.tipo === 'riservata' && (
-        <p className="bg-primario text-su-primario px-4 py-2 text-center text-sm font-semibold tracking-wide">
+        <p className="sfumatura-modulo px-4 py-2 text-center text-sm font-semibold tracking-wide">
           Canoni riservati agli operatori
         </p>
       )}
@@ -84,14 +86,15 @@ export default async function PaginaNoleggioLungo({ params }: Props) {
             className="object-cover"
           />
         ) : (
-          <div className="text-testo-tenue flex h-full items-center justify-center text-sm">
+          <div className="sfumatura-modulo flex h-full items-center justify-center text-sm font-semibold opacity-90">
             Nessuna foto
           </div>
         )}
       </div>
 
       <main className="mx-auto max-w-2xl px-4">
-        <header className="border-bordo flex flex-col gap-2 border-b py-6">
+        <header className="comparsa border-bordo flex flex-col gap-2 border-b py-6">
+          <MarchioModulo modulo="noleggio_lungo" className="self-start" />
           <p className="text-testo-tenue text-sm font-semibold tracking-widest uppercase">
             {lungo.marca}
           </p>
@@ -107,7 +110,7 @@ export default async function PaginaNoleggioLungo({ params }: Props) {
           {lungo.canone_minimo_cent != null && (
             <p className="mt-2">
               <span className="text-testo-tenue text-sm">a partire da </span>
-              <span className="text-4xl font-bold sm:text-5xl">
+              <span className="text-modulo text-4xl font-bold sm:text-5xl">
                 {formattaEuro(lungo.canone_minimo_cent)}
               </span>
               <span className="text-testo-tenue text-sm"> al mese</span>
