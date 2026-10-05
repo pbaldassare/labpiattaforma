@@ -50,9 +50,10 @@ interface DettaglioPratica {
 interface RigaPreventivo {
   id: string;
   numero: number;
-  formula: FormulaAcquisto;
+  formula: FormulaAcquisto | null;
   prezzo_cent: number;
   firmato_il: string | null;
+  created_at: string;
 }
 
 export default function DettaglioPraticaSchermata() {
@@ -76,7 +77,7 @@ export default function DettaglioPraticaSchermata() {
         .order('creato_il', { ascending: false }),
       supabase
         .from(tab('preventivo'))
-        .select('id, numero, formula, prezzo_cent, firmato_il')
+        .select('id, numero, formula, prezzo_cent, firmato_il, created_at')
         .eq('pratica_id', id)
         .order('numero', { ascending: false }),
     ]);
@@ -204,8 +205,14 @@ export default function DettaglioPraticaSchermata() {
             <View key={pv.id} style={stili.preventivo}>
               <Text style={stili.preventivoNumero}>Preventivo n. {pv.numero}</Text>
               <Text style={stili.preventivoDati}>
-                {ETICHETTA_FORMULA[pv.formula]} · {formattaEuro(pv.prezzo_cent)} ·{' '}
-                {quandoBreve(pv.firmato_il)}
+                {[
+                  formattaEuro(pv.prezzo_cent),
+                  pv.formula ? ETICHETTA_FORMULA[pv.formula] : null,
+                  quandoBreve(pv.created_at),
+                  pv.firmato_il ? 'firmato' : 'senza firma',
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </Text>
             </View>
           ))
