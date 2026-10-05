@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   ETICHETTA_FORMULA,
   ETICHETTA_ORIGINE,
@@ -202,7 +202,14 @@ export default function DettaglioPraticaSchermata() {
       <Sezione titolo="Preventivo">
         {preventivi.length > 0 ? (
           preventivi.map((pv) => (
-            <View key={pv.id} style={stili.preventivo}>
+            <Pressable
+              key={pv.id}
+              onPress={() => router.push({ pathname: '/documento/[id]', params: { id: pv.id } })}
+              accessibilityRole="button"
+              accessibilityLabel={`Apri il preventivo n. ${pv.numero}`}
+              style={({ pressed }) => [stili.preventivo, stili.preventivoRiga, pressed && { opacity: 0.7 }]}
+            >
+              <View style={{ flex: 1, gap: 2 }}>
               <Text style={stili.preventivoNumero}>Preventivo n. {pv.numero}</Text>
               <Text style={stili.preventivoDati}>
                 {[
@@ -214,7 +221,9 @@ export default function DettaglioPraticaSchermata() {
                   .filter(Boolean)
                   .join(' · ')}
               </Text>
-            </View>
+              </View>
+              <Text style={stili.preventivoApri}>Apri ›</Text>
+            </Pressable>
           ))
         ) : (
           <Text style={stili.vuoto}>Nessun preventivo ancora.</Text>
@@ -317,5 +326,7 @@ const stili = stiliTema((c) => StyleSheet.create({
     gap: 2,
   },
   preventivoNumero: { fontSize: 14, fontWeight: '700', color: c.testo },
+  preventivoRiga: { flexDirection: 'row', alignItems: 'center', gap: spazi.m },
+  preventivoApri: { fontSize: 14, fontWeight: '700', color: c.primarioChiaro },
   preventivoDati: { fontSize: 13, color: c.testoTenue },
 }));
