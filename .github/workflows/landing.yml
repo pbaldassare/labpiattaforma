@@ -1,0 +1,39 @@
+# Le landing (apps/web) su Cloudflare Workers, a ogni push su main che le tocca.
+# L'app venditore non passa da qui: la costruisce Cloudflare Pages da sola.
+name: Landing su Cloudflare
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - 'packages/shared/**'
+      - 'package-lock.json'
+      - '.github/workflows/landing.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: landing
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npx -y npm@11.16.0 ci
+      - run: npm run deploy --workspace @lab/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: daba97cd2972d30ce6fdcdabd845818a
+          # Valori pubblici, gli stessi di apps/web/wrangler.jsonc: qui servono
+          # mentre si costruisce, la' mentre il Worker gira.
+          SUPABASE_URL: https://gdeyyyirgriwknkcqcwl.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_XTHb1Z8mE4q1zvDToFdpXQ_ikA24GZJ
+          NEXT_PUBLIC_SUPABASE_URL: https://gdeyyyirgriwknkcqcwl.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XTHb1Z8mE4q1zvDToFdpXQ_ikA24GZJ
+          DOMINIO_LANDING: https://labpiattaforma-landing.paolo-baldassare.workers.dev
