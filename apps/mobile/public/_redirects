@@ -10,5 +10,6 @@
 /admin/attivazioni                /admin/attivazioni                200
 /admin/:id                        /admin/[id]                       200
 /offerte/:id                      /offerte/[id]                     200
+/cliente/:id                       /cliente/[id]                      200
 /pratiche/:id                     /pratiche/[id]                    200
 /preventivo/:pratica              /preventivo/[pratica]             200

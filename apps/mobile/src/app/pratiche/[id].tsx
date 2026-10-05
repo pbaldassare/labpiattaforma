@@ -17,6 +17,7 @@ import {
 } from '@lab/shared';
 
 import { Bottone, Campo, Input, Scelta, Sezione } from '@/components/modulo';
+import { PromemoriaPratica } from '@/components/promemoria';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
 import { colori, raggio, spazi, stiliTema } from '@/lib/tema';
@@ -53,13 +54,6 @@ interface RigaPreventivo {
   prezzo_cent: number;
   firmato_il: string | null;
 }
-
-/** Scorciatoie invece di un calendario: il richiamo si fissa in due tocchi. */
-const QUANDO = [
-  { etichetta: 'Domani', giorni: 1 },
-  { etichetta: 'Fra 3 giorni', giorni: 3 },
-  { etichetta: 'Fra una settimana', giorni: 7 },
-];
 
 export default function DettaglioPraticaSchermata() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -117,21 +111,6 @@ export default function DettaglioPraticaSchermata() {
     const { error } = await supabase
       .from(tab('contatto_storico'))
       .insert({ pratica_id: id, origine, testo });
-    if (error) setErrore(error.message);
-    void carica();
-  }
-
-  async function fissaRichiamo(giorni: number) {
-    if (!pratica) return;
-    const quando = new Date();
-    quando.setDate(quando.getDate() + giorni);
-    quando.setHours(9, 0, 0, 0);
-
-    const { error } = await supabase.from(tab('promemoria')).insert({
-      pratica_id: id,
-      quando: quando.toISOString(),
-      motivo: `Richiamare ${pratica.cliente_nome}`,
-    });
     if (error) setErrore(error.message);
     void carica();
   }
@@ -241,27 +220,8 @@ export default function DettaglioPraticaSchermata() {
         )}
       </Sezione>
 
-      <Sezione titolo="Quando richiamarlo">
-        {pratica.prossimo_promemoria && (
-          <Text style={stili.promemoria}>
-            Promemoria già fissato per il{' '}
-            {new Date(pratica.prossimo_promemoria).toLocaleDateString('it-IT', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-            })}
-          </Text>
-        )}
-        <View style={stili.quando}>
-          {QUANDO.map((q) => (
-            <Bottone
-              key={q.giorni}
-              tenue
-              testo={q.etichetta}
-              onPress={() => void fissaRichiamo(q.giorni)}
-            />
-          ))}
-        </View>
+      <Sezione titolo="Promemoria">
+        <PromemoriaPratica praticaId={id} nomeCliente={pratica.cliente_nome} />
       </Sezione>
 
       <Sezione titolo="Storico">

@@ -244,6 +244,7 @@ function Pile() {
       <Stack.Screen name="numeri" options={{ title: 'I tuoi numeri' }} />
       <Stack.Screen name="blocco" options={{ title: 'Attiva il modulo' }} />
       <Stack.Screen name="clienti" options={{ title: 'I tuoi clienti' }} />
+      <Stack.Screen name="cliente/[id]" options={{ title: 'Cliente' }} />
       <Stack.Screen name="offerte/index" options={{ title: 'Le tue offerte' }} />
       <Stack.Screen name="offerte/nuova" options={{ title: 'Nuova offerta · Vendita' }} />
       <Stack.Screen name="offerte/nuova-lungo" options={{ title: 'Nuova offerta · Noleggio lungo' }} />

@@ -151,6 +151,7 @@ export default function Clienti() {
             aperto={aperto === item.id}
             onApri={() => setAperto(aperto === item.id ? null : item.id)}
             onPratica={(id) => router.push({ pathname: '/pratiche/[id]', params: { id } })}
+            onModifica={() => router.push({ pathname: '/cliente/[id]', params: { id: item.id } })}
           />
           </Entra>
         )}
@@ -164,11 +165,13 @@ function SchedaCliente({
   aperto,
   onApri,
   onPratica,
+  onModifica,
 }: {
   cliente: Cliente;
   aperto: boolean;
   onApri: () => void;
   onPratica: (praticaId: string) => void;
+  onModifica: () => void;
 }) {
   const rivenditore = cliente.tipo === 'rivenditore';
 
@@ -232,6 +235,7 @@ function SchedaCliente({
             onPress={() => void Linking.openURL(`mailto:${cliente.email}`)}
           />
         )}
+        <Tasto icona="matita" testo="Modifica" onPress={onModifica} />
       </View>
 
       {aperto && (
@@ -270,7 +274,7 @@ function Tasto({
   testo,
   onPress,
 }: {
-  icona: 'telefona' | 'messaggio' | 'documento';
+  icona: 'telefona' | 'messaggio' | 'documento' | 'matita';
   testo: string;
   onPress: () => void;
 }) {
