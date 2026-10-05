@@ -152,8 +152,13 @@ export default function Profilo() {
 
     // user_id lo mette il database con auth.uid(): il client non lo manda mai,
     // così non può sbagliarlo né falsificarlo.
+    // Nell'aggiornamento serve comunque come filtro: il progetto rifiuta gli
+    // UPDATE senza WHERE ("UPDATE requires a WHERE clause"), anche quando la
+    // policy limiterebbe gia' la modifica alla riga dell'utente.
+    const { data: accesso } = await supabase.auth.getSession();
+    const mio = accesso.session?.user.id ?? '';
     const { error } = esisteGia
-      ? await supabase.from(tab('venditore')).update(valori).select().single()
+      ? await supabase.from(tab('venditore')).update(valori).eq('user_id', mio).select().single()
       : await supabase.from(tab('venditore')).insert(valori).select().single();
 
     setSalvataggio(false);
