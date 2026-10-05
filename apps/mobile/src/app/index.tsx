@@ -88,11 +88,12 @@ export default function Home() {
   const [numeri, setNumeri] = useState<Cruscotto | null>(null);
   const [moduli, setModuli] = useState<StatoModulo[]>([]);
   const [chiamate, setChiamate] = useState<DaRichiamare[]>([]);
+  const [praticheTotali, setPraticheTotali] = useState<number | null>(null);
   const [caricato, setCaricato] = useState(false);
   const [aggiornando, setAggiornando] = useState(false);
 
   const carica = useCallback(async () => {
-    const [v, c, m, p] = await Promise.all([
+    const [v, c, m, p, t] = await Promise.all([
       supabase.from(tab('venditore')).select('*').maybeSingle<Venditore>(),
       supabase.rpc(fn('cruscotto')),
       supabase.rpc(fn('stato_moduli')),
@@ -102,11 +103,14 @@ export default function Home() {
         .eq('stato', 'da_richiamare')
         .order('ultimo_contatto', { ascending: true, nullsFirst: true })
         .limit(3),
+      // Tutte, di qualunque stato: solo il conteggio, senza scaricare le righe.
+      supabase.from(tab('pratica')).select('id', { count: 'exact', head: true }),
     ]);
     setVenditore(v.data ?? null);
     setNumeri((c.data as Cruscotto | null) ?? null);
     setModuli((m.data as StatoModulo[] | null) ?? []);
     setChiamate((p.data ?? []) as unknown as DaRichiamare[]);
+    setPraticheTotali(t.count ?? null);
     setCaricato(true);
   }, []);
 
@@ -338,6 +342,7 @@ export default function Home() {
                 : undefined
             }
             unita={(numeri?.da_richiamare ?? 0) > 0 ? 'da richiamare' : 'in corso'}
+            nota={praticheTotali != null ? `su ${praticheTotali} in tutto` : undefined}
             onPress={() => router.push('/pratiche')}
           />
           <Scorciatoia
@@ -396,6 +401,7 @@ function Scorciatoia({
   etichetta,
   valore,
   unita,
+  nota,
   onPress,
 }: {
   icona: NomeIcona;
@@ -403,6 +409,8 @@ function Scorciatoia({
   valore?: number;
   /** La parola che dice cosa conta la cifra: "attive", "da richiamare". */
   unita: string;
+  /** Una riga piccola sotto la cifra, come il totale delle pratiche. */
+  nota?: string;
   onPress: () => void;
 }) {
   /*
@@ -438,6 +446,11 @@ function Scorciatoia({
           {unita}
         </Text>
       </View>
+      {nota && (
+        <Text style={stili.notaScorciatoia} numberOfLines={1}>
+          {nota}
+        </Text>
+      )}
     </Scheda>
   );
 }
@@ -657,6 +670,7 @@ const stili = stiliTema((c) => StyleSheet.create({
   etichettaScorciatoia: { fontSize: 14, fontWeight: '700', color: c.testo, flexShrink: 1 },
   rigaValore: { flexDirection: 'row', alignItems: 'baseline', gap: 5 },
   valoreScorciatoia: { ...testi.cifra, fontSize: 24, color: c.testo },
+  notaScorciatoia: { fontSize: 12, color: c.testoTenue, marginTop: 2 },
   unitaScorciatoia: { fontSize: 12, color: c.testoTenue, flexShrink: 1 },
 
   coda: {
