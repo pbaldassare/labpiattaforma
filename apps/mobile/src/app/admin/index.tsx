@@ -102,7 +102,8 @@ export default function AdminHome() {
             accessibilityLabel="Esci"
             style={({ pressed }) => [stili.esci, pressed && { opacity: 0.6 }]}
           >
-            <Icona nome="esci" dimensione={18} colore={colori.primarioChiaro} />
+            <Icona nome="esci" dimensione={16} colore={colori.primarioChiaro} />
+            <Text style={stili.esciTesto}>Esci</Text>
           </Pressable>
         </View>
         <View style={stili.numeri}>
@@ -155,6 +156,17 @@ export default function AdminHome() {
       ) : (
         visibili.map((u) => <SchedaUtente key={u.id} utente={u} onPress={() => router.push(`/admin/${u.id}`)} />)
       )}
+
+      {/* Anche in fondo, dove lo si cerca dopo aver finito: un'icona sola in
+          testa non bastava a far capire che li' si esce. */}
+      <Pressable
+        onPress={() => void supabase.auth.signOut()}
+        accessibilityRole="button"
+        style={({ pressed }) => [stili.esciFondo, pressed && { opacity: 0.6 }]}
+      >
+        <Icona nome="esci" dimensione={18} colore={colori.azione} />
+        <Text style={stili.esciFondoTesto}>Esci dal back office</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -266,13 +278,27 @@ const stili = stiliTema((c) =>
     titolo: { ...testi.titolo, fontSize: 22, color: c.testo },
     sottotitolo: { ...testi.piccolo, color: c.testoTenue },
     esci: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      flexDirection: 'row',
+      gap: 6,
+      height: 38,
+      paddingHorizontal: spazi.m,
+      borderRadius: 19,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: c.bordoTenue,
     },
+    esciTesto: { fontSize: 14, fontWeight: '700', color: c.primarioChiaro },
+    esciFondo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spazi.s,
+      minHeight: 48,
+      marginTop: spazi.l,
+      borderRadius: raggio.m,
+      backgroundColor: c.azioneTenue,
+    },
+    esciFondoTesto: { fontSize: 15, fontWeight: '700', color: c.azione },
     numeri: { flexDirection: 'row', alignItems: 'center' },
     numero: { flex: 1, alignItems: 'center', gap: 2 },
     numeroValore: { ...testi.cifra, fontSize: 30, color: c.testo },
