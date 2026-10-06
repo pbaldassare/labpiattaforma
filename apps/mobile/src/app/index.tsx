@@ -176,14 +176,20 @@ export default function Home() {
               <Cifretta
                 valore={numeri.offerte_attive}
                 etichetta={numeri.offerte_attive === 1 ? 'offerta attiva' : 'offerte attive'}
+                onPress={() => router.push('/offerte')}
               />
               <View style={stili.divisoreSottile} />
-              <Cifretta valore={numeri.aperture_30} etichetta="aperture, 30 giorni" />
+              <Cifretta
+                valore={numeri.aperture_30}
+                etichetta="aperture, 30 giorni"
+                onPress={() => router.push('/numeri')}
+              />
               <View style={stili.divisoreSottile} />
               <Cifretta
                 valore={numeri.contatti_30}
                 etichetta={numeri.contatti_30 === 1 ? 'ti ha scritto' : 'ti hanno scritto'}
                 tono={numeri.contatti_30 > 0 ? colori.accento : undefined}
+                onPress={() => router.push('/pratiche')}
               />
             </View>
           )}
@@ -456,22 +462,30 @@ function Scorciatoia({
 }
 
 /** Una delle tre cifre dell'intestazione: numero grosso, parola sotto. */
+/** Un numero si tocca: porta dove quel numero si vede per esteso. */
 function Cifretta({
   valore,
   etichetta,
   tono,
+  onPress,
 }: {
   valore: number;
   etichetta: string;
   tono?: string;
+  onPress?: () => void;
 }) {
   return (
-    <View style={stili.cifretta}>
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      style={({ pressed }) => [stili.cifretta, pressed && { opacity: 0.6 }]}
+    >
       <Text style={[stili.cifrettaValore, tono ? { color: tono } : null]}>{valore}</Text>
       <Text style={stili.cifrettaEtichetta} numberOfLines={2}>
         {etichetta}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 

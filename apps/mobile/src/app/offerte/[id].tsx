@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 
 import {
   ActivityIndicator,
+  Linking,
   Pressable,
   ScrollView,
   Share,
@@ -208,9 +209,12 @@ export default function DettaglioOfferta() {
 
       {errore ? <Text style={stili.errore}>{errore}</Text> : null}
 
+      <MandaAlCliente offerta={offerta} pagine={pagine} />
+
       <Bottone
         testo="Modifica l’offerta"
         icona="matita"
+        tipo="tenue"
         onPress={() =>
           router.push({
             pathname: DOVE_MODIFICA[offerta.modulo],
@@ -271,6 +275,60 @@ export default function DettaglioOfferta() {
         )}
       </View>
     </ScrollView>
+  );
+}
+
+/**
+ * Il gesto per cui l'offerta esiste: mandarla a un cliente. Sta in cima, non
+ * in fondo alla scheda della pagina, perche' e' la cosa che si fa piu' spesso.
+ * Il messaggio parte gia' scritto; il contatto lo sceglie WhatsApp.
+ */
+function MandaAlCliente({ offerta, pagine }: { offerta: Offerta; pagine: Contatori[] }) {
+  const pubblica = pagine.find((p) => p.tipo === 'pubblica' && p.pubblicata);
+  const riservata = pagine.find((p) => p.tipo === 'riservata' && p.pubblicata);
+
+  if (offerta.stato !== 'attiva' || !pubblica) {
+    return (
+      <View style={stili.mandaSpenta}>
+        <Icona nome="attenzione" dimensione={18} colore={colori.accento} />
+        <Text style={stili.mandaSpentaTesto}>
+          {offerta.stato === 'bozza'
+            ? 'È ancora una bozza: mettila su “Pubblicata” qui sotto per poterla mandare ai clienti.'
+            : 'La pagina non è visibile: pubblica l’offerta per poterla mandare ai clienti.'}
+        </Text>
+      </View>
+    );
+  }
+
+  function manda(pagina: Contatori) {
+    const indirizzo = urlPagina(DOMINIO, offerta.modulo, pagina.codice);
+    const testo = `Ciao! Ti mando ${offerta.titolo}: qui trovi foto, prezzo e tutti i dettagli.\n${indirizzo}`;
+    void Linking.openURL(`https://wa.me/?text=${encodeURIComponent(testo)}`);
+  }
+
+  return (
+    <View style={stili.manda}>
+      <Text style={stili.mandaTitolo}>Mandala al cliente</Text>
+      <Bottone testo="Manda su WhatsApp" icona="messaggio" onPress={() => manda(pubblica)} />
+      <View style={stili.mandaRiga}>
+        <Pressable
+          onPress={() => void Linking.openURL(urlPagina(DOMINIO, offerta.modulo, pubblica.codice))}
+          style={({ pressed }) => [stili.mandaSecondario, pressed && { opacity: 0.7 }]}
+        >
+          <Icona nome="occhio" dimensione={16} colore={colori.primarioChiaro} />
+          <Text style={stili.mandaSecondarioTesto}>Vedi la pagina</Text>
+        </Pressable>
+        {riservata && (
+          <Pressable
+            onPress={() => manda(riservata)}
+            style={({ pressed }) => [stili.mandaSecondario, pressed && { opacity: 0.7 }]}
+          >
+            <Icona nome="negozio" dimensione={16} colore={colori.primarioChiaro} />
+            <Text style={stili.mandaSecondarioTesto}>A un rivenditore</Text>
+          </Pressable>
+        )}
+      </View>
+    </View>
   );
 }
 
@@ -367,6 +425,36 @@ function Contatore({ numero, etichetta }: { numero: number; etichetta: string })
 }
 
 const stili = stiliTema((c) => StyleSheet.create({
+  manda: {
+    gap: spazi.s,
+    padding: spazi.l,
+    borderRadius: raggio.l,
+    backgroundColor: c.superficie,
+    borderWidth: 1,
+    borderColor: c.primario,
+  },
+  mandaTitolo: { fontSize: 16, fontWeight: '700', color: c.testo },
+  mandaRiga: { flexDirection: 'row', gap: spazi.s },
+  mandaSecondario: {
+    flex: 1,
+    minHeight: TOCCO_MINIMO,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spazi.xs,
+    borderRadius: raggio.m,
+    backgroundColor: c.superficieAlta,
+  },
+  mandaSecondarioTesto: { fontSize: 14, fontWeight: '600', color: c.primarioChiaro },
+  mandaSpenta: {
+    flexDirection: 'row',
+    gap: spazi.s,
+    alignItems: 'flex-start',
+    padding: spazi.l,
+    borderRadius: raggio.l,
+    backgroundColor: c.accentoTenue,
+  },
+  mandaSpentaTesto: { flex: 1, fontSize: 14, lineHeight: 20, color: c.testo },
   rigaTitolo: { flexDirection: 'row', alignItems: 'center', gap: spazi.s, flexWrap: 'wrap' },
   fondo: { paddingTop: spazi.xxl, gap: spazi.s },
   conferma: {
