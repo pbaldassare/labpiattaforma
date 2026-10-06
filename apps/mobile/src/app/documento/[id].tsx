@@ -118,6 +118,34 @@ function viewBoxFirma(tracciato: string): string {
 
 type Dato = { etichetta: string; valore: string };
 
+/**
+ * In stampa si vede solo il foglio: intestazione dell'app, pulsanti e fondo
+ * spariscono, e i colori della testata restano (i browser di norma tolgono
+ * gli sfondi per risparmiare inchiostro).
+ */
+const CSS_STAMPA = `
+@media print {
+  body * { visibility: hidden !important; }
+  [data-stampa], [data-stampa] * { visibility: visible !important; }
+  [data-stampa] { position: absolute !important; left: 50%; top: 0; width: 640px; transform: translateX(-50%); box-shadow: none !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}`;
+
+function useCssStampa() {
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const doc = (globalThis as unknown as { document?: Document }).document;
+    if (!doc) return;
+    const stile = doc.createElement('style');
+    stile.textContent = CSS_STAMPA;
+    doc.head.appendChild(stile);
+    return () => stile.remove();
+  }, []);
+}
+
+/** L'attributo data-stampa che il CSS qui sopra lascia visibile (solo sul web). */
+const SEGNO_STAMPA = { dataSet: { stampa: 'si' } } as object;
+
 /** I dati che contano per quel prodotto, nell'ordine in cui il cliente li cerca. */
 function datiDelProdotto(d: DatiPreventivo): Dato[] {
   const o = d.offerta;
@@ -189,6 +217,7 @@ export default function DocumentoPreventivo() {
   const [d, setD] = useState<DatiPreventivo | null>(null);
   const [caricato, setCaricato] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
+  useCssStampa();
 
   useEffect(() => {
     let vivo = true;
@@ -261,7 +290,7 @@ export default function DocumentoPreventivo() {
     <ScrollView style={stili.contenitore} contentContainerStyle={stili.contenuto}>
       <Stack.Screen options={{ title: `Preventivo n. ${pv.numero}` }} />
 
-      <View style={stili.foglio}>
+      <View style={stili.foglio} {...SEGNO_STAMPA}>
         {/* La testata nel colore del modulo: si capisce di cosa si parla
             prima di leggere una parola. */}
         <LinearGradient
