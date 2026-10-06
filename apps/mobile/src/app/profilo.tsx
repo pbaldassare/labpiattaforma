@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { FotoProfilo } from '@/components/foto-profilo';
 import { Testo as Text } from '@/components/testo';
 import {
   ERRORI_SLUG,
@@ -56,6 +57,7 @@ export default function Profilo() {
   const [whatsapp, setWhatsapp] = useState('');
   const [presentazione, setPresentazione] = useState('');
   const [rui, setRui] = useState('');
+  const [logo, setLogo] = useState<string | null>(null);
   const [statoSlug, setStatoSlug] = useState<StatoSlug>({ tipo: 'vuoto' });
 
   const attesa = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -109,6 +111,7 @@ export default function Profilo() {
         setWhatsapp(data.whatsapp ?? '');
         setPresentazione(data.presentazione ?? '');
         setRui(data.rui_numero ?? '');
+        setLogo(data.logo_path ?? null);
       }
       setCaricamento(false);
     })();
@@ -148,6 +151,7 @@ export default function Profilo() {
       whatsapp: whatsapp.trim() || null,
       presentazione: presentazione.trim() || null,
       rui_numero: rui.trim() || null,
+      logo_path: logo,
     };
 
     // user_id lo mette il database con auth.uid(): il client non lo manda mai,
@@ -171,6 +175,23 @@ export default function Profilo() {
     setSalvato(true);
   }
 
+  /**
+   * La foto si salva subito se il profilo c'e' gia': chi la cambia non deve
+   * ricordarsi di premere anche "Salva" in fondo. Se il profilo non c'e'
+   * ancora, parte insieme al primo salvataggio.
+   */
+  async function cambiaLogo(nuovo: string | null) {
+    if (esisteGia) {
+      const { data: accesso } = await supabase.auth.getSession();
+      const { error } = await supabase
+        .from(tab('venditore'))
+        .update({ logo_path: nuovo })
+        .eq('user_id', accesso.session?.user.id ?? '');
+      if (error) throw new Error(error.message);
+    }
+    setLogo(nuovo);
+  }
+
   if (caricamento) {
     return (
       <View style={stili.centrato}>
@@ -185,6 +206,8 @@ export default function Profilo() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
+        <FotoProfilo path={logo} nome={nome} onCambia={cambiaLogo} />
+
         <View style={stili.campo}>
           <Text style={stili.etichetta}>Nome che vedono i clienti</Text>
           <TextInput

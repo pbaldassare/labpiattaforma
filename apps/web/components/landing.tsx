@@ -279,9 +279,21 @@ export function SchedaVenditore({
         <div aria-hidden className="bolla absolute -top-16 -right-16 size-48 rounded-full bg-white/15 blur-2xl" />
         <div className="relative flex flex-col gap-5">
           <div className="flex items-center gap-4">
-            <span className="font-display flex size-14 shrink-0 items-center justify-center rounded-2xl bg-white/25 text-lg font-bold backdrop-blur">
-              {iniziali}
-            </span>
+            {venditore.logo_path ? (
+              <span className="relative size-14 shrink-0 overflow-hidden rounded-2xl ring-2 ring-white/70">
+                <Image
+                  src={urlFoto(venditore.logo_path)}
+                  alt={venditore.nome}
+                  fill
+                  sizes="56px"
+                  className="object-cover"
+                />
+              </span>
+            ) : (
+              <span className="font-display flex size-14 shrink-0 items-center justify-center rounded-2xl bg-white/25 text-lg font-bold backdrop-blur">
+                {iniziali}
+              </span>
+            )}
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold tracking-wide uppercase opacity-80">Ti segue</p>
               <p className="truncate text-xl font-extrabold">{venditore.nome}</p>
