@@ -17,6 +17,7 @@ import { BloccoIcona, Pillola, Scheda } from '@/components/base';
 import { Entra } from '@/components/movimento';
 import { Icona, type NomeIcona } from '@/components/icone';
 import { Bottone, Sezione } from '@/components/modulo';
+import { PrimiPassi } from '@/components/primi-passi';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
 import {
@@ -198,16 +199,17 @@ export default function Home() {
         <Scheda rilievo="media" style={stili.intestazione}>
           <Text style={stili.nome}>Benvenuto</Text>
           <Text style={stili.corpo}>
-            Compila il profilo e scegli l’indirizzo della tua vetrina: è da lì che i clienti ti
-            troveranno.
+            Qui gestisci le tue offerte e i clienti che ti scrivono. Si parte dai tre passi qui
+            sotto.
           </Text>
-          <Bottone
-            testo="Compila il profilo"
-            icona="impostazioni"
-            onPress={() => router.push('/profilo')}
-          />
         </Scheda>
       )}
+
+      <PrimiPassi
+        haProfilo={venditore != null}
+        haOfferte={(numeri?.offerte_attive ?? 0) > 0}
+        haAperture={(numeri?.aperture ?? 0) > 0}
+      />
 
       {/* Il prossimo richiamo, se c'e', sta sopra tutto: e' l'unica cosa che
           chiede di fare qualcosa adesso. */}
