@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -26,6 +26,7 @@ import {
 } from '@lab/shared';
 
 import { Bottone, Campo, Input, Sezione } from '@/components/modulo';
+import { Procedura } from '@/components/procedura';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
 import { colori, raggio, spazi, stiliTema, TOCCO_MINIMO } from '@/lib/tema';
@@ -43,6 +44,7 @@ export default function NuovaOffertaLungo() {
   // allineate per sempre.
   const { id } = useLocalSearchParams<{ id?: string }>();
   const modifica = typeof id === 'string' && id.length > 0;
+  const scorrimento = useRef<ScrollView>(null);
 
   const [marca, setMarca] = useState('');
   const [modello, setModello] = useState('');
@@ -229,164 +231,208 @@ export default function NuovaOffertaLungo() {
           title: modifica ? 'Modifica · Noleggio lungo' : 'Nuova offerta · Noleggio lungo',
         }}
       />
-      <ScrollView contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
-        <Sezione titolo="Il mezzo">
-          <Campo etichetta="Marca" obbligatorio>
-            <Input value={marca} onChangeText={setMarca} placeholder="Volkswagen" />
-          </Campo>
-          <Campo etichetta="Modello" obbligatorio>
-            <Input value={modello} onChangeText={setModello} placeholder="T-Roc" />
-          </Campo>
-          <Campo etichetta="Allestimento">
-            <Input
-              value={allestimento}
-              onChangeText={setAllestimento}
-              placeholder="1.0 TSI Life"
-            />
-          </Campo>
-        </Sezione>
+      <ScrollView ref={scorrimento} contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
+        <Procedura
+          liberi={modifica}
+          onCambiaPasso={() => scorrimento.current?.scrollTo({ y: 0, animated: true })}
+          passi={[
+            {
+              titolo: 'Il mezzo',
+              valido: marca.trim() !== '' && modello.trim() !== '',
+              motivo: 'Scrivi marca e modello per andare avanti.',
+              contenuto: (
+                <>
+                <Sezione titolo="Il mezzo">
+                  <Campo etichetta="Marca" obbligatorio>
+                    <Input value={marca} onChangeText={setMarca} placeholder="Volkswagen" />
+                  </Campo>
+                  <Campo etichetta="Modello" obbligatorio>
+                    <Input value={modello} onChangeText={setModello} placeholder="T-Roc" />
+                  </Campo>
+                  <Campo etichetta="Allestimento">
+                    <Input
+                      value={allestimento}
+                      onChangeText={setAllestimento}
+                      placeholder="1.0 TSI Life"
+                    />
+                  </Campo>
+                </Sezione>
+                </>
+              ),
+            },
+            {
+              titolo: 'Durate e km',
+              contenuto: (
+                <>
 
-        <Sezione titolo="Quali durate offri">
-          <View style={stili.pasticche}>
-            {DURATE_POSSIBILI.map((d) => (
-              <Pasticca
-                key={d}
-                etichetta={formattaDurata(d)}
-                attiva={durate.includes(d)}
-                onPress={() => setDurate(commuta(durate, d))}
-              />
-            ))}
-          </View>
-        </Sezione>
-
-        <Sezione titolo="Quali chilometraggi">
-          <View style={stili.pasticche}>
-            {KM_POSSIBILI.map((k) => (
-              <Pasticca
-                key={k}
-                etichetta={formattaNumero(k)}
-                attiva={km.includes(k)}
-                onPress={() => setKm(commuta(km, k))}
-              />
-            ))}
-          </View>
-        </Sezione>
-
-        <Sezione titolo="Canoni mensili">
-          {/* Due listini separati invece di diciotto caselle sullo stesso
-              schermo: il venditore compila prima quelli al pubblico, e passa
-              ai riservati solo se li usa. */}
-          <View style={stili.pasticche}>
-            <Pasticca
-              etichetta="Al pubblico"
-              attiva={listino === 'pubblico'}
-              onPress={() => setListino('pubblico')}
-            />
-            <Pasticca
-              etichetta={`Rivenditori${conRivenditore > 0 ? ` (${conRivenditore})` : ''}`}
-              attiva={listino === 'rivenditore'}
-              onPress={() => setListino('rivenditore')}
-            />
-          </View>
-
-          {durate.length === 0 || km.length === 0 ? (
-            <Text style={stili.nota}>Scegli almeno una durata e un chilometraggio.</Text>
-          ) : (
-            durate.map((d) => (
-              <View key={d} style={stili.rigaGriglia}>
-                <Text style={stili.durata}>{formattaDurata(d)}</Text>
-                <View style={stili.caselle}>
-                  {km.map((k) => (
-                    <View key={k} style={stili.casella}>
-                      <Text style={stili.kmEtichetta}>{formattaNumero(k)}</Text>
-                      <Input
-                        value={canoni[chiave(d, k, listino)] ?? ''}
-                        onChangeText={(v) =>
-                          setCanoni((x) => ({ ...x, [chiave(d, k, listino)]: v }))
-                        }
-                        keyboardType="decimal-pad"
-                        placeholder="—"
-                        style={stili.casellaInput}
+                <Sezione titolo="Quali durate offri">
+                  <View style={stili.pasticche}>
+                    {DURATE_POSSIBILI.map((d) => (
+                      <Pasticca
+                        key={d}
+                        etichetta={formattaDurata(d)}
+                        attiva={durate.includes(d)}
+                        onPress={() => setDurate(commuta(durate, d))}
                       />
+                    ))}
+                  </View>
+                </Sezione>
+
+                <Sezione titolo="Quali chilometraggi">
+                  <View style={stili.pasticche}>
+                    {KM_POSSIBILI.map((k) => (
+                      <Pasticca
+                        key={k}
+                        etichetta={formattaNumero(k)}
+                        attiva={km.includes(k)}
+                        onPress={() => setKm(commuta(km, k))}
+                      />
+                    ))}
+                  </View>
+                </Sezione>
+                </>
+              ),
+            },
+            {
+              titolo: 'Canoni',
+              valido: griglia.length > 0,
+              motivo: 'Inserisci almeno un canone.',
+              contenuto: (
+                <>
+
+                <Sezione titolo="Canoni mensili">
+                  {/* Due listini separati invece di diciotto caselle sullo stesso
+                      schermo: il venditore compila prima quelli al pubblico, e passa
+                      ai riservati solo se li usa. */}
+                  <View style={stili.pasticche}>
+                    <Pasticca
+                      etichetta="Al pubblico"
+                      attiva={listino === 'pubblico'}
+                      onPress={() => setListino('pubblico')}
+                    />
+                    <Pasticca
+                      etichetta={`Rivenditori${conRivenditore > 0 ? ` (${conRivenditore})` : ''}`}
+                      attiva={listino === 'rivenditore'}
+                      onPress={() => setListino('rivenditore')}
+                    />
+                  </View>
+
+                  {durate.length === 0 || km.length === 0 ? (
+                    <Text style={stili.nota}>Scegli almeno una durata e un chilometraggio.</Text>
+                  ) : (
+                    durate.map((d) => (
+                      <View key={d} style={stili.rigaGriglia}>
+                        <Text style={stili.durata}>{formattaDurata(d)}</Text>
+                        <View style={stili.caselle}>
+                          {km.map((k) => (
+                            <View key={k} style={stili.casella}>
+                              <Text style={stili.kmEtichetta}>{formattaNumero(k)}</Text>
+                              <Input
+                                value={canoni[chiave(d, k, listino)] ?? ''}
+                                onChangeText={(v) =>
+                                  setCanoni((x) => ({ ...x, [chiave(d, k, listino)]: v }))
+                                }
+                                keyboardType="decimal-pad"
+                                placeholder="—"
+                                style={stili.casellaInput}
+                              />
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    ))
+                  )}
+
+                  {listino === 'rivenditore' && (
+                    <Text style={stili.nota}>
+                      Facoltativi. Se ne compili almeno uno nasce la pagina riservata, con link
+                      separato e non pubblicata.
+                    </Text>
+                  )}
+
+                  {minimo != null && (
+                    <Text style={stili.riepilogo}>
+                      {griglia.length} combinazioni · in pagina comparirà “a partire da{' '}
+                      {formattaEuro(minimo)} al mese”
+                    </Text>
+                  )}
+                </Sezione>
+                </>
+              ),
+            },
+            {
+              titolo: 'Condizioni',
+              contenuto: (
+                <>
+
+                <Sezione titolo="Condizioni">
+                  <Campo etichetta="Anticipo">
+                    <Input
+                      value={anticipo}
+                      onChangeText={setAnticipo}
+                      keyboardType="decimal-pad"
+                      placeholder="3.000"
+                    />
+                  </Campo>
+                  <Campo etichetta="Tempi di consegna">
+                    <Input
+                      value={consegna}
+                      onChangeText={setConsegna}
+                      placeholder="Pronta consegna, oppure 8 settimane"
+                    />
+                  </Campo>
+                  <Campo etichetta="Cosa è compreso nel canone">
+                    <View style={stili.pasticche}>
+                      {SERVIZI.map((s) => (
+                        <Pasticca
+                          key={s}
+                          etichetta={ETICHETTA_SERVIZIO[s]}
+                          attiva={servizi.includes(s)}
+                          onPress={() => setServizi(commuta(servizi, s))}
+                        />
+                      ))}
                     </View>
-                  ))}
-                </View>
-              </View>
-            ))
-          )}
-
-          {listino === 'rivenditore' && (
-            <Text style={stili.nota}>
-              Facoltativi. Se ne compili almeno uno nasce la pagina riservata, con link
-              separato e non pubblicata.
-            </Text>
-          )}
-
-          {minimo != null && (
-            <Text style={stili.riepilogo}>
-              {griglia.length} combinazioni · in pagina comparirà “a partire da{' '}
-              {formattaEuro(minimo)} al mese”
-            </Text>
-          )}
-        </Sezione>
-
-        <Sezione titolo="Condizioni">
-          <Campo etichetta="Anticipo">
-            <Input
-              value={anticipo}
-              onChangeText={setAnticipo}
-              keyboardType="decimal-pad"
-              placeholder="3.000"
-            />
-          </Campo>
-          <Campo etichetta="Tempi di consegna">
-            <Input
-              value={consegna}
-              onChangeText={setConsegna}
-              placeholder="Pronta consegna, oppure 8 settimane"
-            />
-          </Campo>
-          <Campo etichetta="Cosa è compreso nel canone">
-            <View style={stili.pasticche}>
-              {SERVIZI.map((s) => (
-                <Pasticca
-                  key={s}
-                  etichetta={ETICHETTA_SERVIZIO[s]}
-                  attiva={servizi.includes(s)}
-                  onPress={() => setServizi(commuta(servizi, s))}
-                />
-              ))}
-            </View>
-          </Campo>
-        </Sezione>
-
-        {errore ? <Text style={stili.errore}>{errore}</Text> : null}
-
-        <View style={stili.azioni}>
-          {modifica ? (
-            <Bottone
-              testo="Salva le modifiche"
-              inCorso={inCorso}
-              disabilitato={!puoSalvare}
-              onPress={() => void salva('attiva')}
-            />
-          ) : (
+                  </Campo>
+                </Sezione>
+                </>
+              ),
+            },
+          ]}
+          finale={
             <>
-          <Bottone
-            testo="Salva e pubblica"
-            inCorso={inCorso}
-            disabilitato={!puoSalvare}
-            onPress={() => void salva('attiva')}
-          />
-          <Bottone
-            tenue
-            testo="Salva come bozza"
-            disabilitato={!puoSalvare}
-            onPress={() => void salva('bozza')}
-          />
+              {!puoSalvare && (
+                <Text style={stili.errore}>Manca qualcosa: torna ai passi precedenti e completa i campi obbligatori.</Text>
+              )}
+              {errore ? <Text style={stili.errore}>{errore}</Text> : null}
+
+              <View style={stili.azioni}>
+                {modifica ? (
+                  <Bottone
+                    testo="Salva le modifiche"
+                    inCorso={inCorso}
+                    disabilitato={!puoSalvare}
+                    onPress={() => void salva('attiva')}
+                  />
+                ) : (
+                  <>
+                <Bottone
+                  testo="Salva e pubblica"
+                  inCorso={inCorso}
+                  disabilitato={!puoSalvare}
+                  onPress={() => void salva('attiva')}
+                />
+                <Bottone
+                  tenue
+                  testo="Salva come bozza"
+                  disabilitato={!puoSalvare}
+                  onPress={() => void salva('bozza')}
+                />
+                  </>
+                )}
+              </View>
             </>
-          )}
-        </View>
+          }
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );

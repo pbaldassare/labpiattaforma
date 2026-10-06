@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -24,6 +24,7 @@ import {
 
 import { Scheda } from '@/components/base';
 import { Bottone, Campo, Input, Scelta, Sezione } from '@/components/modulo';
+import { Procedura } from '@/components/procedura';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
 import { colori, spazi, stiliTema, testi } from '@/lib/tema';
@@ -48,6 +49,7 @@ export default function NuovaBreve() {
   // allineate per sempre.
   const { id } = useLocalSearchParams<{ id?: string }>();
   const modifica = typeof id === 'string' && id.length > 0;
+  const scorrimento = useRef<ScrollView>(null);
   const oggi = aGiorno(new Date());
 
   const [modello, setModello] = useState('');
@@ -188,183 +190,220 @@ export default function NuovaBreve() {
       <Stack.Screen
         options={{ title: modifica ? 'Modifica · Noleggio breve' : 'Nuova offerta · Noleggio breve' }}
       />
-      <ScrollView contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
-        <Sezione titolo="Il mezzo">
-          <Campo etichetta="Modello" obbligatorio>
-            <Input value={modello} onChangeText={setModello} placeholder="Fiat 500 Hybrid" />
-          </Campo>
-          <Campo etichetta="Targa">
-            <Input
-              value={targa}
-              onChangeText={(v) => setTarga(v.toUpperCase())}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              placeholder="GE456FH"
-            />
-          </Campo>
-        </Sezione>
+      <ScrollView ref={scorrimento} contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
+        <Procedura
+          liberi={modifica}
+          onCambiaPasso={() => scorrimento.current?.scrollTo({ y: 0, animated: true })}
+          passi={[
+            {
+              titolo: 'Il mezzo',
+              valido: modello.trim() !== '',
+              motivo: 'Scrivi il modello per andare avanti.',
+              contenuto: (
+                <>
+                <Sezione titolo="Il mezzo">
+                  <Campo etichetta="Modello" obbligatorio>
+                    <Input value={modello} onChangeText={setModello} placeholder="Fiat 500 Hybrid" />
+                  </Campo>
+                  <Campo etichetta="Targa">
+                    <Input
+                      value={targa}
+                      onChangeText={(v) => setTarga(v.toUpperCase())}
+                      autoCapitalize="characters"
+                      autoCorrect={false}
+                      placeholder="GE456FH"
+                    />
+                  </Campo>
+                </Sezione>
 
-        <Sezione titolo="Per quanto resta a noleggio">
-          <Scelta
-            valore={String(finestra)}
-            consentiVuoto={false}
-            onCambia={(v) => setFinestra(Number(v ?? 180))}
-            opzioni={FINESTRE.map((f) => ({ valore: String(f.giorni), etichetta: f.etichetta }))}
-          />
-          <Text style={stili.nota}>
-            Il cliente potrà prenotare da oggi fino al{' '}
-            {new Date(aggiungiGiorni(oggi, finestra)).toLocaleDateString('it-IT')}.
-          </Text>
-        </Sezione>
+                <Sezione titolo="Per quanto resta a noleggio">
+                  <Scelta
+                    valore={String(finestra)}
+                    consentiVuoto={false}
+                    onCambia={(v) => setFinestra(Number(v ?? 180))}
+                    opzioni={FINESTRE.map((f) => ({ valore: String(f.giorni), etichetta: f.etichetta }))}
+                  />
+                  <Text style={stili.nota}>
+                    Il cliente potrà prenotare da oggi fino al{' '}
+                    {new Date(aggiungiGiorni(oggi, finestra)).toLocaleDateString('it-IT')}.
+                  </Text>
+                </Sezione>
+                </>
+              ),
+            },
+            {
+              titolo: 'Tariffe',
+              valido: tariffaCent != null && tariffaCent > 0,
+              motivo: 'Serve la tariffa al giorno.',
+              contenuto: (
+                <>
 
-        <Sezione titolo="Tariffe">
-          <Campo etichetta="Al giorno" obbligatorio>
-            <Input
-              value={tariffa}
-              onChangeText={setTariffa}
-              keyboardType="decimal-pad"
-              placeholder="49"
-            />
-          </Campo>
-          <Campo
-            etichetta="Al giorno per i rivenditori"
-            aiuto="Se la compili nasce la pagina riservata, con link separato."
-          >
-            <Input
-              value={tariffaRiv}
-              onChangeText={setTariffaRiv}
-              keyboardType="decimal-pad"
-              placeholder="42"
-            />
-          </Campo>
+                <Sezione titolo="Tariffe">
+                  <Campo etichetta="Al giorno" obbligatorio>
+                    <Input
+                      value={tariffa}
+                      onChangeText={setTariffa}
+                      keyboardType="decimal-pad"
+                      placeholder="49"
+                    />
+                  </Campo>
+                  <Campo
+                    etichetta="Al giorno per i rivenditori"
+                    aiuto="Se la compili nasce la pagina riservata, con link separato."
+                  >
+                    <Input
+                      value={tariffaRiv}
+                      onChangeText={setTariffaRiv}
+                      keyboardType="decimal-pad"
+                      placeholder="42"
+                    />
+                  </Campo>
 
-          <Text style={stili.nota}>
-            Tariffe ridotte per i noleggi lunghi. Facoltative: se le lasci vuote resta quella
-            piena.
-          </Text>
-          <View style={stili.soglie}>
-            <View style={stili.meta}>
-              <Campo etichetta="Oltre 3 giorni">
-                <Input
-                  value={oltre3}
-                  onChangeText={setOltre3}
-                  keyboardType="decimal-pad"
-                  placeholder="44"
-                  style={stili.centrato}
-                />
-              </Campo>
-            </View>
-            <View style={stili.meta}>
-              <Campo etichetta="Oltre 7">
-                <Input
-                  value={oltre7}
-                  onChangeText={setOltre7}
-                  keyboardType="decimal-pad"
-                  placeholder="39"
-                  style={stili.centrato}
-                />
-              </Campo>
-            </View>
-            <View style={stili.meta}>
-              <Campo etichetta="Oltre 15">
-                <Input
-                  value={oltre15}
-                  onChangeText={setOltre15}
-                  keyboardType="decimal-pad"
-                  placeholder="34"
-                  style={stili.centrato}
-                />
-              </Campo>
-            </View>
-          </View>
+                  <Text style={stili.nota}>
+                    Tariffe ridotte per i noleggi lunghi. Facoltative: se le lasci vuote resta quella
+                    piena.
+                  </Text>
+                  <View style={stili.soglie}>
+                    <View style={stili.meta}>
+                      <Campo etichetta="Oltre 3 giorni">
+                        <Input
+                          value={oltre3}
+                          onChangeText={setOltre3}
+                          keyboardType="decimal-pad"
+                          placeholder="44"
+                          style={stili.centrato}
+                        />
+                      </Campo>
+                    </View>
+                    <View style={stili.meta}>
+                      <Campo etichetta="Oltre 7">
+                        <Input
+                          value={oltre7}
+                          onChangeText={setOltre7}
+                          keyboardType="decimal-pad"
+                          placeholder="39"
+                          style={stili.centrato}
+                        />
+                      </Campo>
+                    </View>
+                    <View style={stili.meta}>
+                      <Campo etichetta="Oltre 15">
+                        <Input
+                          value={oltre15}
+                          onChangeText={setOltre15}
+                          keyboardType="decimal-pad"
+                          placeholder="34"
+                          style={stili.centrato}
+                        />
+                      </Campo>
+                    </View>
+                  </View>
 
-          {tariffaCent != null && (
-            <Scheda style={stili.esempio}>
-              <Text style={stili.esempioTitolo}>Cosa vedrà il cliente</Text>
-              <Riga giorni={2} tariffa={tariffaCent} oltre3={analizzaEuro(oltre3)} oltre7={analizzaEuro(oltre7)} oltre15={analizzaEuro(oltre15)} />
-              <Riga giorni={5} tariffa={tariffaCent} oltre3={analizzaEuro(oltre3)} oltre7={analizzaEuro(oltre7)} oltre15={analizzaEuro(oltre15)} />
-              <Riga giorni={10} tariffa={tariffaCent} oltre3={analizzaEuro(oltre3)} oltre7={analizzaEuro(oltre7)} oltre15={analizzaEuro(oltre15)} />
-            </Scheda>
-          )}
-        </Sezione>
+                  {tariffaCent != null && (
+                    <Scheda style={stili.esempio}>
+                      <Text style={stili.esempioTitolo}>Cosa vedrà il cliente</Text>
+                      <Riga giorni={2} tariffa={tariffaCent} oltre3={analizzaEuro(oltre3)} oltre7={analizzaEuro(oltre7)} oltre15={analizzaEuro(oltre15)} />
+                      <Riga giorni={5} tariffa={tariffaCent} oltre3={analizzaEuro(oltre3)} oltre7={analizzaEuro(oltre7)} oltre15={analizzaEuro(oltre15)} />
+                      <Riga giorni={10} tariffa={tariffaCent} oltre3={analizzaEuro(oltre3)} oltre7={analizzaEuro(oltre7)} oltre15={analizzaEuro(oltre15)} />
+                    </Scheda>
+                  )}
+                </Sezione>
+                </>
+              ),
+            },
+            {
+              titolo: 'Condizioni',
+              contenuto: (
+                <>
 
-        <Sezione titolo="Condizioni">
-          <View style={stili.soglie}>
-            <View style={stili.meta}>
-              <Campo etichetta="Km al giorno">
-                <Input
-                  value={kmInclusi}
-                  onChangeText={setKmInclusi}
-                  keyboardType="number-pad"
-                  placeholder="150"
-                />
-              </Campo>
-            </View>
-            <View style={stili.meta}>
-              <Campo etichetta="Km in più">
-                <Input
-                  value={kmExtra}
-                  onChangeText={setKmExtra}
-                  keyboardType="decimal-pad"
-                  placeholder="0,30"
-                />
-              </Campo>
-            </View>
-          </View>
+                <Sezione titolo="Condizioni">
+                  <View style={stili.soglie}>
+                    <View style={stili.meta}>
+                      <Campo etichetta="Km al giorno">
+                        <Input
+                          value={kmInclusi}
+                          onChangeText={setKmInclusi}
+                          keyboardType="number-pad"
+                          placeholder="150"
+                        />
+                      </Campo>
+                    </View>
+                    <View style={stili.meta}>
+                      <Campo etichetta="Km in più">
+                        <Input
+                          value={kmExtra}
+                          onChangeText={setKmExtra}
+                          keyboardType="decimal-pad"
+                          placeholder="0,30"
+                        />
+                      </Campo>
+                    </View>
+                  </View>
 
-          <Campo
-            etichetta="Deposito"
-            aiuto="Quanto il cliente versa per tenere le date. Le regole di rimborso restano da decidere."
-          >
-            <Input
-              value={deposito}
-              onChangeText={setDeposito}
-              keyboardType="decimal-pad"
-              placeholder="250"
-            />
-          </Campo>
+                  <Campo
+                    etichetta="Deposito"
+                    aiuto="Quanto il cliente versa per tenere le date. Le regole di rimborso restano da decidere."
+                  >
+                    <Input
+                      value={deposito}
+                      onChangeText={setDeposito}
+                      keyboardType="decimal-pad"
+                      placeholder="250"
+                    />
+                  </Campo>
 
-          <View style={stili.soglie}>
-            <View style={stili.meta}>
-              <Campo etichetta="Età minima">
-                <Input value={eta} onChangeText={setEta} keyboardType="number-pad" />
-              </Campo>
-            </View>
-            <View style={stili.meta}>
-              <Campo etichetta="Anni di patente">
-                <Input value={patente} onChangeText={setPatente} keyboardType="number-pad" />
-              </Campo>
-            </View>
-          </View>
-        </Sezione>
-
-        {errore ? <Text style={stili.errore}>{errore}</Text> : null}
-
-        <View style={stili.azioni}>
-          {modifica ? (
-            <Bottone
-              testo="Salva le modifiche"
-              inCorso={inCorso}
-              disabilitato={!puoSalvare}
-              onPress={() => void salva('attiva')}
-            />
-          ) : (
+                  <View style={stili.soglie}>
+                    <View style={stili.meta}>
+                      <Campo etichetta="Età minima">
+                        <Input value={eta} onChangeText={setEta} keyboardType="number-pad" />
+                      </Campo>
+                    </View>
+                    <View style={stili.meta}>
+                      <Campo etichetta="Anni di patente">
+                        <Input value={patente} onChangeText={setPatente} keyboardType="number-pad" />
+                      </Campo>
+                    </View>
+                  </View>
+                </Sezione>
+                </>
+              ),
+            },
+          ]}
+          finale={
             <>
-              <Bottone
-                testo="Salva e pubblica"
-                inCorso={inCorso}
-                disabilitato={!puoSalvare}
-                onPress={() => void salva('attiva')}
-              />
-              <Bottone
-                tenue
-                testo="Salva come bozza"
-                disabilitato={!puoSalvare || inCorso}
-                onPress={() => void salva('bozza')}
-              />
+              {!puoSalvare && (
+                <Text style={stili.errore}>Manca qualcosa: torna ai passi precedenti e completa i campi obbligatori.</Text>
+              )}
+              {errore ? <Text style={stili.errore}>{errore}</Text> : null}
+
+              <View style={stili.azioni}>
+                {modifica ? (
+                  <Bottone
+                    testo="Salva le modifiche"
+                    inCorso={inCorso}
+                    disabilitato={!puoSalvare}
+                    onPress={() => void salva('attiva')}
+                  />
+                ) : (
+                  <>
+                    <Bottone
+                      testo="Salva e pubblica"
+                      inCorso={inCorso}
+                      disabilitato={!puoSalvare}
+                      onPress={() => void salva('attiva')}
+                    />
+                    <Bottone
+                      tenue
+                      testo="Salva come bozza"
+                      disabilitato={!puoSalvare || inCorso}
+                      onPress={() => void salva('bozza')}
+                    />
+                  </>
+                )}
+              </View>
             </>
-          )}
-        </View>
+          }
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );

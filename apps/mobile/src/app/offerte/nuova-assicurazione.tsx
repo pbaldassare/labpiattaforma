@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -28,6 +28,7 @@ import {
 import { Scheda } from '@/components/base';
 import { Icona } from '@/components/icone';
 import { Bottone, Campo, Input, Scelta, Sezione } from '@/components/modulo';
+import { Procedura } from '@/components/procedura';
 import { Testo as Text } from '@/components/testo';
 import { supabase } from '@/lib/supabase';
 import { colori, raggio, spazi, stiliTema, testi, TOCCO_MINIMO } from '@/lib/tema';
@@ -37,6 +38,7 @@ export default function NuovaAssicurazione() {
   // Con un id si sta correggendo una polizza che esiste gia'.
   const { id } = useLocalSearchParams<{ id?: string }>();
   const modifica = typeof id === 'string' && id.length > 0;
+  const scorrimento = useRef<ScrollView>(null);
 
   const [compagnia, setCompagnia] = useState('');
   const [prodotto, setProdotto] = useState('');
@@ -191,166 +193,203 @@ export default function NuovaAssicurazione() {
     >
       {/* Il titolo dice cosa si sta facendo. */}
       <Stack.Screen options={{ title: modifica ? 'Modifica polizza' : 'Nuova polizza' }} />
-      <ScrollView contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
-        {/* Avvisare prima, non dopo aver compilato tutto e premuto salva. */}
-        {rui !== null && !haRui && (
-          <Scheda style={stili.avviso}>
-            <Icona nome="attenzione" dimensione={18} colore={colori.accento} />
-            <Text style={stili.avvisoTesto}>
-              Non hai ancora il numero RUI nel profilo. Puoi preparare il prodotto, ma per
-              pubblicarlo serve: senza iscrizione, proporre polizze non è consentito.
-            </Text>
-          </Scheda>
-        )}
+      <ScrollView ref={scorrimento} contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
+        <Procedura
+          liberi={modifica}
+          onCambiaPasso={() => scorrimento.current?.scrollTo({ y: 0, animated: true })}
+          passi={[
+            {
+              titolo: 'Il prodotto',
+              valido: compagnia.trim() !== '' && prodotto.trim() !== '',
+              motivo: 'Scrivi compagnia e nome del prodotto.',
+              contenuto: (
+                <>
+                {/* Avvisare prima, non dopo aver compilato tutto e premuto salva. */}
+                {rui !== null && !haRui && (
+                  <Scheda style={stili.avviso}>
+                    <Icona nome="attenzione" dimensione={18} colore={colori.accento} />
+                    <Text style={stili.avvisoTesto}>
+                      Non hai ancora il numero RUI nel profilo. Puoi preparare il prodotto, ma per
+                      pubblicarlo serve: senza iscrizione, proporre polizze non è consentito.
+                    </Text>
+                  </Scheda>
+                )}
 
-        <Sezione titolo="Il prodotto">
-          <Campo etichetta="Compagnia" obbligatorio>
-            <Input value={compagnia} onChangeText={setCompagnia} placeholder="Allianz" />
-          </Campo>
-          <Campo etichetta="Nome del prodotto" obbligatorio>
-            <Input value={prodotto} onChangeText={setProdotto} placeholder="Auto Sicura" />
-          </Campo>
-          <Campo etichetta="Tipo di rischio">
-            <Scelta
-              valore={rischio}
-              consentiVuoto={false}
-              onCambia={(v) => setRischio((v ?? 'auto') as TipoRischio)}
-              opzioni={TIPI_RISCHIO.map((t) => ({ valore: t, etichetta: ETICHETTA_RISCHIO[t] }))}
-            />
-          </Campo>
-        </Sezione>
+                <Sezione titolo="Il prodotto">
+                  <Campo etichetta="Compagnia" obbligatorio>
+                    <Input value={compagnia} onChangeText={setCompagnia} placeholder="Allianz" />
+                  </Campo>
+                  <Campo etichetta="Nome del prodotto" obbligatorio>
+                    <Input value={prodotto} onChangeText={setProdotto} placeholder="Auto Sicura" />
+                  </Campo>
+                  <Campo etichetta="Tipo di rischio">
+                    <Scelta
+                      valore={rischio}
+                      consentiVuoto={false}
+                      onCambia={(v) => setRischio((v ?? 'auto') as TipoRischio)}
+                      opzioni={TIPI_RISCHIO.map((t) => ({ valore: t, etichetta: ETICHETTA_RISCHIO[t] }))}
+                    />
+                  </Campo>
+                </Sezione>
+                </>
+              ),
+            },
+            {
+              titolo: 'Numeri',
+              valido: premioCent != null && premioCent > 0,
+              motivo: 'Serve il premio di partenza.',
+              contenuto: (
+                <>
 
-        <Sezione titolo="Numeri">
-          <Campo
-            etichetta="Premio di partenza"
-            obbligatorio
-            aiuto="In pagina compare come “a partire da”: il preventivo esatto lo fai tu."
-          >
-            <Input
-              value={premio}
-              onChangeText={setPremio}
-              keyboardType="decimal-pad"
-              placeholder="450"
-            />
-          </Campo>
-          <Campo etichetta="Provvigione" aiuto="Solo per te: non compare su nessuna pagina.">
-            <Input
-              value={provvigione}
-              onChangeText={setProvvigione}
-              keyboardType="decimal-pad"
-              placeholder="90"
-            />
-          </Campo>
-          <View style={stili.affiancati}>
-            <View style={stili.meta}>
-              <Campo etichetta="Massimale">
-                <Input
-                  value={massimale}
-                  onChangeText={setMassimale}
-                  keyboardType="decimal-pad"
-                  placeholder="6.000.000"
-                />
-              </Campo>
-            </View>
-            <View style={stili.meta}>
-              <Campo etichetta="Franchigia">
-                <Input
-                  value={franchigia}
-                  onChangeText={setFranchigia}
-                  keyboardType="decimal-pad"
-                  placeholder="300"
-                />
-              </Campo>
-            </View>
-          </View>
-          <Campo etichetta="Durata in mesi">
-            <Input
-              value={durata}
-              onChangeText={setDurata}
-              keyboardType="number-pad"
-              placeholder="12"
-            />
-          </Campo>
-        </Sezione>
+                <Sezione titolo="Numeri">
+                  <Campo
+                    etichetta="Premio di partenza"
+                    obbligatorio
+                    aiuto="In pagina compare come “a partire da”: il preventivo esatto lo fai tu."
+                  >
+                    <Input
+                      value={premio}
+                      onChangeText={setPremio}
+                      keyboardType="decimal-pad"
+                      placeholder="450"
+                    />
+                  </Campo>
+                  <Campo etichetta="Provvigione" aiuto="Solo per te: non compare su nessuna pagina.">
+                    <Input
+                      value={provvigione}
+                      onChangeText={setProvvigione}
+                      keyboardType="decimal-pad"
+                      placeholder="90"
+                    />
+                  </Campo>
+                  <View style={stili.affiancati}>
+                    <View style={stili.meta}>
+                      <Campo etichetta="Massimale">
+                        <Input
+                          value={massimale}
+                          onChangeText={setMassimale}
+                          keyboardType="decimal-pad"
+                          placeholder="6.000.000"
+                        />
+                      </Campo>
+                    </View>
+                    <View style={stili.meta}>
+                      <Campo etichetta="Franchigia">
+                        <Input
+                          value={franchigia}
+                          onChangeText={setFranchigia}
+                          keyboardType="decimal-pad"
+                          placeholder="300"
+                        />
+                      </Campo>
+                    </View>
+                  </View>
+                  <Campo etichetta="Durata in mesi">
+                    <Input
+                      value={durata}
+                      onChangeText={setDurata}
+                      keyboardType="number-pad"
+                      placeholder="12"
+                    />
+                  </Campo>
+                </Sezione>
+                </>
+              ),
+            },
+            {
+              titolo: 'Garanzie',
+              contenuto: (
+                <>
 
-        <Sezione titolo="Cosa copre e cosa no">
-          <Text style={stili.nota}>
-            Tocca una voce per spostarla fra “copre” e “non copre”. In pagina diventano due
-            elenchi distinti.
-          </Text>
+                <Sezione titolo="Cosa copre e cosa no">
+                  <Text style={stili.nota}>
+                    Tocca una voce per spostarla fra “copre” e “non copre”. In pagina diventano due
+                    elenchi distinti.
+                  </Text>
 
-          {garanzie.map((g, i) => (
-            <View key={`${g.nome}-${i}`} style={stili.garanzia}>
-              <Pressable
-                onPress={() => commuta(i)}
-                style={stili.commuta}
-                accessibilityRole="switch"
-                accessibilityState={{ checked: g.inclusa }}
-                accessibilityLabel={`${g.nome}, ${g.inclusa ? 'compresa' : 'non compresa'}`}
-              >
-                <View style={[stili.segno, g.inclusa ? stili.segnoSi : stili.segnoNo]}>
-                  <Icona
-                    nome={g.inclusa ? 'spunta' : 'attenzione'}
-                    dimensione={14}
-                    colore={g.inclusa ? colori.successo : colori.testoDebole}
-                  />
-                </View>
-                <Text style={[stili.garanziaNome, !g.inclusa && stili.garanziaEsclusa]}>
-                  {g.nome}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => togli(i)}
-                style={stili.togli}
-                accessibilityRole="button"
-                accessibilityLabel={`Togli ${g.nome}`}
-              >
-                <Text style={stili.togliTesto}>×</Text>
-              </Pressable>
-            </View>
-          ))}
+                  {garanzie.map((g, i) => (
+                    <View key={`${g.nome}-${i}`} style={stili.garanzia}>
+                      <Pressable
+                        onPress={() => commuta(i)}
+                        style={stili.commuta}
+                        accessibilityRole="switch"
+                        accessibilityState={{ checked: g.inclusa }}
+                        accessibilityLabel={`${g.nome}, ${g.inclusa ? 'compresa' : 'non compresa'}`}
+                      >
+                        <View style={[stili.segno, g.inclusa ? stili.segnoSi : stili.segnoNo]}>
+                          <Icona
+                            nome={g.inclusa ? 'spunta' : 'attenzione'}
+                            dimensione={14}
+                            colore={g.inclusa ? colori.successo : colori.testoDebole}
+                          />
+                        </View>
+                        <Text style={[stili.garanziaNome, !g.inclusa && stili.garanziaEsclusa]}>
+                          {g.nome}
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => togli(i)}
+                        style={stili.togli}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Togli ${g.nome}`}
+                      >
+                        <Text style={stili.togliTesto}>×</Text>
+                      </Pressable>
+                    </View>
+                  ))}
 
-          <View style={stili.aggiungi}>
-            <View style={stili.meta}>
-              <Input
-                value={nuova}
-                onChangeText={setNuova}
-                placeholder="Aggiungi una garanzia"
-                onSubmitEditing={aggiungi}
-                returnKeyType="done"
-              />
-            </View>
-            <Bottone tenue testo="Aggiungi" icona="piu" onPress={aggiungi} />
-          </View>
-        </Sezione>
-
-        {errore ? <Text style={stili.errore}>{errore}</Text> : null}
-
-        <View style={stili.azioni}>
-          {modifica ? (
-            <Bottone
-              testo="Salva le modifiche"
-              inCorso={inCorso}
-              disabilitato={!puoSalvare}
-              onPress={() => void salva('attiva')}
-            />
-          ) : (
+                  <View style={stili.aggiungi}>
+                    <View style={stili.meta}>
+                      <Input
+                        value={nuova}
+                        onChangeText={setNuova}
+                        placeholder="Aggiungi una garanzia"
+                        onSubmitEditing={aggiungi}
+                        returnKeyType="done"
+                      />
+                    </View>
+                    <Bottone tenue testo="Aggiungi" icona="piu" onPress={aggiungi} />
+                  </View>
+                </Sezione>
+                </>
+              ),
+            },
+          ]}
+          finale={
             <>
-          <Bottone
-            testo="Salva e pubblica"
-            inCorso={inCorso}
-            disabilitato={!puoSalvare}
-            onPress={() => void salva('attiva')}
-          />
-          <Bottone
-            tenue
-            testo="Salva come bozza"
-            disabilitato={!puoSalvare || inCorso}
-            onPress={() => void salva('bozza')}
-          />
+              {!puoSalvare && (
+                <Text style={stili.errore}>Manca qualcosa: torna ai passi precedenti e completa i campi obbligatori.</Text>
+              )}
+              {errore ? <Text style={stili.errore}>{errore}</Text> : null}
+
+              <View style={stili.azioni}>
+                {modifica ? (
+                  <Bottone
+                    testo="Salva le modifiche"
+                    inCorso={inCorso}
+                    disabilitato={!puoSalvare}
+                    onPress={() => void salva('attiva')}
+                  />
+                ) : (
+                  <>
+                <Bottone
+                  testo="Salva e pubblica"
+                  inCorso={inCorso}
+                  disabilitato={!puoSalvare}
+                  onPress={() => void salva('attiva')}
+                />
+                <Bottone
+                  tenue
+                  testo="Salva come bozza"
+                  disabilitato={!puoSalvare || inCorso}
+                  onPress={() => void salva('bozza')}
+                />
+                  </>
+                )}
+              </View>
             </>
-          )}
-        </View>
+          }
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );

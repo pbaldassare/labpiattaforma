@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { Procedura } from '@/components/procedura';
 import { Testo as Text } from '@/components/testo';
 import {
   eModuloEsaurito,
@@ -50,6 +51,7 @@ export default function NuovaOfferta() {
   // allineate per sempre.
   const { id } = useLocalSearchParams<{ id?: string }>();
   const modifica = typeof id === 'string' && id.length > 0;
+  const scorrimento = useRef<ScrollView>(null);
 
   const [marca, setMarca] = useState('');
   const [modello, setModello] = useState('');
@@ -227,184 +229,230 @@ export default function NuovaOfferta() {
       <Stack.Screen
         options={{ title: modifica ? 'Modifica · Vendita' : 'Nuova offerta · Vendita' }}
       />
-      <ScrollView contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
-        <Sezione titolo="Il mezzo">
-          <Campo etichetta="Marca" obbligatorio>
-            <Input value={marca} onChangeText={setMarca} placeholder="Fiat" />
-          </Campo>
-          <Campo etichetta="Modello" obbligatorio aiuto="Marca e modello formano il titolo della pagina.">
-            <Input value={modello} onChangeText={setModello} placeholder="Panda 1.2 Easy" />
-          </Campo>
-          <Campo etichetta="Targa">
-            <Input
-              value={targa}
-              onChangeText={(v) => setTarga(v.toUpperCase())}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              placeholder="AB123CD"
-            />
-          </Campo>
-          <View style={stili.affiancati}>
-            <View style={stili.meta}>
-              <Campo etichetta="Chilometri">
-                <Input
-                  value={chilometri}
-                  onChangeText={setChilometri}
-                  keyboardType="number-pad"
-                  inputMode="numeric"
-                  placeholder="84000"
-                />
-              </Campo>
-            </View>
-            <View style={stili.meta}>
-              <Campo etichetta="Anno">
-                <Input
-                  value={anno}
-                  onChangeText={setAnno}
-                  keyboardType="number-pad"
-                  inputMode="numeric"
-                  placeholder="2019"
-                  maxLength={4}
-                />
-              </Campo>
-            </View>
-          </View>
-          <Campo etichetta="Alimentazione">
-            <Scelta
-              valore={alimentazione}
-              onCambia={setAlimentazione}
-              opzioni={ALIMENTAZIONI.map((a) => ({
-                valore: a,
-                etichetta: ETICHETTA_ALIMENTAZIONE[a],
-              }))}
-            />
-          </Campo>
-          <Campo etichetta="Cambio">
-            <Scelta
-              valore={cambio}
-              onCambia={setCambio}
-              opzioni={(['manuale', 'automatico'] as Cambio[]).map((c) => ({
-                valore: c,
-                etichetta: ETICHETTA_CAMBIO[c],
-              }))}
-            />
-          </Campo>
-        </Sezione>
+      <ScrollView ref={scorrimento} contentContainerStyle={stili.scorrimento} keyboardShouldPersistTaps="handled">
+        <Procedura
+          liberi={modifica}
+          onCambiaPasso={() => scorrimento.current?.scrollTo({ y: 0, animated: true })}
+          passi={[
+            {
+              titolo: 'Il mezzo',
+              valido: marca.trim() !== '' && modello.trim() !== '',
+              motivo: 'Scrivi marca e modello per andare avanti.',
+              contenuto: (
+                <>
+                <Sezione titolo="Il mezzo">
+                  <Campo etichetta="Marca" obbligatorio>
+                    <Input value={marca} onChangeText={setMarca} placeholder="Fiat" />
+                  </Campo>
+                  <Campo etichetta="Modello" obbligatorio aiuto="Marca e modello formano il titolo della pagina.">
+                    <Input value={modello} onChangeText={setModello} placeholder="Panda 1.2 Easy" />
+                  </Campo>
+                  <Campo etichetta="Targa">
+                    <Input
+                      value={targa}
+                      onChangeText={(v) => setTarga(v.toUpperCase())}
+                      autoCapitalize="characters"
+                      autoCorrect={false}
+                      placeholder="AB123CD"
+                    />
+                  </Campo>
+                  <View style={stili.affiancati}>
+                    <View style={stili.meta}>
+                      <Campo etichetta="Chilometri">
+                        <Input
+                          value={chilometri}
+                          onChangeText={setChilometri}
+                          keyboardType="number-pad"
+                          inputMode="numeric"
+                          placeholder="84000"
+                        />
+                      </Campo>
+                    </View>
+                    <View style={stili.meta}>
+                      <Campo etichetta="Anno">
+                        <Input
+                          value={anno}
+                          onChangeText={setAnno}
+                          keyboardType="number-pad"
+                          inputMode="numeric"
+                          placeholder="2019"
+                          maxLength={4}
+                        />
+                      </Campo>
+                    </View>
+                  </View>
+                  <Campo etichetta="Alimentazione">
+                    <Scelta
+                      valore={alimentazione}
+                      onCambia={setAlimentazione}
+                      opzioni={ALIMENTAZIONI.map((a) => ({
+                        valore: a,
+                        etichetta: ETICHETTA_ALIMENTAZIONE[a],
+                      }))}
+                    />
+                  </Campo>
+                  <Campo etichetta="Cambio">
+                    <Scelta
+                      valore={cambio}
+                      onCambia={setCambio}
+                      opzioni={(['manuale', 'automatico'] as Cambio[]).map((c) => ({
+                        valore: c,
+                        etichetta: ETICHETTA_CAMBIO[c],
+                      }))}
+                    />
+                  </Campo>
+                </Sezione>
+                </>
+              ),
+            },
+            {
+              titolo: 'Prezzi',
+              valido: pubblicoCent !== null && pubblicoCent > 0 && !prezzoAcquistoNonValido && !prezzoRivenditoreNonValido,
+              motivo: 'Serve il prezzo al pubblico, e i prezzi scritti devono essere validi.',
+              contenuto: (
+                <>
 
-        <Sezione titolo="Prezzi">
-          <Campo
-            etichetta="Prezzo di acquisto"
-            aiuto="Solo per te: non compare su nessuna pagina."
-            errore={prezzoAcquistoNonValido ? 'Non sembra un prezzo.' : null}
-          >
-            <Input
-              value={acquisto}
-              onChangeText={setAcquisto}
-              keyboardType="decimal-pad"
-              placeholder="6.500"
-            />
-          </Campo>
-          <Campo
-            etichetta="Prezzo al cliente finale"
-            obbligatorio
-            aiuto="È il numero in evidenza sulla pagina pubblica."
-            errore={prezzoPubblicoNonValido ? 'Non sembra un prezzo.' : null}
-          >
-            <Input
-              value={pubblico}
-              onChangeText={setPubblico}
-              keyboardType="decimal-pad"
-              placeholder="8.900"
-            />
-          </Campo>
-          <Campo
-            etichetta="Prezzo rivenditore"
-            aiuto="Se lo compili nasce una seconda pagina, con link separato e non pubblicata."
-            errore={prezzoRivenditoreNonValido ? 'Non sembra un prezzo.' : null}
-          >
-            <Input
-              value={rivenditore}
-              onChangeText={setRivenditore}
-              keyboardType="decimal-pad"
-              placeholder="7.800"
-            />
-          </Campo>
+                <Sezione titolo="Prezzi">
+                  <Campo
+                    etichetta="Prezzo di acquisto"
+                    aiuto="Solo per te: non compare su nessuna pagina."
+                    errore={prezzoAcquistoNonValido ? 'Non sembra un prezzo.' : null}
+                  >
+                    <Input
+                      value={acquisto}
+                      onChangeText={setAcquisto}
+                      keyboardType="decimal-pad"
+                      placeholder="6.500"
+                    />
+                  </Campo>
+                  <Campo
+                    etichetta="Prezzo al cliente finale"
+                    obbligatorio
+                    aiuto="È il numero in evidenza sulla pagina pubblica."
+                    errore={prezzoPubblicoNonValido ? 'Non sembra un prezzo.' : null}
+                  >
+                    <Input
+                      value={pubblico}
+                      onChangeText={setPubblico}
+                      keyboardType="decimal-pad"
+                      placeholder="8.900"
+                    />
+                  </Campo>
+                  <Campo
+                    etichetta="Prezzo rivenditore"
+                    aiuto="Se lo compili nasce una seconda pagina, con link separato e non pubblicata."
+                    errore={prezzoRivenditoreNonValido ? 'Non sembra un prezzo.' : null}
+                  >
+                    <Input
+                      value={rivenditore}
+                      onChangeText={setRivenditore}
+                      keyboardType="decimal-pad"
+                      placeholder="7.800"
+                    />
+                  </Campo>
 
-          {(marginePubblico !== null || margineRivenditore !== null) && (
-            <View style={stili.margini}>
-              {marginePubblico !== null && (
-                <RigaMargine etichetta="Margine al pubblico" valore={marginePubblico} />
-              )}
-              {margineRivenditore !== null && (
-                <RigaMargine etichetta="Margine rivenditore" valore={margineRivenditore} />
-              )}
-            </View>
-          )}
-        </Sezione>
+                  {(marginePubblico !== null || margineRivenditore !== null) && (
+                    <View style={stili.margini}>
+                      {marginePubblico !== null && (
+                        <RigaMargine etichetta="Margine al pubblico" valore={marginePubblico} />
+                      )}
+                      {margineRivenditore !== null && (
+                        <RigaMargine etichetta="Margine rivenditore" valore={margineRivenditore} />
+                      )}
+                    </View>
+                  )}
+                </Sezione>
+                </>
+              ),
+            },
+            {
+              titolo: 'Provenienza',
+              valido: provenienza === 'proprio' || fornitore.trim() !== '',
+              motivo: 'Scrivi il nome del fornitore.',
+              contenuto: (
+                <>
 
-        <Sezione titolo="Provenienza">
-          <Scelta
-            valore={provenienza}
-            consentiVuoto={false}
-            onCambia={(v) => setProvenienza((v ?? 'proprio') as Provenienza)}
-            opzioni={[
-              { valore: 'proprio' as Provenienza, etichetta: 'Mezzo mio' },
-              { valore: 'fornitore' as Provenienza, etichetta: 'Di un fornitore' },
-            ]}
-          />
-          {provenienza === 'fornitore' && (
-            <Campo etichetta="Nome del fornitore" obbligatorio>
-              <Input value={fornitore} onChangeText={setFornitore} />
-            </Campo>
-          )}
-        </Sezione>
+                <Sezione titolo="Provenienza">
+                  <Scelta
+                    valore={provenienza}
+                    consentiVuoto={false}
+                    onCambia={(v) => setProvenienza((v ?? 'proprio') as Provenienza)}
+                    opzioni={[
+                      { valore: 'proprio' as Provenienza, etichetta: 'Mezzo mio' },
+                      { valore: 'fornitore' as Provenienza, etichetta: 'Di un fornitore' },
+                    ]}
+                  />
+                  {provenienza === 'fornitore' && (
+                    <Campo etichetta="Nome del fornitore" obbligatorio>
+                      <Input value={fornitore} onChangeText={setFornitore} />
+                    </Campo>
+                  )}
+                </Sezione>
+                </>
+              ),
+            },
+            {
+              titolo: 'Come si acquista',
+              contenuto: (
+                <>
 
-        <Sezione titolo="Come può acquistarla">
-          <View style={stili.formule}>
-            {FORMULE.map((f) => {
-              const attiva = formule.includes(f);
-              return (
-                <Bottone
-                  key={f}
-                  testo={`${attiva ? '✓ ' : ''}${ETICHETTA_FORMULA[f]}`}
-                  tenue={!attiva}
-                  onPress={() => commuta(f)}
-                />
-              );
-            })}
-          </View>
-          <Text style={stili.nota}>
-            Le provvigioni proposte sono quelle del prototipo e restano da confermare.
-          </Text>
-        </Sezione>
-
-        {errore ? <Text style={stili.errore}>{errore}</Text> : null}
-
-        <View style={stili.azioni}>
-          {modifica ? (
-            <Bottone
-              testo="Salva le modifiche"
-              onPress={() => void salva('attiva')}
-              inCorso={inCorso}
-              disabilitato={!puoSalvare}
-            />
-          ) : (
+                <Sezione titolo="Come può acquistarla">
+                  <View style={stili.formule}>
+                    {FORMULE.map((f) => {
+                      const attiva = formule.includes(f);
+                      return (
+                        <Bottone
+                          key={f}
+                          testo={`${attiva ? '✓ ' : ''}${ETICHETTA_FORMULA[f]}`}
+                          tenue={!attiva}
+                          onPress={() => commuta(f)}
+                        />
+                      );
+                    })}
+                  </View>
+                  <Text style={stili.nota}>
+                    Le provvigioni proposte sono quelle del prototipo e restano da confermare.
+                  </Text>
+                </Sezione>
+                </>
+              ),
+            },
+          ]}
+          finale={
             <>
-              <Bottone
-                testo="Salva e pubblica"
-                onPress={() => void salva('attiva')}
-                inCorso={inCorso}
-                disabilitato={!puoSalvare}
-              />
-              <Bottone
-                testo="Salva come bozza"
-                tenue
-                onPress={() => void salva('bozza')}
-                disabilitato={!puoSalvare || inCorso}
-              />
+              {!puoSalvare && (
+                <Text style={stili.errore}>Manca qualcosa: torna ai passi precedenti e completa i campi obbligatori.</Text>
+              )}
+              {errore ? <Text style={stili.errore}>{errore}</Text> : null}
+
+              <View style={stili.azioni}>
+                {modifica ? (
+                  <Bottone
+                    testo="Salva le modifiche"
+                    onPress={() => void salva('attiva')}
+                    inCorso={inCorso}
+                    disabilitato={!puoSalvare}
+                  />
+                ) : (
+                  <>
+                    <Bottone
+                      testo="Salva e pubblica"
+                      onPress={() => void salva('attiva')}
+                      inCorso={inCorso}
+                      disabilitato={!puoSalvare}
+                    />
+                    <Bottone
+                      testo="Salva come bozza"
+                      tenue
+                      onPress={() => void salva('bozza')}
+                      disabilitato={!puoSalvare || inCorso}
+                    />
+                  </>
+                )}
+              </View>
             </>
-          )}
-        </View>
+          }
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );
