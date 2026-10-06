@@ -258,9 +258,9 @@ function Pile() {
       <Stack.Screen name="pratiche/[id]" options={{ title: 'Pratica' }} />
       <Stack.Screen name="preventivo/[pratica]" options={{ title: 'Nuovo preventivo' }} />
       <Stack.Screen name="documento/[id]" options={{ title: 'Preventivo' }} />
-      <Stack.Screen name="admin/index" options={{ title: 'Back office' }} />
+      <Stack.Screen name="admin/index" options={{ title: 'Lab Piattaforma' }} />
       <Stack.Screen name="admin/nuovo" options={{ title: 'Nuovo utente' }} />
-      <Stack.Screen name="admin/attivazioni" options={{ title: 'Chi ha pagato cosa' }} />
+      <Stack.Screen name="admin/attivazioni" options={{ title: 'Attivazioni e pagamenti' }} />
       <Stack.Screen name="admin/[id]" options={{ title: 'Utente' }} />
       </Stack>
     </ThemeProvider>
